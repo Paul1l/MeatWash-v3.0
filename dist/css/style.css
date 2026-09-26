@@ -295,7 +295,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
   background: radial-gradient(90% 140% at 26% 48%, #5a0f14 0%, #4a0b10 38%, #3e0a0e 70%, #30070a 100%);
 }
 .membership::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 75%, rgba(0, 0, 0, .35)); }
-.membership__card { position: relative; align-self: stretch; overflow: hidden; display: grid; place-items: center; padding: clamp(18px, 2.4vw, 36px); }
+/* overflow не режем: тень карты выходит за край колонки (на телефоне снизу отступа нет). */
+.membership__card { position: relative; align-self: stretch; overflow: visible; display: grid; place-items: center; padding: clamp(18px, 2.4vw, 36px); }
 /* Карта нарисована из фирменного вектора и лежит с прозрачным фоном.
    Никакого mix-blend-mode: он размывал карту в фон секции. */
 .membership__card img {
@@ -304,13 +305,12 @@ button.card { width: 100%; text-align: left; appearance: none; }
 }
 .membership__card.is-in img { transform: none; opacity: 1; }
 /* Карта при наведении чуть приподнимается: крупнее и с более глубокой тенью.
-   drop-shadow идёт по контуру карты (у картинки прозрачный фон). */
-.membership__card img { filter: drop-shadow(0 10px 18px rgb(0 0 0 / .32)); }
+   drop-shadow идёт по контуру карты: у картинки прозрачный фон, а запечённая
+   в ней мягкая тень сходит к краям файла в ноль (иначе край читался как срез). */
+.membership__card img { filter: drop-shadow(0 8px 16px rgb(0 0 0 / .3)); }
 @media (hover: hover) {
-  /* Тень при наведении выходит за край колонки — не обрезать её. */
-  .membership__card { overflow: visible; }
   .membership__card img { transition: transform .5s var(--ease), filter .5s var(--ease), opacity 1.2s var(--ease); }
-  .membership__card img:hover { transform: scale(1.04); filter: drop-shadow(0 26px 40px rgb(0 0 0 / .5)); }
+  .membership__card img:hover { transform: scale(1.04); filter: drop-shadow(0 22px 36px rgb(0 0 0 / .48)); }
 }
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
   .membership__card img:hover { transform: none; }
