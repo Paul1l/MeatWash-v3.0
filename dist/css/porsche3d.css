@@ -13,8 +13,9 @@
 
 /* ---------- Слой сцены ---------- */
 .p3d-stage{
+  /* Без заливки: при уходе к главам гаснет только canvas (live3d.js), и под
+     слоем должна остаться видна фото-витрина. Чёрный фон закрывал главы. */
   position:absolute; inset:0; z-index:0;
-  background:var(--black-2);
   opacity:0; visibility:hidden; pointer-events:none;
   transition:opacity 600ms var(--ease), visibility 0s linear 600ms;
 }
