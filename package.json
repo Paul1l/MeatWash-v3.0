@@ -2,16 +2,26 @@
   "name": "meatwash-cinematic",
   "version": "1.0.0",
   "private": true,
-  "description": "MEATWASH: сайт с фото-витриной на GSAP ScrollTrigger",
+  "description": "MEATWASH: сайт с фото-витриной на GSAP ScrollTrigger и 3D-режимом «Оживить Porsche» по нажатию",
   "scripts": {
     "start": "node serve.cjs",
-    "check": "node scripts/check.mjs",
-    "catalog": "node scripts/catalog.mjs"
+    "check": "node scripts/check.mjs && node scripts/check-3d.mjs",
+    "catalog": "node scripts/catalog.mjs",
+    "optimize-3d": "node scripts/optimize-3d.mjs",
+    "bundle-3d": "node scripts/bundle-3d.mjs",
+    "check:3d": "node scripts/check-3d.mjs",
+    "check:page": "node scripts/check.mjs"
   },
   "dependencies": {
     "gsap": "3.13.0"
   },
   "devDependencies": {
-    "sharp": "^0.35.4"
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
+    "esbuild": "^0.28.2",
+    "meshoptimizer": "^1.3.0",
+    "sharp": "^0.35.4",
+    "three": "^0.180.0"
   }
 }

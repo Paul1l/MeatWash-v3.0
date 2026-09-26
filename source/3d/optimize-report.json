@@ -1,0 +1,51 @@
+{
+  "title": "FREE 1975 Porsche 911 (930) Turbo",
+  "author": "Karol Miklas / Lionsharp Studios",
+  "source": {
+    "file": "source/3d/porsche-930.glb",
+    "bytes": 14919340
+  },
+  "license": "CC-BY-4.0",
+  "changes": "Удалены второй слой кузова, пол, ароматизатор, антенна, номерные знаки с рамками; касательные; текстуры уменьшены и сжаты в WebP; геометрия сжата Meshopt; для телефона упрощены мелкие детали.",
+  "units": "метры; низ шин y=0; перед −Z; левый борт −X",
+  "variants": {
+    "desktop": {
+      "file": "assets/3d/porsche-930-desktop.glb",
+      "bytes": 2228272,
+      "sha256": "bdbf10b8cbafea4c5c68d5439749f984334536358df27bdddc37442c17d8c2a9",
+      "before": {
+        "triangles": 241260,
+        "vertices": 157275,
+        "meshes": 75,
+        "materials": 14,
+        "textures": 27
+      },
+      "after": {
+        "triangles": 193241,
+        "vertices": 127596,
+        "meshes": 10,
+        "materials": 10,
+        "textures": 14
+      }
+    },
+    "mobile": {
+      "file": "assets/3d/porsche-930-mobile.glb",
+      "bytes": 1201100,
+      "sha256": "3db40a8b78a8c709e1418580810c85602dfc6eaf31fa86efc70b7418aec1cb7e",
+      "before": {
+        "triangles": 241260,
+        "vertices": 157275,
+        "meshes": 75,
+        "materials": 14,
+        "textures": 27
+      },
+      "after": {
+        "triangles": 122553,
+        "vertices": 87182,
+        "meshes": 10,
+        "materials": 10,
+        "textures": 14
+      }
+    }
+  }
+}

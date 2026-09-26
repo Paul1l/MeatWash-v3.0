@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>3D — тестовая страница (временная)</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0806;color:#eee;font:14px system-ui}
+  .stage{position:fixed;inset:0;background:url(assets/shots/cf-hero-dirty.webp) 50% 50%/cover no-repeat}
+  .stage.small{background-image:url(assets/shots/cf-hero-dirty-s.webp)}
+  .overlay{position:fixed;inset:0;background:inherit;pointer-events:none;opacity:0;z-index:2;background:url(assets/shots/cf-hero-dirty.webp) 50% 50%/cover no-repeat}
+  .ui{position:fixed;left:8px;bottom:8px;z-index:3;display:flex;flex-wrap:wrap;gap:4px;max-width:calc(100% - 16px)}
+  .ui button{background:#221710;color:#eee;border:1px solid #6b4b2e;padding:6px 10px;cursor:pointer}
+  .ui button:focus-visible{outline:2px solid #e8c48a;outline-offset:2px}
+  #log{position:fixed;right:8px;top:8px;z-index:3;background:#0009;padding:6px;white-space:pre;font:12px monospace}
+</style>
+<div class="stage" id="stage"></div>
+<div class="overlay" id="overlay"></div>
+<div class="ui" id="ui">
+  <button data-go>Оживить</button><button data-cancel>Отмена</button><button data-tour>Показ</button>
+  <button data-view="overview">Общий вид</button><button data-view="body">Кузов</button><button data-view="wheel">Диски</button>
+  <button data-view="hood">Капот</button><button data-view="reflection">Отражения</button><button data-view="headlight">Фара</button>
+  <button data-view="sill">Порог</button><button data-view="windscreen">Стекло</button><button data-view="hero">hero</button>
+  <button data-off>Обычный вид</button><button data-overlay>Фото поверх</button>
+</div>
+<div id="log"></div>
+<script type="module">
+// Временная страница для подбора ракурсов и замеров. В финале удаляется.
+const q = new URLSearchParams(location.search);
+const stage = document.getElementById('stage'), log = document.getElementById('log');
+if (innerWidth <= 900) stage.classList.add('small');
+let scene = null, controller = null, mod = null;
+const say = s => { log.textContent = s; };
+window.__t = {get scene(){return scene;}, get mod(){return mod;}, state: 'idle', progress: []};
+async function go() {
+  if (scene || controller) return;
+  controller = new AbortController(); window.__t.state = 'loading';
+  const started = performance.now();
+  try {
+    mod = await import('./js/porsche3d.bundle.js');
+    window.__t.importMs = Math.round(performance.now() - started);
+    scene = await mod.mount({
+      container: stage, signal: controller.signal, quality: q.get('quality') || 'auto',
+      reducedMotion: q.has('reduce') || matchMedia('(prefers-reduced-motion: reduce)').matches,
+      onProgress: p => { window.__t.progress.push(p.ratio); say(`загрузка ${p.ratio == null ? '…' : Math.round(p.ratio * 100) + '%'} ${p.loaded}`); },
+      onFirstFrame: () => { window.__t.firstFrameMs = Math.round(performance.now() - started); },
+      onError: e => { window.__t.state = 'error:' + e.code; say('ошибка ' + e.message); scene = null; },
+      onViewChange: v => { window.__t.view = v; },
+      onTourEnd: () => { window.__t.tourEnded = true; },
+    });
+    window.__t.state = 'ready';
+    say(JSON.stringify(scene.stats(), null, 1));
+  } catch (e) {
+    window.__t.state = e.name === 'AbortError' ? 'aborted' : 'error:' + (e.code || e.name);
+    window.__t.error = String(e && e.message);
+    say(window.__t.state + ' ' + e.message);
+  } finally { controller = null; }
+}
+document.getElementById('ui').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.hasAttribute('data-go')) go();
+  if (b.hasAttribute('data-cancel')) controller?.abort();
+  if (b.hasAttribute('data-tour')) scene?.tour();
+  if (b.dataset.view) scene?.view(b.dataset.view);
+  if (b.hasAttribute('data-off')) { const y = scrollY; scene?.dispose(); scene = null; window.__t.state = 'idle'; scrollTo(0, y); }
+  if (b.hasAttribute('data-overlay')) { const o = document.getElementById('overlay'); o.style.opacity = o.style.opacity === '0.5' ? '0' : '0.5'; }
+});
+if (q.has('auto')) go();
+</script>
+</html>

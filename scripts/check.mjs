@@ -62,17 +62,26 @@ for(const id of shots)for(const file of [`assets/shots/${id}.webp`,`assets/shots
 assert.equal(config.LADDER.length,6);
 
 // Модули, которые реально грузит страница: скрипты из index.html и всё, что они импортируют.
+// 3D-режим (porsche3d.bundle.js) в этот список не входит: его можно подключать
+// только import() по нажатию «Оживить Porsche», поэтому он проверяется отдельно.
+const is3d=name=>/porsche3d/.test(name);
 const modules=new Set([...html.matchAll(/<script\b[^>]*\bsrc="js\/([^"]+)"/g)].map(m=>m[1]));
+const lazy3d=[];
 for(const name of modules){
+ assert(!is3d(name),'3D module is a <script> on the page: '+name);
  const text=await readFile(resolve(dist,'js',name),'utf8');
- for(const [,url] of text.matchAll(/(?:from\s*|import\()['"]\.\/([^'"]+)['"]/g))modules.add(url);
+ for(const [,url] of text.matchAll(/(?:\bfrom\s*|\bimport\s*)['"]\.\/([^'"]+)['"]/g))assert(!is3d(url),`3D module is imported statically by ${name}: ${url}`);
+ for(const [,url] of text.matchAll(/(?:from\s*|import\()['"]\.\/([^'"]+)['"]/g)){if(is3d(url))lazy3d.push(`${name} → ${url}`);else modules.add(url);}
 }
 const pageCode=[html,...await Promise.all([...modules].map(name=>readFile(resolve(dist,'js',name),'utf8')))].join('\n');
-// 3D-сцены нет: страница работает на фото-витрине. Если кто-то вернёт
-// модули сцены, three или модель — проверка это поймает.
+// Обычный режим — фото-витрина. До нажатия 3D не запрашивается: ни модулей
+// прежней сцены, ни three, ни модели, ни importmap, preload или prefetch на 3D.
 assert(modules.has('stage.js'),'Page must load the photo stage (stage.js)');
 for(const name of ['scene.bundle.js','scene.js','garage.js','interior.js','water.js'])assert(!modules.has(name),'3D module is loaded by the page: '+name);
-assert(!/porsche-930|\.glb\b|importmap|vendor\/build|vendor\/examples/.test(pageCode),'Page still references the 3D scene');
+assert(!/porsche-930|\.glb\b|assets\/3d\/|importmap|vendor\/build|vendor\/examples/.test(pageCode),'Page references 3D assets directly (model, three, importmap)');
+assert(!/porsche3d/.test(html),'index.html references the 3D module (script, preload or prefetch): it must load only on click');
+for(const [tag] of html.matchAll(/<link\b[^>]*>/g))assert(!(/modulepreload|prefetch|prerender/.test(tag)&&/js\/|\.glb|assets\/3d/.test(tag)),'Preload or prefetch of scripts/3D on the page: '+tag);
+for(const entry of lazy3d)assert(/→ porsche3d\.bundle\.js$/.test(entry),'Only porsche3d.bundle.js may be imported lazily: '+entry);
 
 // У площадок разные компании в yclients: общий адрес открывает только одну из них.
 const bookings=new Set();
@@ -86,4 +95,4 @@ assert.equal(bookings.size,content.locations.length,'Branches must have differen
 for(const [url] of pageCode.matchAll(/https?:\/\/[\w.-]*yclients\.com[^"'\s<)]*/g))assert(bookings.has(url),'Unexpected yclients link on the page: '+url);
 
 assert.equal(failures.length,0,failures.join('\n'));
-console.log(`PASS: JS syntax, module paths, local assets (src, srcset, CSS url), anchors, six scroll stops, four services, supplied and garage prices, ${shots.size} stage shots, no 3D on the page, both branch booking destinations, no shared yclients link.`);
+console.log(`PASS: JS syntax, module paths, local assets (src, srcset, CSS url), anchors, six scroll stops, four services, supplied and garage prices, ${shots.size} stage shots, no 3D before click (lazy import only${lazy3d.length?": "+lazy3d.join(", "):""}), both branch booking destinations, no shared yclients link.`);
