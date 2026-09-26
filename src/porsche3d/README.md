@@ -2,16 +2,18 @@
 
 Исходник модуля. На сайт попадает только бандл `dist/js/porsche3d.bundle.js`
 (`npm run bundle-3d`): three r180, GLTFLoader и декодер Meshopt внутри, importmap не нужен.
-Страница грузит его **только** `import('./porsche3d.bundle.js')` по нажатию кнопки —
+Страница грузит его **только** `import('./porsche3d.bundle.js')` из `dist/js/live3d.js` по нажатию —
 `npm run check` падает на статическом импорте, `<script>`, preload/prefetch или ссылке на `.glb`.
 
-- `index.js` — `mount()`: загрузка модели с прогрессом и отменой, материалы, камера, отрисовка по требованию, `dispose()`.
+- `index.js` — `mount()`: загрузка модели с прогрессом, отменой и тайм-аутом, материалы, камера,
+  поворот рукой, отрисовка по требованию, `dispose()`.
 - `views.js` — ракурсы, показ, соответствие работ «Гаража услуг» ракурсам.
 - `room.js` — помещение, свет и окружение для отражений (всё рисуется на canvas, без загрузок).
+- `models.js` — манифест моделей (адрес с хешем и размер); создаёт `npm run optimize-3d`.
 
-Модели — `dist/assets/3d/porsche-930-{desktop,mobile}.glb`, собираются `npm run optimize-3d`
+Модели — `dist/assets/3d/porsche-930-{desktop,mobile}.<хеш>.glb`, собираются `npm run optimize-3d`
 из `source/3d/porsche-930.glb` (исходник v1, в `dist` не публикуется). Отчёт с размерами
-и sha256 — `source/3d/optimize-report.json`. `npm run check:3d` сверяет бандл и модели.
+и sha256 — `source/3d/optimize-report.json`. `npm run check:3d` сверяет бандл, модели и манифест.
 
 ## API
 
@@ -19,35 +21,47 @@
 const {mount} = await import('./porsche3d.bundle.js');
 const scene = await mount({
   container,            // элемент с position: relative/absolute; canvas добавится последним ребёнком
-  signal,               // AbortSignal: отмена загрузки → промис отклоняется с AbortError
+  signal,               // AbortSignal: отмена → промис отклоняется с AbortError
   quality: 'auto',      // 'high' | 'low' | 'auto' (телефон, сенсор без мыши, ≤4 ГБ, Save-Data → low)
-  reducedMotion,        // по умолчанию из prefers-reduced-motion
-  model,                // необязательно: свой URL или Promise<Response> (можно начать fetch заранее)
-  onProgress({loaded, total, ratio}),  // ratio = null, если размер неизвестен или ответ сжат
-  onFirstFrame(),       // первый кадр нарисован, canvas начинает проявляться
+  reducedMotion,        // по умолчанию из prefers-reduced-motion: без показа, параллакса и инерции
+  startView: 'hero',    // 'hero' совпадает с фото первого экрана; 'overview' — повторный запуск
+  fadeIn: true,         // false — проявление делает страница (сайт: #scene[data-p3d="on"])
+  interactive: true,    // поворот мышью и горизонтальным жестом
+  stallTimeout: 15000,  // мс без новых байт → Porsche3DError('timeout')
+  onProgress({loaded, total, ratio}),  // total — из манифеста (верно и при сжатии на хостинге)
+  onPhase(name),        // 'download' → 'prepare' (скачано, готовим сцену)
+  onFirstFrame(),       // первый кадр нарисован
   onError(error),       // после запуска: потеря контекста WebGL (сцена уже закрыта)
-  onViewChange(name),   // 'hero' | 'overview' | 'body' | 'wheel' | … | 'tour'
+  onViewChange(name),   // ракурс | 'tour' | 'free' (повернули рукой или остановили показ)
   onTourEnd(),
+  onInteract(kind),     // 'press' | 'tap' — нажатие на сцену (показ останавливается)
 });
-scene.tour();                 // показ 7,5 с; false при reduced motion (сразу общий вид)
-scene.stopTour();
-scene.view('overview' | 'body' | 'wheel' | 'hood' | 'reflection' | 'headlight' | 'sill' | 'windscreen' | 'hero');
+scene.tour();                 // показ ~7 с; false при reduced motion (сразу общий вид)
+scene.stopTour();             // камера остаётся, где была
+scene.touring;                // идёт ли показ
+scene.view('overview' | 'body' | 'wheel' | 'wing' | 'front' | 'hood' | 'reflection' | 'headlight' | 'sill' | 'windscreen' | 'hero');
 scene.showService(zoneId);    // id из config.js ZONES; false — ракурса нет (салон), показывайте фото
+scene.setSafeArea({top, right, bottom, left});  // свободная часть кадра, px (шапка, панель гаража)
+scene.setSuspended(reason, on);  // пауза по причине страницы (ушли к главам, диалог, 3D скрыт)
 scene.setReducedMotion(bool);
 scene.stats();                // кадры, вызовы отрисовки, треугольники, память, timings этапов
-scene.dispose();              // освобождает всё и удаляет canvas; повторный вызов безопасен
+scene.dispose();              // освобождает видеопамять и удаляет canvas; повторный вызов безопасен
 ```
 
 Ошибки `mount()` — `Porsche3DError` с `code`: `webgl` (нет WebGL 2), `load` (сеть, HTTP),
-`compile` (шейдеры); отмена — `DOMException` `AbortError`. Во всех случаях canvas уже удалён,
-страница показывает обычный фон. Повторный `mount()` закрывает предыдущую сцену.
+`timeout`, `compile` (шейдеры), `context-lost`; отмена — `DOMException` `AbortError`. Во всех
+случаях canvas уже удалён, страница показывает обычный фон. Повторный `mount()` закрывает
+предыдущую сцену. Скачанная модель остаётся в памяти модуля: после `dispose()` повторный
+`mount()` не ходит в сеть.
 
 ## Поведение
 
-- Canvas с `pointer-events: none`: колесо, касания и прокрутка страницы идут мимо сцены.
-  Камера двигается только программно; параллакс — за мышью по `window` (только мышь,
-  не при reduced motion).
+- Колесо не слушается — всегда листает страницу. У canvas `touch-action: pan-y`: вертикальный
+  жест листает, горизонтальный (|dx| > 8 и больше |dy|) поворачивает. Мышь: поворот и наклон
+  55°–86°, без сдвига и масштаба, инерция 0.08. Параллакс за мышью ±1,5° / ±0,6°.
 - Кадр рисуется только при изменении; неподвижная камера — ноль кадров. Вне экрана
-  (IntersectionObserver) и на скрытой вкладке цикл стоит, показ ставится на паузу.
-- Начальный ракурс `hero` совпадает с кадром `cf-hero-dirty.webp` при `background-size: cover`
-  на любом соотношении сторон: canvas можно проявлять поверх фото без скачка.
+  (IntersectionObserver), на скрытой вкладке и при `setSuspended` цикл стоит, показ на паузе.
+- До готовности шейдеров кадр не рисуется, текстуры загружаются на видеокарту по одной,
+  Meshopt распаковывается в фоновых потоках: страница прокручивается и во время запуска.
+- Ракурс `hero` совпадает с кадром `cf-hero-dirty.webp` при `background-size: cover` на любом
+  соотношении сторон; остальные ракурсы вписываются в `setSafeArea`.

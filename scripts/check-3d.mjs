@@ -5,7 +5,7 @@
 // - у каждой работы «Гаража услуг» есть ракурс или явный отказ (фото);
 // - размеры укладываются в бюджет; печатается таблица raw / gzip / brotli.
 // Что страница не грузит 3D до нажатия, проверяет npm run check (check.mjs).
-import {readFile, mkdtemp, rm} from 'node:fs/promises';
+import {readFile, readdir, mkdtemp, rm} from 'node:fs/promises';
 import {resolve, join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createHash} from 'node:crypto';
@@ -68,6 +68,16 @@ for (const [name, variant] of Object.entries(report.variants)) {
     check(!prim.getAttribute('TANGENT'), `${variant.file}: остались касательные`);
   }
 }
+// В dist/assets/3d только текущие модели (имена с хешем), манифест модуля —
+// с теми же адресами и размерами.
+const expected = Object.values(report.variants).map(v => v.file.replace('assets/3d/', '')).sort();
+const present = (await readdir(resolve(root, 'dist/assets/3d'))).sort();
+check(JSON.stringify(present) === JSON.stringify(expected), 'В dist/assets/3d лишние или старые файлы: ' + present.join(', '));
+const manifest = (await import('data:text/javascript;base64,' + Buffer.from(await readFile(resolve(root, 'src/porsche3d/models.js'), 'utf8')).toString('base64'))).MODELS;
+check(manifest.high.file === report.variants.desktop.file && manifest.high.bytes === report.variants.desktop.bytes
+  && manifest.low.file === report.variants.mobile.file && manifest.low.bytes === report.variants.mobile.bytes, 'src/porsche3d/models.js не совпадает с отчётом optimize-3d');
+for (const variant of Object.values(report.variants)) check(variant.file.endsWith('.' + variant.sha256.slice(0, 10) + '.glb'), 'Имя модели без хеша содержимого: ' + variant.file);
+
 const bundle = await readFile(BUNDLE);
 sizes('dist/js/porsche3d.bundle.js', bundle);
 check(bundle.length <= 700e3, `Бандл ${bundle.length} байт больше 700 КБ`);
@@ -83,7 +93,7 @@ for (const zone of config.ZONES) {
 }
 for (const id of Object.keys(views.SERVICE_VIEWS)) check(config.ZONES.some(z => z.id === id), `В SERVICE_VIEWS лишняя работа ${id}`);
 for (const name of views.PUBLIC_VIEWS) check(name in views.VIEWS, `Нет ракурса ${name}`);
-check(views.TOUR.times.length === views.TOUR.keys.length, 'TOUR: times и keys разной длины');
+for (const step of views.TOUR.steps) check(step.view in views.VIEWS, 'Показ: нет ракурса ' + step.view);
 check(views.TOUR.duration >= 6 && views.TOUR.duration <= 8, 'Показ должен длиться 6–8 с');
 
 const pad = (v, n) => String(v).padStart(n);

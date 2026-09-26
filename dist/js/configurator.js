@@ -12,7 +12,9 @@ const HOLD = 3400;        // сколько кадр держится на од�
 const CROSS = 700;         // перекрёстное затухание между кадрами
 const FILM_LEAD = 900;     // чистая пауза в начале ролика под запись экрана
 
-export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
+// live3d — переключатель «Показать в 3D» (js/live3d.js, может отсутствовать):
+// работа гаража уходит в 3D-камеру, а если у модели нет детали — остаётся фото.
+export function setupConfigurator({ mount, getScene, onOpen, onClose, live3d = null }) {
   const picked = new Set();
   // Все слушатели панели снимаются разом в destroy().
   const abort = new AbortController(), options = { signal: abort.signal };
@@ -29,10 +31,18 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
   mount.innerHTML = `
     <div class="cfg" id="cfg-panel" role="region" aria-labelledby="cfg-title" tabindex="-1" hidden>
       <div class="cfg__head">
-        <p class="cfg__eyebrow">Гараж услуг</p>
+        <div class="cfg__headrow">
+          <p class="cfg__eyebrow">Гараж услуг</p>
+          <button class="cfg__3d" type="button" data-cfg-3d aria-pressed="false">
+            <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+            <span><span class="cfg__3d-long">Показать в </span>3D</span>
+            <span class="p3d__bar" aria-hidden="true"><i></i></span>
+          </button>
+        </div>
         <h3 class="cfg__title" id="cfg-title">Соберите уход и смотрите на машину</h3>
         <button class="cfg__close" type="button" data-cfg-close aria-label="Закрыть гараж услуг">×</button>
       </div>
+      <p class="cfg__3dmsg" data-cfg-3dmsg hidden>Не удалось загрузить 3D. Нажмите ещё раз.</p>
 
       <div class="cfg__presets">
         ${ZONE_PRESETS.map((p) => `
@@ -130,12 +140,14 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     const scene = getScene();
     if (!scene) return;
     const spec = target(id, force);
-    scene.setManual(spec);
-    panel.classList.toggle('has-pair', Boolean(spec.pair));
+    // В 3D работа показывается камерой; под canvas остаётся её кадр без шторки.
+    const in3d = Boolean(live3d?.garage.target(spec.id));
+    scene.setManual(in3d ? { id: spec.id, shot: spec.shot } : spec);
+    panel.classList.toggle('has-pair', Boolean(spec.pair) && !in3d);
     // Новую пару шторка проезжает сама: иначе разницу нужно искать вручную.
-    if (spec.pair && spec.id !== shownPair) scene.stage?.sweep?.(1900);
-    shownPair = spec.pair ? spec.id : null;
-    return spec;
+    if (spec.pair && !in3d && spec.id !== shownPair) scene.stage?.sweep?.(1900);
+    shownPair = spec.pair && !in3d ? spec.id : null;
+    return in3d ? { ...spec, pair: null } : spec;
   }
 
   function refreshTotal() {
@@ -173,6 +185,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     panel.classList.remove('is-playing');
     if (autoCinema) { autoCinema = false; setCinema(false); }
     if (wasFilm) setFilm(false);
+    live3d?.garage.showing(false);
     if (!silent) retarget(null);
   }
 
@@ -230,6 +243,8 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     };
     showBtn.textContent = 'Стоп';
     panel.classList.add('is-playing');
+    // Показ идёт по фотографиям с парами «до/после»: 3D на это время выключается.
+    live3d?.garage.showing(true);
     // На телефоне нижний лист занимает пол-экрана и накрывает подпись показа.
     // Показ смотрят, а не листают, поэтому панель на время уходит сама.
     if (innerWidth <= 720 && !cinema) { setCinema(true); autoCinema = true; }
@@ -254,6 +269,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     stage.hidden = false;
     filmBtn.textContent = 'Стоп';
     panel.classList.add('is-playing');
+    live3d?.garage.showing(true);
     // Ролик открывается грязной машиной: дальше по порядку идут работы.
     getScene()?.setManual({ id: null, shot: FILM_OPEN });
     stageTitle.textContent = 'Как приехала';
@@ -333,6 +349,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
   }, options);
 
   cinemaBtn.addEventListener('click', () => setCinema(!cinema), options);
+  live3d?.garage.bind({ button: mount.querySelector('[data-cfg-3d]'), message: mount.querySelector('[data-cfg-3dmsg]'), panel, refresh: () => { if (!show) retarget(null); } });
 
 
 
@@ -362,6 +379,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       document.addEventListener('keydown', onKey);
       freezeOverlays(true);
       refreshTotal();
+      live3d?.garage.open();
       retarget(null);
       onOpen?.();
       // Фокус — в панель; preventScroll: панель и так на экране, страница не должна дёргаться.
@@ -379,6 +397,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       document.body.classList.remove('cfg-open');
       document.removeEventListener('keydown', onKey);
       freezeOverlays(false);
+      live3d?.garage.close();
       getScene()?.setManual(null);
       onClose?.();
       // Фокус — обратно на кнопку гаража, без прокрутки к ней: панель могла
@@ -387,6 +406,8 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       opener = null;
     },
     get isOpen() { return open; },
+    // Работа, которую сейчас показывает гараж (для камеры 3D); null — ничего не выбрано.
+    currentTarget: () => target(null).id,
     film: () => { if (!open) api.open(); startFilm(); },
     selected: () => [...picked],
     destroy() { abort.abort(); stopShow(true); document.removeEventListener('click', onFilmClick); document.removeEventListener('keydown', onKey); freezeOverlays(false); },

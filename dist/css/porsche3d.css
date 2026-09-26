@@ -1,0 +1,212 @@
+/* MEATWASH v3.0 — «Оживить Porsche»: 3D-слой первого экрана.
+   Подключается последним: перекрывает положение hero и .hero-bar на телефоне
+   и в статичном режиме. Цвета и шрифт — токены style.css. */
+
+:root{
+  /* Верх нижней кнопки записи (cinematic.css: bottom max(12px, safe-area), высота 46px). */
+  --p3d-cta-top: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 46px);
+  --p3d-h: 44px;
+  --p3d-fs: clamp(12px, .9vw, 13px);
+  --p3d-line: rgb(var(--ivory-rgb) / .3);
+  --p3d-fill: rgb(var(--black-rgb) / .34);
+}
+
+/* ---------- Слой сцены ---------- */
+.p3d-stage{
+  position:absolute; inset:0; z-index:0;
+  background:var(--black-2);
+  opacity:0; visibility:hidden; pointer-events:none;
+  transition:opacity 600ms var(--ease), visibility 0s linear 600ms;
+}
+#scene[data-p3d="on"] .p3d-stage{
+  opacity:1; visibility:visible; pointer-events:auto;
+  transition:opacity 900ms var(--ease), visibility 0s;
+}
+#scene[data-p3d-away] .p3d-stage{ pointer-events:none; }
+.p3d-stage canvas{
+  display:block; width:100%; height:100%;
+  touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+  cursor:grab;
+}
+.p3d-stage.is-dragging canvas{ cursor:grabbing; }
+
+#scene[data-p3d="on"]:not([data-p3d-away]) .stage__layer{ animation-play-state:paused; }
+#scene[data-p3d="on"] .hero{ pointer-events:none; }
+#scene[data-p3d="on"] .hero :is(a, button){ pointer-events:auto; }
+#scene[data-p3d="on"]:not([data-p3d-away]) .scene__cfg{ backdrop-filter:none; background:rgb(var(--black-rgb) / .74); }
+#scene[data-p3d="on"] .cfg{ backdrop-filter:none; background:rgb(var(--black-rgb) / .88); }
+
+/* ---------- Ряд в .hero-bar ---------- */
+.hero-bar{ align-items:center; gap:clamp(20px, 2.8vw, 44px); pointer-events:none; }
+.hero-bar > *{ pointer-events:auto; }
+
+.p3d{ position:relative; display:flex; align-items:center; gap:8px; min-width:0; }
+.p3d [data-in]{ display:none; }
+.p3d[data-state="idle"]    [data-in~="idle"],
+.p3d[data-state="loading"] [data-in~="loading"],
+.p3d[data-state="error"]   [data-in~="error"],
+.p3d[data-state="on"]      [data-in~="on"]{ display:inline-flex; }
+.p3d [data-in]{ animation:p3d-in 240ms var(--ease) both; }
+@keyframes p3d-in{ from{ opacity:0; translate:0 4px; } }
+
+.p3d__btn{
+  position:relative; overflow:hidden;
+  align-items:center; justify-content:center; gap:10px;
+  height:var(--p3d-h); padding:0 16px;
+  border:1px solid var(--p3d-line); border-radius:var(--radius);
+  background:var(--p3d-fill); color:var(--ivory);
+  font-size:var(--p3d-fs); letter-spacing:.04em; line-height:1; white-space:nowrap;
+  transition:border-color var(--t) var(--ease), background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.p3d__ico{ flex:0 0 auto; width:18px; height:18px; color:rgb(var(--ivory-rgb) / .72); transition:color var(--t) var(--ease); }
+:is(.p3d__tour, .p3d__exit, .p3d__retry, .p3d__close) .p3d__ico{ width:16px; height:16px; }
+@media (hover:hover){
+  .p3d__btn:hover{ border-color:rgb(var(--ivory-rgb) / .62); background:rgb(var(--burgundy-2-rgb) / .22); box-shadow:0 0 28px -8px rgb(var(--burgundy-2-rgb) / .8); }
+  .p3d__btn:hover .p3d__ico{ color:var(--ivory); }
+}
+.p3d__btn:active{ background:rgb(var(--burgundy-2-rgb) / .34); }
+
+.p3d__start{ min-width:13.5em; }
+.p3d__pct{ min-width:4ch; text-align:right; font-variant-numeric:tabular-nums; color:var(--muted); }
+.p3d__pct:empty{ display:none; }
+.p3d__start[aria-disabled="true"]{ cursor:progress; border-color:var(--p3d-line); background:var(--p3d-fill); box-shadow:none; }
+
+.p3d__bar{
+  position:absolute; left:0; right:0; bottom:0; height:2px; overflow:hidden;
+  background:rgb(var(--ivory-rgb) / .14); opacity:0; transition:opacity 200ms linear; pointer-events:none;
+}
+.p3d[data-state="loading"] .p3d__bar, .cfg__3d[aria-busy="true"] .p3d__bar{ opacity:1; }
+.p3d__bar i{
+  display:block; width:100%; height:100%; background:rgb(var(--ivory-rgb) / .85);
+  transform-origin:0 50%; transform:scaleX(var(--p3d-progress, 0)); transition:transform 240ms linear;
+}
+.p3d__bar.is-indeterminate i{ width:32%; transform:none; animation:p3d-indeterminate 1.6s var(--ease) infinite; }
+@keyframes p3d-indeterminate{ from{ translate:-100% 0; } to{ translate:315% 0; } }
+
+.p3d__link{
+  position:relative; align-items:center; gap:8px; min-height:var(--p3d-h); padding:0 10px;
+  color:var(--muted); font-size:var(--p3d-fs); letter-spacing:.04em; white-space:nowrap;
+  transition:color var(--t) var(--ease);
+}
+.p3d__cancel, .p3d__link .p3d__txt{
+  text-decoration:underline; text-decoration-color:rgb(var(--ivory-rgb) / .3);
+  text-decoration-thickness:1px; text-underline-offset:5px;
+  transition:text-decoration-color var(--t) var(--ease);
+}
+@media (hover:hover){
+  .p3d__link:hover{ color:var(--ivory); }
+  .p3d__cancel:hover, .p3d__link:hover .p3d__txt{ text-decoration-color:var(--ivory); }
+}
+.p3d__tour .p3d__ico--stop{ display:none; }
+.p3d__tour[data-playing] .p3d__ico--stop{ display:block; }
+.p3d__tour[data-playing] .p3d__ico--replay{ display:none; }
+
+/* «Отмена» слева — второй щелчок двойного клика не попадает в неё. */
+.p3d__cancel{ order:-1; }
+
+.p3d__views{
+  align-items:stretch; height:var(--p3d-h);
+  border:1px solid var(--p3d-line); border-radius:var(--radius); background:var(--p3d-fill); overflow:hidden;
+}
+.p3d__view{
+  padding:0 14px; color:var(--muted); font-size:var(--p3d-fs); letter-spacing:.04em; white-space:nowrap;
+  transition:color var(--t) var(--ease), background var(--t) var(--ease);
+}
+.p3d__view + .p3d__view{ border-left:1px solid rgb(var(--ivory-rgb) / .14); }
+@media (hover:hover){ .p3d__view:hover{ color:var(--ivory); background:rgb(var(--ivory-rgb) / .06); } }
+.p3d__view[aria-pressed="true"]{ color:var(--ivory); background:rgb(var(--burgundy-2-rgb) / .42); }
+.p3d__view:focus-visible{ outline-offset:-4px; }
+
+.p3d__msg{
+  align-items:center; min-height:var(--p3d-h); max-width:26ch; margin:0; padding-left:12px;
+  border-left:2px solid var(--burgundy-2); font-size:12px; line-height:1.3; color:var(--ivory);
+}
+.p3d__close{
+  align-items:center; justify-content:center; width:var(--p3d-h); height:var(--p3d-h);
+  border-radius:var(--radius); color:var(--muted);
+  transition:color var(--t) var(--ease), background var(--t) var(--ease);
+}
+@media (hover:hover){ .p3d__close:hover{ color:var(--ivory); background:rgb(var(--ivory-rgb) / .07); } }
+
+.p3d__hint{
+  position:absolute; right:0; bottom:calc(100% + 12px); margin:0;
+  font-size:11px; letter-spacing:.08em; color:var(--muted); white-space:nowrap;
+  text-shadow:0 1px 12px rgb(var(--black-rgb) / .8);
+  opacity:0; pointer-events:none; transition:opacity 600ms var(--ease);
+}
+.p3d__hint.is-shown{ opacity:1; transition-duration:300ms; }
+.p3d:not([data-state="on"]) .p3d__hint{ display:none; }
+
+@media (max-width:599px){
+  .p3d{ gap:6px; }
+  .p3d__view{ padding:0 10px; }
+  .p3d [data-compact]{ width:var(--p3d-h); padding:0; justify-content:center; }
+  .p3d [data-compact] .p3d__txt{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .p3d__msg{ max-width:18ch; }
+}
+@media (max-width:359px){
+  .p3d__view{ padding:0 8px; }
+  .p3d__retry{ padding:0 12px; }
+}
+
+@media (max-width:900px) and (orientation:portrait){
+  .hero-bar{ bottom:calc(var(--p3d-cta-top) + 14px); justify-content:space-between; }
+  .p3d__cancel{ order:0; }
+  .p3d__hint{ display:none; }
+}
+@media (max-width:800px) and (orientation:portrait){
+  .hero{ bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
+}
+@media (orientation:landscape) and (max-height:500px){ .p3d__hint{ display:none; } }
+
+.static-experience .p3d-stage{ inset:0 0 auto; height:100svh; z-index:1; }
+.static-experience .hero-bar{ display:flex; top:calc(100svh - 4svh - var(--p3d-h)); bottom:auto; }
+.static-experience .hero-bar__scroll{ display:none; }
+@media (max-width:900px) and (orientation:portrait){
+  .static-experience .hero-bar{ top:calc(100svh - var(--p3d-cta-top) - 14px - var(--p3d-h)); }
+  .static-experience .hero{ padding-bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
+}
+
+.cfg__headrow{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; }
+.cfg__headrow .cfg__eyebrow{ margin:0; }
+.cfg__head{ padding-right:50px; }
+.cfg__close{ top:-4px; }
+.cfg__3d{
+  position:relative; overflow:hidden; flex:0 0 auto;
+  display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:0 10px;
+  border:1px solid rgb(var(--ivory-rgb) / .18); border-radius:var(--radius);
+  color:rgb(var(--ivory-rgb) / .8); font-size:12px; letter-spacing:.04em; white-space:nowrap;
+  transition:background .18s ease, border-color .18s ease, color .18s ease;
+}
+.cfg__3d .p3d__ico{ width:16px; height:16px; color:currentColor; }
+@media (hover:hover){ .cfg__3d:hover{ background:rgb(var(--burgundy-2-rgb) / .28); border-color:rgb(var(--burgundy-2-rgb) / .7); color:var(--ivory); } }
+.cfg__3d[aria-pressed="true"]{ background:var(--burgundy-2); border-color:var(--burgundy-2); color:var(--ivory); }
+.cfg__3d[aria-busy="true"]{ cursor:progress; }
+.cfg__3d.is-error{ border-color:var(--burgundy-2); }
+.cfg__3d:focus-visible{ outline:2px solid var(--ivory); outline-offset:2px; }
+.cfg__3d[aria-disabled="true"]{ opacity:.4; pointer-events:none; }
+.cfg__3dmsg{ margin:0 0 14px; padding-left:10px; border-left:2px solid var(--burgundy-2); font-size:12px; line-height:1.4; color:rgb(var(--ivory-rgb) / .86); }
+@media (max-width:720px){
+  .cfg__head{ padding-right:50px; }
+  .cfg__close{ top:-4px; right:-6px; }
+  .cfg__headrow{ margin-bottom:10px; }
+  .cfg__3d-long{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+}
+@media (pointer:coarse){
+  .cfg__3d{ min-height:44px; }
+  .cfg__close{ top:0; }
+}
+
+/* Без движения (системная настройка, ?motion=reduce, статичный режим) показа нет. */
+.p3d[data-reduced][data-state] .p3d__tour{ display:none; }
+/* Статичный режим: место под ряд 3D внизу первого экрана, на низком альбоме
+   текст поднимается под шапку — иначе ряд ложился на подзаголовок. */
+.static-experience .hero{ padding-bottom:calc(4svh + var(--p3d-h) + 24px); }
+@media (orientation:landscape) and (max-height:500px){
+  .static-experience .hero{ padding-top:max(var(--header-h), 22svh); }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .p3d__bar.is-indeterminate i{ width:100%; translate:none; opacity:.5; }
+  .p3d[data-state="on"] .p3d__tour{ display:none; }
+}

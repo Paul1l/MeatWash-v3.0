@@ -6,13 +6,13 @@
 <meta name="theme-color" content="#080808">
 <title>MEATWASH — Car Care Club · Москва</title>
 <meta name="description" content="MEATWASH Car Care Club — премиальный детейлинг в Москве. Ручная мойка, химчистка салона, полировка, керамическая защита. Мясницкая и Технопарк.">
-<link rel="canonical" href="https://paul1l.github.io/MeatWash-v2.0/">
+<link rel="canonical" href="https://paul1l.github.io/MeatWash-v3.0/">
 <meta property="og:title" content="MEATWASH — Больше, чем мойка">
 <meta property="og:description" content="Уход, который сохраняет ценность. Car Care Club в центре Москвы.">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:url" content="https://paul1l.github.io/MeatWash-v2.0/">
-<meta property="og:image" content="https://paul1l.github.io/MeatWash-v2.0/assets/img/og-club.webp">
+<meta property="og:url" content="https://paul1l.github.io/MeatWash-v3.0/">
+<meta property="og:image" content="https://paul1l.github.io/MeatWash-v3.0/assets/img/og-club.webp">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
@@ -40,7 +40,8 @@
 <link rel="stylesheet" href="css/proof.css">
 <link rel="stylesheet" href="css/configurator.css">
 <link rel="stylesheet" href="css/catalog.css">
-<script type="application/ld+json">[{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Мясницкая","url":"https://paul1l.github.io/MeatWash-v2.0/#locations","image":"https://paul1l.github.io/MeatWash-v2.0/assets/img/studio-myasnitskaya-1200.webp","telephone":"+79300352325","address":{"@type":"PostalAddress","streetAddress":"Мясницкая ул., 11","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"22:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Saturday","Sunday"],"opens":"09:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash/191686454110/"]},{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Технопарк","url":"https://paul1l.github.io/MeatWash-v2.0/#locations","image":"https://paul1l.github.io/MeatWash-v2.0/assets/img/studio-technopark-1200.webp","telephone":"+79324916991","address":{"@type":"PostalAddress","streetAddress":"просп. Андропова, 8, стр. 2","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"08:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/"]}]</script>
+<link rel="stylesheet" href="css/porsche3d.css">
+<script type="application/ld+json">[{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Мясницкая","url":"https://paul1l.github.io/MeatWash-v3.0/#locations","image":"https://paul1l.github.io/MeatWash-v3.0/assets/img/studio-myasnitskaya-1200.webp","telephone":"+79300352325","address":{"@type":"PostalAddress","streetAddress":"Мясницкая ул., 11","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"22:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Saturday","Sunday"],"opens":"09:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash/191686454110/"]},{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Технопарк","url":"https://paul1l.github.io/MeatWash-v3.0/#locations","image":"https://paul1l.github.io/MeatWash-v3.0/assets/img/studio-technopark-1200.webp","telephone":"+79324916991","address":{"@type":"PostalAddress","streetAddress":"просп. Андропова, 8, стр. 2","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"08:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/"]}]</script>
 </head>
 <body>
 <a class="skip-link" href="#services">Перейти к услугам</a>
@@ -73,6 +74,8 @@
     <div class="scene__poster" aria-hidden="true" hidden><img data-static-src="assets/shots/cf-hero-clean.webp" width="1600" height="900" alt="Автомобиль после ухода MEATWASH"></div>
     <!-- aria-hidden — на слоях-картинках внутри (stage.js): ручка шторки должна быть доступна. -->
     <div class="stage-mount"></div>
+    <!-- 3D-режим «Оживить Porsche»: canvas вставляет js/live3d.js только после нажатия. -->
+    <div class="p3d-stage" id="p3d-stage" aria-hidden="true"></div>
     <div class="scene__shade" aria-hidden="true"></div>
     <a class="scene__skip" href="#services">Все услуги ↓</a>
     <button class="scene__cfg" type="button" data-cfg-open aria-expanded="false" aria-controls="cfg-panel">Гараж услуг</button>
@@ -87,6 +90,37 @@
       </div>
     </div>
     <div class="hero-bar" data-ui="bar">
+      <!-- hidden снимает live3d.js, если браузер умеет WebGL 2. Состояния: idle, loading, on, error. -->
+      <div class="p3d" id="p3d" role="group" aria-label="Porsche в 3D" data-state="idle" hidden>
+        <p class="p3d__hint" aria-hidden="true">Потяните машину, чтобы повернуть</p>
+        <button class="p3d__btn p3d__start" type="button" data-p3d="start" data-in="idle loading">
+          <svg class="p3d__ico" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          <span class="p3d__label">Оживить Porsche</span>
+          <span class="p3d__pct" aria-hidden="true"></span>
+          <span class="p3d__bar" aria-hidden="true"><i></i></span>
+        </button>
+        <button class="p3d__link p3d__cancel" type="button" data-p3d="cancel" data-in="loading">Отмена</button>
+        <p class="p3d__msg" data-in="error">Не удалось загрузить 3D</p>
+        <button class="p3d__btn p3d__retry" type="button" data-p3d="retry" data-in="error">
+          <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M15.6 11.2A5.8 5.8 0 1 1 13.9 5.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M14.4 2.4v3.6h-3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Повторить</span>
+        </button>
+        <button class="p3d__close" type="button" data-p3d="dismiss" data-in="error" aria-label="Скрыть сообщение"><svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
+        <div class="p3d__views" role="group" aria-label="Ракурс" data-in="on">
+          <button class="p3d__view" type="button" data-p3d-view="overview" aria-pressed="false">Общий вид</button>
+          <button class="p3d__view" type="button" data-p3d-view="body" aria-pressed="false">Кузов</button>
+          <button class="p3d__view" type="button" data-p3d-view="wheel" aria-pressed="false">Диски</button>
+        </div>
+        <button class="p3d__link p3d__tour" type="button" data-p3d="tour" data-in="on" data-compact>
+          <svg class="p3d__ico p3d__ico--replay" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M15.6 11.2A5.8 5.8 0 1 1 13.9 5.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M14.4 2.4v3.6h-3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg class="p3d__ico p3d__ico--stop" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><rect x="5.5" y="5.5" width="9" height="9" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>
+          <span class="p3d__txt">Повторить показ</span>
+        </button>
+        <button class="p3d__btn p3d__exit" type="button" data-p3d="exit" data-in="on" data-compact>
+          <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          <span class="p3d__txt">Обычный вид</span>
+        </button>
+      </div>
       <button class="hero-bar__scroll" type="button" data-scroll-next lang="en">SCROLL</button>
     </div>
 
@@ -346,6 +380,8 @@
   </div>
 </footer>
 
+<!-- Сообщения 3D-режима для чтения с экрана: вне .hero-bar, который получает inert. -->
+<p class="visually-hidden" id="p3d-live" role="status" aria-live="polite" aria-atomic="true"></p>
 <button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
 
 <!-- ============ BOOKING ============ -->

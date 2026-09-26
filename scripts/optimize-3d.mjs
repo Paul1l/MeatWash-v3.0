@@ -27,7 +27,7 @@
 // центр по x/z в нуле, перед смотрит в −Z, левый борт — в −X.
 //
 // Запуск: npm run optimize-3d
-import {mkdir, readFile, stat, writeFile} from 'node:fs/promises';
+import {mkdir, readFile, readdir, rename, rm, stat, writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -179,7 +179,7 @@ async function build(variant) {
   }));
   document.createExtension(ALL_EXTENSIONS.find(e => e.EXTENSION_NAME === 'EXT_meshopt_compression')).setRequired(true);
 
-  const file = resolve(OUT, `porsche-930-${variant.name}.glb`);
+  const file = resolve(OUT, `porsche-930-${variant.name}.tmp.glb`);
   await io.write(file, document);
   return {file, before, after: stats(document), bytes: (await stat(file)).size};
 }
@@ -220,8 +220,13 @@ const report = {source: {file: 'source/3d/porsche-930.glb', bytes: sourceBytes},
 for (const variant of VARIANTS) {
   const result = await build(variant);
   await verify(result);
+  // Имя с хешем содержимого: новая модель — новый адрес, старая из кэша
+  // браузера или хостинга не подхватится.
   const sha256 = createHash('sha256').update(await readFile(result.file)).digest('hex');
-  report.variants[variant.name] = {file: `assets/3d/porsche-930-${variant.name}.glb`, bytes: result.bytes, sha256, before: result.before, after: result.after};
+  const name = `porsche-930-${variant.name}.${sha256.slice(0, 10)}.glb`;
+  for (const old of await readdir(OUT)) if (old.startsWith(`porsche-930-${variant.name}.`) && old.endsWith('.glb') && old !== name && !old.endsWith('.tmp.glb')) await rm(resolve(OUT, old));
+  await rename(result.file, resolve(OUT, name));
+  report.variants[variant.name] = {file: `assets/3d/${name}`, bytes: result.bytes, sha256, before: result.before, after: result.after};
   console.log(`${variant.name}: ${sourceBytes} → ${result.bytes} байт; треугольников ${result.before.triangles} → ${result.after.triangles}; мешей ${result.before.meshes} → ${result.after.meshes}; текстур ${result.before.textures} → ${result.after.textures}`);
 }
 // Отчёт лежит рядом с исходником, а не в dist: странице он не нужен,
@@ -235,3 +240,13 @@ await writeFile(resolve(root, 'source/3d/optimize-report.json'), JSON.stringify(
   units: 'метры; низ шин y=0; перед −Z; левый борт −X',
   ...report,
 }, null, 2) + '\n');
+// Манифест для модуля: адрес и размер каждой модели. Размер нужен для честного
+// процента загрузки — даже если хостинг отдаёт файл сжатым.
+await writeFile(resolve(root, 'src/porsche3d/models.js'), `// Создаётся npm run optimize-3d — руками не править.
+// high — компьютер, low — телефон; bytes — размер файла для процента загрузки.
+export const MODELS = ${JSON.stringify({
+  high: {file: report.variants.desktop.file, bytes: report.variants.desktop.bytes},
+  low: {file: report.variants.mobile.file, bytes: report.variants.mobile.bytes},
+}, null, 2)};
+`);
+console.log('Манифест: src/porsche3d/models.js. Пересоберите бандл: npm run bundle-3d.');

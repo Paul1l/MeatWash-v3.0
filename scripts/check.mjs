@@ -79,7 +79,7 @@ const pageCode=[html,...await Promise.all([...modules].map(name=>readFile(resolv
 assert(modules.has('stage.js'),'Page must load the photo stage (stage.js)');
 for(const name of ['scene.bundle.js','scene.js','garage.js','interior.js','water.js'])assert(!modules.has(name),'3D module is loaded by the page: '+name);
 assert(!/porsche-930|\.glb\b|assets\/3d\/|importmap|vendor\/build|vendor\/examples/.test(pageCode),'Page references 3D assets directly (model, three, importmap)');
-assert(!/porsche3d/.test(html),'index.html references the 3D module (script, preload or prefetch): it must load only on click');
+assert(!/porsche3d\.bundle|js\/porsche3d/.test(html),'index.html references the 3D module (script, preload or prefetch): it must load only on click');
 for(const [tag] of html.matchAll(/<link\b[^>]*>/g))assert(!(/modulepreload|prefetch|prerender/.test(tag)&&/js\/|\.glb|assets\/3d/.test(tag)),'Preload or prefetch of scripts/3D on the page: '+tag);
 for(const entry of lazy3d)assert(/→ porsche3d\.bundle\.js$/.test(entry),'Only porsche3d.bundle.js may be imported lazily: '+entry);
 

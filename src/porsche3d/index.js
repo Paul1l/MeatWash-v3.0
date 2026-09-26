@@ -7,27 +7,26 @@
 //   const scene = await mount({container, signal, onProgress, onFirstFrame, onError});
 //   scene.tour(); scene.view('wheel'); scene.showService('polish'); scene.dispose();
 //
-// Прокрутку страницы сцена не трогает: canvas с pointer-events:none, слушателей
-// wheel/touch нет. Камера двигается только программно (ракурсы, показ) и чуть-чуть
-// за мышью (параллакс; выключен при reduced motion и на сенсорных экранах).
+// Прокрутку страницы сцена не перехватывает: слушателей wheel нет, на canvas
+// touch-action: pan-y — вертикальный жест листает страницу. Поворот — мышью
+// или горизонтальным жестом (порог 8 px); ракурсы и показ — программно.
 import {
-  ACESFilmicToneMapping, CatmullRomCurve3, Color, MathUtils, MeshPhysicalMaterial,
+  ACESFilmicToneMapping, Color, MathUtils, MeshPhysicalMaterial,
   PerspectiveCamera, Scene, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {buildEnvironment, buildRoom} from './room.js';
 import {VIEWS, TOUR, SERVICE_VIEWS, PUBLIC_VIEWS, REF_ASPECT} from './views.js';
+import {MODELS} from './models.js';
 
-export {VIEWS, SERVICE_VIEWS, PUBLIC_VIEWS};
-
-const MODELS = {
-  high: 'assets/3d/porsche-930-desktop.glb',
-  low: 'assets/3d/porsche-930-mobile.glb',
-};
+export {VIEWS, SERVICE_VIEWS, PUBLIC_VIEWS, MODELS};
 
 // Одна сцена на страницу: повторный mount закрывает предыдущую.
 let active = null;
+// Скачанная модель остаётся в памяти модуля (1–2 МБ): повторное включение
+// после «Обычного вида» не ходит в сеть. Видеопамять при выходе освобождается.
+const modelCache = new Map();
 
 export class Porsche3DError extends Error {
   constructor(code, message, cause) { super(message, {cause}); this.name = 'Porsche3DError'; this.code = code; }
@@ -44,37 +43,50 @@ export function pickQuality() {
   return coarse || small || weak ? 'low' : 'high';
 }
 
-// Загрузка модели с честным прогрессом: процент — только если сервер назвал
-// размер и не сжимал ответ (иначе Content-Length не совпадает с прочитанным).
-async function fetchModel(source, signal, onProgress) {
-  const response = await (typeof source === 'string' ? fetch(source, {signal}) : source);
-  if (!response.ok) throw new Porsche3DError('load', `Модель не загрузилась: HTTP ${response.status}`);
-  const encoding = (response.headers.get('content-encoding') || 'identity').toLowerCase();
-  const declared = Number(response.headers.get('content-length')) || 0;
-  const total = encoding === 'identity' && declared > 0 ? declared : null;
-  if (!response.body) {
-    const buffer = await response.arrayBuffer();
-    onProgress?.({loaded: buffer.byteLength, total: buffer.byteLength, ratio: 1});
+// Загрузка модели с честным прогрессом. Итог известен из манифеста сборки
+// (models.js): поток ответа отдаёт распакованные байты, поэтому процент верен
+// и при сжатии на хостинге. Для чужого адреса — Content-Length без сжатия.
+// stall мс без новых байт — ошибка timeout.
+async function fetchModel(url, known, signal, onProgress, stall) {
+  if (modelCache.has(url)) {
+    const buffer = modelCache.get(url);
+    onProgress?.({loaded: buffer.byteLength, total: buffer.byteLength, ratio: 1, cached: true});
     return buffer;
   }
-  const reader = response.body.getReader();
-  const chunks = []; let loaded = 0;
-  const cancel = () => reader.cancel().catch(() => {});
-  signal?.addEventListener('abort', cancel, {once: true});
+  const request = new AbortController();
+  const forward = () => request.abort();
+  signal.addEventListener('abort', forward, {once: true});
+  let timer = 0, stalled = false;
+  const arm = () => { clearTimeout(timer); timer = setTimeout(() => { stalled = true; request.abort(); }, stall); };
   try {
+    arm();
+    const response = await fetch(url, {signal: request.signal});
+    if (!response.ok) throw new Porsche3DError('load', `Модель не загрузилась: HTTP ${response.status}`);
+    const encoding = (response.headers.get('content-encoding') || 'identity').toLowerCase();
+    const declared = Number(response.headers.get('content-length')) || 0;
+    const total = known || (encoding === 'identity' && declared > 0 ? declared : null);
+    const reader = response.body.getReader();
+    const chunks = []; let loaded = 0;
     for (;;) {
+      arm();
       const {done, value} = await reader.read();
-      if (signal?.aborted) throw abortError();
       if (done) break;
       chunks.push(value); loaded += value.byteLength;
       onProgress?.({loaded, total, ratio: total ? Math.min(1, loaded / total) : null});
     }
+    const out = new Uint8Array(loaded); let offset = 0;
+    for (const chunk of chunks) { out.set(chunk, offset); offset += chunk.byteLength; }
+    modelCache.clear();
+    modelCache.set(url, out.buffer);
+    return out.buffer;
+  } catch (error) {
+    if (stalled) throw new Porsche3DError('timeout', `Модель не приходит ${Math.round(stall / 1000)} с`, error);
+    if (signal.aborted) throw abortError();
+    throw error;
   } finally {
-    signal?.removeEventListener('abort', cancel);
+    clearTimeout(timer);
+    signal.removeEventListener('abort', forward);
   }
-  const out = new Uint8Array(loaded); let offset = 0;
-  for (const chunk of chunks) { out.set(chunk, offset); offset += chunk.byteLength; }
-  return out.buffer;
 }
 
 // Освобождает геометрии, материалы и текстуры объекта (и лишние материалы).
@@ -100,10 +112,10 @@ function webglAvailable() {
   } catch { return false; }
 }
 
-const smooth = t => t * t * (3 - 2 * t);
 // Отдать главный поток странице между тяжёлыми шагами загрузки.
 const pause = () => new Promise(resolve => (globalThis.scheduler?.yield ? scheduler.yield().then(resolve) : setTimeout(resolve, 0)));
 const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const DEG = Math.PI / 180;
 
 // Материалы в духе клуба: глубокий бордовый лак с прозрачным верхним слоем,
 // тонированные стёкла без преломления (transmission — лишний проход рендера).
@@ -147,18 +159,25 @@ export async function mount({
   signal,
   quality = 'auto',
   reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches,
+  startView = 'hero',
+  fadeIn = true,
+  interactive = true,
+  stallTimeout = 15000,
   model,
   baseUrl = new URL('../', import.meta.url).href,
   onProgress,
+  onPhase,
   onFirstFrame,
   onError,
   onViewChange,
   onTourEnd,
+  onInteract,
 } = {}) {
   if (!container) throw new TypeError('mount: нужен container');
   if (signal?.aborted) throw abortError();
   active?.dispose();
   if (!webglAvailable()) throw new Porsche3DError('webgl', 'WebGL недоступен на этом устройстве');
+  if (!VIEWS[startView]) throw new Porsche3DError('view', `Нет ракурса ${startView}`);
 
   const level = quality === 'auto' ? pickQuality() : quality === 'low' ? 'low' : 'high';
   const low = level === 'low';
@@ -180,8 +199,10 @@ export async function mount({
   canvas.setAttribute('aria-hidden', 'true');
   Object.assign(canvas.style, {
     position: 'absolute', inset: '0', width: '100%', height: '100%', display: 'block',
-    pointerEvents: 'none', opacity: '0', transition: `opacity ${reducedMotion ? 250 : 900}ms ease`,
+    touchAction: 'pan-y', userSelect: 'none', webkitUserSelect: 'none',
+    pointerEvents: interactive ? '' : 'none',
   });
+  if (fadeIn) Object.assign(canvas.style, {opacity: '0', transition: `opacity ${reducedMotion ? 250 : 900}ms ease`});
 
   let renderer;
   try {
@@ -207,12 +228,14 @@ export async function mount({
     listeners.abort();
     if (firstFrame) { const done = firstFrame; firstFrame = null; done(); }
     intersection?.disconnect(); resize?.disconnect();
+    container.classList.remove('is-dragging');
     release(scene, restyled?.replaced);
     room?.dispose();
     environment?.dispose();
     renderer.renderLists.dispose();
     renderer.dispose();
-    renderer.forceContextLoss();
+    // Контекст уже потерян — второй раз терять нечего (three предупреждает в консоли).
+    if (!lost) renderer.forceContextLoss();
     canvas.remove();
   }
   const handle = {dispose};
@@ -229,10 +252,13 @@ export async function mount({
       if (mounted) onError?.(lost);
     }, on);
 
-    const source = model || new URL(MODELS[level], baseUrl).href;
-    const buffer = await fetchModel(source, loading.signal, onProgress);
+    const entry = MODELS[level];
+    const url = model || new URL(entry.file, baseUrl).href;
+    onPhase?.('download');
+    const buffer = await fetchModel(url, model ? 0 : entry.bytes, loading.signal, onProgress, stallTimeout);
     mark('model');
     if (disposed) bail();
+    onPhase?.('prepare');
 
     // Шаги с паузами между ними: страница продолжает прокручиваться.
     await pause(); if (disposed) bail();
@@ -246,7 +272,8 @@ export async function mount({
     MeshoptDecoder.useWorkers(low ? 1 : 2);
     let gltf;
     try {
-      gltf = await Promise.race([loader.parseAsync(buffer, new URL('assets/3d/', baseUrl).href), cancelled]);
+      // Разбору нужна своя копия: буфер остаётся в кэше модуля.
+      gltf = await Promise.race([loader.parseAsync(buffer.slice(0), new URL('assets/3d/', baseUrl).href), cancelled]);
     } finally {
       MeshoptDecoder.useWorkers(0);
     }
@@ -264,17 +291,28 @@ export async function mount({
   }
 
   // ── Камера ────────────────────────────────────────────────────────────────
-  // Опорный кадр 16:9 вписывается в контейнер как фото с background-size:cover;
-  // на узком экране — не уже доли span, чтобы машина не превращалась в полосу.
-  const state = {p: new Vector3(...VIEWS.hero.p), t: new Vector3(...VIEWS.hero.t), fov: VIEWS.hero.fov, focus: [...VIEWS.hero.focus], span: VIEWS.hero.span};
-  let width = 0, height = 0, viewName = 'hero';
+  // Опорный кадр 16:9 вписывается в свободную часть контейнера как фото с
+  // background-size:cover; на узком экране — не уже доли span, чтобы машина
+  // не превращалась в полосу. Свободная часть — контейнер минус inset
+  // (шапка, панель гаража); у ракурса hero (span 0) inset не учитывается:
+  // он совпадает с фото первого экрана.
+  const viewState = name => {
+    const v = VIEWS[name];
+    return {p: new Vector3(...v.p), t: new Vector3(...v.t), fov: v.fov, focus: [...v.focus], span: v.span, fit: v.span ? 1 : 0};
+  };
+  const state = viewState(startView);
+  const inset = {top: 0, right: 0, bottom: 0, left: 0};
+  let width = 0, height = 0, viewName = startView;
   function frame() {
     if (!width || !height) return;
-    let fullW = Math.max(width, height * REF_ASPECT);
-    if (width / fullW < state.span) fullW = width / state.span;
+    const k = state.fit;
+    const l = inset.left * k, r = inset.right * k, t = inset.top * k, b = inset.bottom * k;
+    const W = Math.max(1, width - l - r), H = Math.max(1, height - t - b);
+    let fullW = Math.max(W, H * REF_ASPECT);
+    if (state.span && W / fullW < state.span) fullW = W / state.span;
     const fullH = fullW / REF_ASPECT;
     camera.fov = state.fov; camera.aspect = REF_ASPECT;
-    camera.setViewOffset(fullW, fullH, (fullW - width) * state.focus[0], (fullH - height) * state.focus[1], width, height);
+    camera.setViewOffset(fullW, fullH, (fullW - W) * state.focus[0] - l, (fullH - H) * state.focus[1] - t, width, height);
     camera.updateProjectionMatrix();
   }
   function measure() {
@@ -287,7 +325,8 @@ export async function mount({
     frame(); invalidate();
   }
 
-  // Параллакс: небольшое смещение камеры за мышью — отражения на лаке «едут».
+  // Параллакс за мышью (±1,5° по горизонтали, ±0,6° по вертикали): отражения
+  // на лаке «едут». Только мышь; выключен при reduced motion, в показе и при повороте.
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
   let parallaxOn = !reducedMotion && fine.matches;
   const pointer = {x: 0, y: 0}, lean = {x: 0, y: 0};
@@ -297,32 +336,31 @@ export async function mount({
     invalidate();
   }, {...on, passive: true});
 
-  // Движения камеры: переход к ракурсу (по дуге вокруг машины, чтобы не
-  // проходить сквозь кузов) и показ по сплайну.
+  // Движения камеры: переход к ракурсу по дуге вокруг машины (чтобы не
+  // проходить сквозь кузов), показ — цепочка таких переходов с паузами.
   const center = new Vector3(0, 0.5, 0);
-  let move = null, tour = null, drift = null, driftNext = null;
+  let move = null, tour = null, drift = null, driftNext = null, spin = null;
   const polar = v => {
     const d = v.clone().sub(center);
     return {r: Math.hypot(d.x, d.z), a: Math.atan2(d.x, d.z), y: v.y};
   };
-  function goTo(name, {instant = reducedMotion, duration = 1.4} = {}) {
-    const view = VIEWS[name];
-    if (!view) throw new Porsche3DError('view', `Нет ракурса ${name}`);
-    tour = null; drift = null; driftNext = null; viewName = name;
-    const to = {p: new Vector3(...view.p), t: new Vector3(...view.t), fov: view.fov, focus: view.focus, span: view.span};
-    if (instant) { move = null; apply(to); }
-    else {
-      const from = {p: state.p.clone(), t: state.t.clone(), fov: state.fov, focus: [...state.focus], span: state.span};
-      const a = polar(from.p), b = polar(to.p);
-      let da = b.a - a.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
-      move = {from, to, a, b, da, time: 0, duration};
-    }
+  function startMove(name, duration) {
+    const to = viewState(name);
+    const from = {p: state.p.clone(), t: state.t.clone(), fov: state.fov, focus: [...state.focus], span: state.span, fit: state.fit};
+    const a = polar(from.p), b = polar(to.p);
+    let da = b.a - a.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    // span 0 (hero) не интерполируется: берём ширину цели сразу, иначе кадр «дышит».
+    if (!from.span) from.span = to.span || 0;
+    if (!to.span && from.span) to.span = from.span;
+    move = {from, to, a, b, da, time: 0, duration};
+  }
+  function goTo(name, {instant = reducedMotion, duration = 1.25} = {}) {
+    if (!VIEWS[name]) throw new Porsche3DError('view', `Нет ракурса ${name}`);
+    tour = null; drift = null; driftNext = null; spin = null; viewName = name;
+    if (instant) { move = null; Object.assign(state, viewState(name)); frame(); }
+    else startMove(name, duration);
     onViewChange?.(name);
     invalidate();
-  }
-  function apply(s) {
-    state.p.copy(s.p); state.t.copy(s.t); state.fov = s.fov;
-    state.focus = [...s.focus]; state.span = s.span; frame();
   }
   function stepMove(dt) {
     if (!move) return false;
@@ -337,6 +375,7 @@ export async function mount({
     state.fov = MathUtils.lerp(from.fov, to.fov, k);
     state.focus = [MathUtils.lerp(from.focus[0], to.focus[0], k), MathUtils.lerp(from.focus[1], to.focus[1], k)];
     state.span = MathUtils.lerp(from.span, to.span, k);
+    state.fit = MathUtils.lerp(from.fit, to.fit, k);
     frame();
     if (k >= 1) {
       move = null;
@@ -344,39 +383,23 @@ export async function mount({
     }
     return !!move || !!drift;
   }
-  // Показ начинается из текущего положения камеры — без скачка, даже если
-  // перед этим был открыт другой ракурс.
-  function startTour() {
-    const keys = TOUR.keys.map((k, i) => i === 0
-      ? {p: state.p.clone(), t: state.t.clone(), fov: state.fov}
-      : {p: new Vector3(...k.p), t: new Vector3(...k.t), fov: k.fov});
-    tour = {
-      time: 0, keys, focus: [...state.focus], span: state.span,
-      path: new CatmullRomCurve3(keys.map(k => k.p), false, 'centripetal'),
-      look: new CatmullRomCurve3(keys.map(k => k.t), false, 'centripetal'),
-    };
-  }
+  // Показ: крыло → капот → диск → общий вид, с паузами (TOUR в views.js).
+  // Идёт из текущего положения камеры, на скрытой вкладке и вне экрана стоит.
   function stepTour(dt) {
     if (!tour) return false;
-    tour.time += dt;
-    const {keys, path, look} = tour, times = TOUR.times, last = keys.length - 1;
-    // Мягкий разгон и остановка по всему показу; между точками — по их времени.
-    const u = Math.min(1, tour.time / TOUR.duration), eased = smooth(u) * TOUR.duration;
-    let i = 0;
-    while (i < last - 1 && eased > times[i + 1]) i++;
-    const s = MathUtils.clamp((eased - times[i]) / (times[i + 1] - times[i]), 0, 1);
-    path.getPoint((i + s) / last, state.p); look.getPoint((i + s) / last, state.t);
-    state.fov = MathUtils.lerp(keys[i].fov, keys[i + 1].fov, smooth(s));
-    const blend = smooth(Math.min(1, u * 4));
-    state.span = MathUtils.lerp(tour.span, TOUR.span, blend);
-    state.focus = [MathUtils.lerp(tour.focus[0], TOUR.focus[0], blend), MathUtils.lerp(tour.focus[1], TOUR.focus[1], blend)];
-    frame();
-    if (u >= 1) {
-      tour = null;
-      // Показ заканчивается общим видом: на телефоне он шире кадра hero.
-      goTo('overview', {duration: 0.6});
-      onTourEnd?.();
+    if (move) { stepMove(dt); return true; }
+    tour.hold -= dt;
+    if (tour.hold > 0) return true;
+    const step = TOUR.steps[tour.index++];
+    if (!step) {
+      tour = null; viewName = 'overview';
+      onViewChange?.('overview'); onTourEnd?.();
+      return false;
     }
+    viewName = 'tour';
+    startMove(step.view, step.move);
+    tour.hold = step.hold;
+    stepMove(dt);
     return true;
   }
   // Полировка: камера медленно ведёт вдоль борта — отражения скользят.
@@ -384,59 +407,143 @@ export async function mount({
     if (!drift) return false;
     drift.time += dt;
     const u = Math.min(1, drift.time / drift.duration);
-    const s = Math.sin(u * Math.PI);
-    state.p.copy(drift.base).addScaledVector(drift.axis, s * 0.45);
+    state.p.copy(drift.base).addScaledVector(drift.axis, Math.sin(u * Math.PI) * 0.45);
     frame();
     if (u >= 1) drift = null;
     return !!drift;
   }
   function stepLean(dt) {
-    const tx = parallaxOn ? pointer.x : 0, ty = parallaxOn ? pointer.y : 0;
-    const k = 1 - Math.exp(-dt * 5);
+    const on = parallaxOn && !tour && !drag;
+    const tx = on ? pointer.x : 0, ty = on ? pointer.y : 0;
+    const k = 1 - Math.pow(1 - 0.06, dt * 60);
     lean.x += (tx - lean.x) * k; lean.y += (ty - lean.y) * k;
     return Math.abs(tx - lean.x) > 0.003 || Math.abs(ty - lean.y) > 0.003;
   }
 
+  // ── Поворот рукой ─────────────────────────────────────────────────────────
+  // Мышь: вокруг машины и наклон 55°–86°, без сдвига и масштаба. Касание:
+  // только горизонтальный жест (|dx| > 8 и больше |dy|) — вертикальный листает
+  // страницу (touch-action: pan-y). Колесо не слушаем: оно всегда листает.
+  const POLAR_MIN = 55 * DEG, POLAR_MAX = 86 * DEG;
+  let drag = null;
+  const offset = new Vector3();
+  function rotate(dAz, dPolar) {
+    offset.subVectors(state.p, state.t);
+    const r = offset.length();
+    let az = Math.atan2(offset.x, offset.z), pol = Math.acos(MathUtils.clamp(offset.y / r, -1, 1));
+    az += dAz;
+    pol = MathUtils.clamp(pol + dPolar, POLAR_MIN, Math.max(POLAR_MAX, Math.min(pol, 89 * DEG)));
+    state.p.set(state.t.x + r * Math.sin(pol) * Math.sin(az), state.t.y + r * Math.cos(pol), state.t.z + r * Math.sin(pol) * Math.cos(az));
+    frame();
+  }
+  // Показ останавливается от нажатия; ракурс сбрасывается, только когда
+  // машину действительно повернули.
+  function halt() {
+    if (!tour) return;
+    tour = null; move = null; viewName = 'free'; onViewChange?.('free');
+  }
+  function takeOver() {
+    tour = null; move = null; drift = null; driftNext = null;
+    if (viewName !== 'free') { viewName = 'free'; onViewChange?.('free'); }
+  }
+  function stepSpin(dt) {
+    if (!spin || drag) return false;
+    const k = Math.pow(1 - 0.08, dt * 60);
+    spin.az *= k; spin.pol *= k;
+    rotate(spin.az * dt * 60, spin.pol * dt * 60);
+    if (Math.abs(spin.az) < 1e-4 && Math.abs(spin.pol) < 1e-4) { spin = null; return false; }
+    return true;
+  }
+  if (interactive) {
+    canvas.addEventListener('pointerdown', e => {
+      if (drag || e.button > 0) return;
+      const mouse = e.pointerType === 'mouse';
+      drag = {id: e.pointerId, type: e.pointerType, x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, mode: mouse ? 'rotate' : 'wait', moved: 0, vAz: 0, vPol: 0, taken: false};
+      spin = null;
+      // Касание пока ничего не решает: может оказаться прокруткой страницы.
+      if (mouse) { canvas.setPointerCapture(e.pointerId); container.classList.add('is-dragging'); halt(); onInteract?.('press'); }
+    }, on);
+    canvas.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (drag.mode === 'wait') {
+        if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+          drag.mode = 'rotate'; drag.lastX = e.clientX; drag.lastY = e.clientY;
+          canvas.setPointerCapture(e.pointerId); container.classList.add('is-dragging');
+          onInteract?.('press');
+        } else if (Math.abs(dy) > 8) { drag = null; return; }
+        else return;
+      }
+      if (!drag.taken) {
+        if (Math.abs(dx) + Math.abs(dy) < 3) return;
+        drag.taken = true; drag.lastX = e.clientX; drag.lastY = e.clientY; takeOver();
+      }
+      const mx = e.clientX - drag.lastX, my = e.clientY - drag.lastY;
+      drag.lastX = e.clientX; drag.lastY = e.clientY;
+      const dAz = -mx / Math.max(1, width) * Math.PI * 1.3;
+      const dPol = drag.type === 'mouse' ? -my / Math.max(1, height) * Math.PI * 0.5 : 0;
+      drag.vAz = dAz; drag.vPol = dPol; drag.moved += Math.abs(mx) + Math.abs(my);
+      rotate(dAz, dPol); invalidate();
+    }, on);
+    const end = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      // Короткое касание без движения — как нажатие: показ останавливается.
+      if (drag.mode === 'wait' && e.type === 'pointerup') { halt(); onInteract?.('tap'); }
+      if (drag.mode === 'rotate' && !reducedMotion && e.type === 'pointerup' && drag.moved > 4) spin = {az: drag.vAz, pol: drag.vPol};
+      drag = null;
+      container.classList.remove('is-dragging');
+      invalidate();
+    };
+    canvas.addEventListener('pointerup', end, on);
+    canvas.addEventListener('pointercancel', end, on);
+  }
+
   // ── Отрисовка по требованию ──────────────────────────────────────────────
   // Кадр рисуется, только когда что-то изменилось; неподвижная камера — ноль
-  // кадров. Вне экрана и на скрытой вкладке цикл стоит.
+  // кадров. Вне экрана, на скрытой вкладке и по просьбе страницы (setSuspended)
+  // цикл стоит, показ на паузе.
   // compiled: до конца компиляции шейдеров не рисуем — первый render() ждал бы
   // сборку всех программ синхронно и блокировал страницу на секунду и больше.
   let onScreen = true, frames = 0, last = 0, compiled = false;
-  const side = new Vector3(), up = new Vector3(0, 1, 0), eye = new Vector3();
-  function running() { return compiled && !disposed && onScreen && !document.hidden; }
+  const suspended = new Set();
+  const eye = new Vector3();
+  function running() { return compiled && !disposed && onScreen && !document.hidden && !suspended.size; }
+  function stop() { cancelAnimationFrame(raf); raf = 0; last = 0; }
   function invalidate() { if (!raf && running()) raf = requestAnimationFrame(tick); }
   function tick(now) {
     raf = 0;
     const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
     last = now;
-    let busy = stepMove(dt);
-    busy = stepTour(dt) || busy;
+    let busy = stepTour(dt);
+    if (!tour) busy = stepMove(dt) || busy;
     busy = stepDrift(dt) || busy;
+    busy = stepSpin(dt) || busy;
     busy = stepLean(dt) || busy;
-    side.subVectors(state.t, state.p).cross(up).normalize();
-    eye.copy(state.p).addScaledVector(side, lean.x * 0.14).addScaledVector(up, -lean.y * 0.07);
+    // Параллакс — поворот вокруг точки взгляда на доли градуса.
+    offset.subVectors(state.p, state.t);
+    const r = offset.length();
+    const az = Math.atan2(offset.x, offset.z) - lean.x * 1.5 * DEG;
+    const pol = Math.acos(MathUtils.clamp(offset.y / r, -1, 1)) + lean.y * 0.6 * DEG;
+    eye.set(state.t.x + r * Math.sin(pol) * Math.sin(az), state.t.y + r * Math.cos(pol), state.t.z + r * Math.sin(pol) * Math.cos(az));
     camera.position.copy(eye); camera.lookAt(state.t);
     renderer.render(scene, camera);
     frames++;
     if (firstFrame) { const done = firstFrame; firstFrame = null; done(); }
-    if (busy) raf = requestAnimationFrame(tick); else last = 0;
+    if ((busy || drag) && running()) raf = requestAnimationFrame(tick); else last = 0;
   }
 
-  intersection = new IntersectionObserver(([entry]) => {
-    onScreen = entry.isIntersecting;
-    if (onScreen) { last = 0; invalidate(); } else { cancelAnimationFrame(raf); raf = 0; last = 0; }
+  intersection = new IntersectionObserver(([item]) => {
+    onScreen = item.isIntersecting;
+    if (onScreen) invalidate(); else stop();
   });
   intersection.observe(container);
   resize = new ResizeObserver(measure);
   resize.observe(container);
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else { last = 0; invalidate(); }
-  }, on);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else invalidate(); }, on);
   fine.addEventListener('change', () => { parallaxOn = !reducedMotion && fine.matches; invalidate(); }, on);
 
   measure();
-  apply({p: new Vector3(...VIEWS.hero.p), t: new Vector3(...VIEWS.hero.t), fov: VIEWS.hero.fov, focus: VIEWS.hero.focus, span: VIEWS.hero.span});
+  frame();
   camera.position.copy(state.p); camera.lookAt(state.t);
   try {
     // Шейдеры собираются параллельно (KHR_parallel_shader_compile), готовность
@@ -471,12 +578,13 @@ export async function mount({
   if (disposed) throw lost || abortError();
 
   // Первый кадр: ждём, пока он действительно нарисован, и только потом
-  // проявляем canvas — до этого виден обычный фон страницы.
+  // проявляем canvas — до этого виден обычный фон страницы. Если сцена вне
+  // экрана или вкладка скрыта, кадр нарисуется, когда станет видно.
   compiled = true;
-  await new Promise(resolve => { firstFrame = resolve; last = 0; if (!raf) raf = requestAnimationFrame(tick); });
+  await new Promise(resolve => { firstFrame = resolve; last = 0; invalidate(); });
   if (disposed) throw lost || abortError();
   mark('firstFrame');
-  canvas.style.opacity = '1';
+  if (fadeIn) canvas.style.opacity = '1';
   onFirstFrame?.();
 
   Object.assign(handle, {
@@ -484,16 +592,22 @@ export async function mount({
     quality: level,
     views: Object.keys(VIEWS),
     get currentView() { return viewName; },
-    // Показ 7,5 с; при reduced motion автооблёта нет — только общий вид.
+    get touring() { return !!tour; },
+    // Показ ~7 с; при reduced motion автооблёта нет — только общий вид.
     tour() {
       if (disposed) return false;
       if (reducedMotion) { goTo('overview'); onTourEnd?.(); return false; }
-      move = null; drift = null; viewName = 'tour';
-      startTour();
-      onViewChange?.('tour'); invalidate();
+      move = null; drift = null; driftNext = null; spin = null;
+      tour = {index: 0, hold: 0};
+      viewName = 'tour'; onViewChange?.('tour'); invalidate();
       return true;
     },
-    stopTour() { if (tour) { tour = null; goTo('overview', {duration: 0.6}); } },
+    // Остановка показа: камера остаётся, где была (ни один ракурс не выбран).
+    stopTour() {
+      if (!tour) return;
+      tour = null; move = null; viewName = 'free';
+      onViewChange?.('free'); invalidate();
+    },
     view(name, options) { if (!disposed) goTo(name, options); },
     // Работа гаража → ракурс. false — у модели нет убедительной детали,
     // страница оставляет фотографию.
@@ -505,17 +619,27 @@ export async function mount({
       // отражения скользят по лаку.
       if (id === 'polish' && !reducedMotion) {
         const base = new Vector3(...VIEWS[name].p), look = new Vector3(...VIEWS[name].t);
-        const axis = new Vector3().subVectors(look, base).cross(up).normalize();
+        const axis = new Vector3().subVectors(look, base).cross(new Vector3(0, 1, 0)).normalize();
         driftNext = {base, axis, time: 0, duration: 3.2};
         if (!move) { drift = driftNext; driftNext = null; invalidate(); }
       }
       return true;
     },
+    // Свободная часть контейнера (px): шапка, панель гаража, нижняя кнопка.
+    setSafeArea(next = {}) {
+      Object.assign(inset, {top: 0, right: 0, bottom: 0, left: 0}, next);
+      frame(); invalidate();
+    },
+    // Пауза по причине страницы: ушли к главам, открыт диалог и т. п.
+    setSuspended(reason, on) {
+      if (!!on === suspended.has(reason)) return;
+      if (on) { suspended.add(reason); stop(); } else { suspended.delete(reason); invalidate(); }
+    },
     setReducedMotion(value) {
       reducedMotion = !!value; parallaxOn = !reducedMotion && fine.matches;
-      if (reducedMotion) { drift = null; driftNext = null; }
+      if (reducedMotion) { drift = null; driftNext = null; spin = null; }
       if (reducedMotion && tour) { tour = null; goTo('overview', {instant: true}); }
-      canvas.style.transition = `opacity ${reducedMotion ? 250 : 900}ms ease`;
+      if (fadeIn) canvas.style.transition = `opacity ${reducedMotion ? 250 : 900}ms ease`;
       invalidate();
     },
     invalidate,
@@ -525,7 +649,7 @@ export async function mount({
       const info = renderer.info;
       return {quality: level, frames, drawCalls: info.render.calls, triangles: info.render.triangles,
         geometries: info.memory.geometries, textures: info.memory.textures, programs: info.programs?.length ?? 0,
-        pixelRatio: renderer.getPixelRatio(), width, height, running: !!raf, timings: {...timings}};
+        pixelRatio: renderer.getPixelRatio(), width, height, running: !!raf, suspended: [...suspended], timings: {...timings}};
     },
   });
   mounted = true;

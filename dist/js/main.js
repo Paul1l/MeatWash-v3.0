@@ -2,6 +2,7 @@ import {STOPS,clamp,smooth,LADDER} from './config.js';
 import {setupUI} from './ui.js';
 import {setupConfigurator} from './configurator.js';
 import {setupProof} from './proof.js';
+import {setupLive3d} from './live3d.js';
 
 const $=s=>document.querySelector(s);
 const section=$('#scene'),poster=$('.scene__poster'),posterImage=$('.scene__poster img');
@@ -49,11 +50,14 @@ function goToStop(key){
 // Гараж услуг живёт поверх витрины и на время работы забирает у прокрутки
 // выбор кадра: ScrollTrigger при этом остаётся живым, просто мы не даём ему
 // менять кадр, пока открыта панель.
+// «Оживить Porsche»: сама сцена грузится только по нажатию (live3d.js → import()).
+const live3d=setupLive3d({section,reduced:()=>motion.matches||forceStatic,getTarget:()=>configurator.currentTarget()});
 const cfgMount=document.createElement('div');
 cfgMount.className='cfg-mount';
 section.firstElementChild.append(cfgMount);
 const configurator=setupConfigurator({
  mount:cfgMount,
+ live3d,
  getScene:()=>scene,
  onOpen:()=>{document.querySelector('[data-cfg-open]')?.setAttribute('aria-expanded','true');},
  // После закрытия состояние слоёв восстанавливаем явно: иначе скрытые главы
@@ -93,6 +97,7 @@ function apply(progress,force=false){
  const p=clamp(progress);state.progress=p;
  const intro=1-smooth(p,.008,.07);
  setVisibility(hero,intro,true,force);setVisibility(bar,1-smooth(p,.015,.09),true,force);
+ live3d?.progress(p);
  // Номер главы 1–4: на 0.90–0.91 (финал, навигация ещё видна) активной остаётся последняя.
  const index=Math.min(4,Math.floor(p*5+.5));
  section.firstElementChild.style.setProperty('--shade',String(smooth(p,.06,.15)*(1-smooth(p,.90,.97))));
@@ -125,7 +130,9 @@ function staticExperience(){
  // progress больше не движется: иначе шапка остаётся «после hero» и на первом
  // экране видны две кнопки записи.
  state.progress=0;
- for(const el of [...chapters,hero,finale]){el.style.opacity='1';el.style.transform='';el.inert=false;el.setAttribute('aria-hidden','false');}
+ // .hero-bar тоже: в статичном режиме в нём кнопка 3D (porsche3d.css).
+ for(const el of [...chapters,hero,bar,finale]){el.style.opacity='1';el.style.transform='';el.inert=false;el.setAttribute('aria-hidden','false');}
+ live3d?.setStatic();
  poster.hidden=false;poster.style.opacity='1';posterImage.style.transform='';
  // До 900px — кадр 900 px, как у витрины (stage.js) и статичных глав (cinematic.css).
  posterImage.src=innerWidth<=900?posterImage.dataset.staticSrc.replace(/\.webp$/,'-s.webp'):posterImage.dataset.staticSrc;
@@ -216,7 +223,7 @@ addEventListener('resize',keepSceneProgress,{signal:controller.signal});
 addEventListener('resize',()=>{cancelAnimationFrame(resizeFrame);resizeFrame=requestAnimationFrame(()=>{document.documentElement.dataset.viewport=String(innerWidth);scene?.resize();if(!staticMode)apply(state.progress);});},{signal:controller.signal});
 addEventListener('scroll',()=>{updateChrome();remember();},{passive:true,signal:controller.signal});
 motion.addEventListener('change',()=>{if(motion.matches)staticExperience();else location.reload();},{signal:controller.signal});
-addEventListener('pagehide',event=>{if(event.persisted)return;destroyed=true;cancelAnimationFrame(resizeFrame);tween?.kill();trigger?.kill();scene?.dispose();lcpObserver?.disconnect();cleanupUI();cleanupProof();configurator.destroy();controller.abort();},{once:true});
+addEventListener('pagehide',event=>{if(event.persisted)return;destroyed=true;cancelAnimationFrame(resizeFrame);tween?.kill();trigger?.kill();scene?.dispose();lcpObserver?.disconnect();cleanupUI();cleanupProof();configurator.destroy();live3d?.destroy();controller.abort();},{once:true});
 document.fonts.ready.then(()=>window.ScrollTrigger?.refresh());
 updateChrome();remember();
 if(document.readyState==='loading')addEventListener('DOMContentLoaded',start,{once:true});else start();

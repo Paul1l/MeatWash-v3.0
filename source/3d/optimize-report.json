@@ -10,7 +10,7 @@
   "units": "метры; низ шин y=0; перед −Z; левый борт −X",
   "variants": {
     "desktop": {
-      "file": "assets/3d/porsche-930-desktop.glb",
+      "file": "assets/3d/porsche-930-desktop.bdbf10b8cb.glb",
       "bytes": 2228272,
       "sha256": "bdbf10b8cbafea4c5c68d5439749f984334536358df27bdddc37442c17d8c2a9",
       "before": {
@@ -29,7 +29,7 @@
       }
     },
     "mobile": {
-      "file": "assets/3d/porsche-930-mobile.glb",
+      "file": "assets/3d/porsche-930-mobile.3db40a8b78.glb",
       "bytes": 1201100,
       "sha256": "3db40a8b78a8c709e1418580810c85602dfc6eaf31fa86efc70b7418aec1cb7e",
       "before": {

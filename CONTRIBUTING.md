@@ -3,7 +3,7 @@
 Репозиторий открыт для нескольких человек. Ниже — минимум, которого достаточно,
 чтобы не мешать друг другу и не сломать опубликованный макет.
 
-Опубликованный сайт: https://paul1l.github.io/MeatWash-v2.0/
+Опубликованный сайт: https://paul1l.github.io/MeatWash-v3.0/
 Его собирает GitHub Actions из папки `dist` при каждом push в `main`. Всё, что
 попало в `main`, через минуту видит клиент — поэтому напрямую в `main` не пушим.
 
@@ -16,8 +16,8 @@
 ## Первый запуск
 
 ```
-git clone https://github.com/Paul1l/MeatWash-v2.0.git
-cd MeatWash-v2.0
+git clone https://github.com/Paul1l/MeatWash-v3.0.git
+cd MeatWash-v3.0
 npm ci        # нужно только для проверок и пересборки, для просмотра не обязательно
 npm start     # http://127.0.0.1:4173
 ```
@@ -57,8 +57,9 @@ npm run check          # ресурсы, ссылки, якоря, цены, к�
 Новый кадр кладём в двух размерах: `cf-<id>.webp` (1600 px) и `cf-<id>-s.webp`
 (900 px); `npm run check` проверяет, что все кадры из `dist/js/config.js` есть на диске.
 
-3D-сцены в проекте нет: модули сцены, модель, three и скрипты её сборки удалены.
-Прежняя 3D-версия осталась только в истории git.
+3D-режим «Оживить Porsche» грузится только по нажатию (`dist/js/live3d.js` → `import('./porsche3d.bundle.js')`).
+Правка сцены — в `src/porsche3d/`, затем `npm run bundle-3d`; замена модели — `source/3d/porsche-930.glb`,
+затем `npm run optimize-3d` и `npm run bundle-3d`. Бандл и модели коммитятся; `npm run check` сверяет их с исходниками.
 
 ## Каталог услуг
 
