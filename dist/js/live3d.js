@@ -5,6 +5,9 @@
 //
 // Состояния ряда .p3d (data-state): idle → loading → on, либо error.
 // #scene[data-p3d]: off | loading | on | error — «on», только когда 3D на экране.
+// Включённый 3D остаётся фоном всей сцены: камера и эффекты глав ведутся
+// прокруткой (как в v1.0), фото-кадры под canvas не меняются. В статичном
+// режиме и при «уменьшить движение» 3D — только на первом экране (как в фазе 2).
 // 3D видно, когда модель готова и: гараж открыт — включён его переключатель
 // (и у работы есть ракурс), гараж закрыт — ряд первого экрана в режиме on.
 // Отрисовка стоит, когда 3D не видно (ушли к главам, фото в гараже, диалог);
@@ -18,7 +21,7 @@ const HINT_KEY = 'p3d-hint-shown';
 
 const smooth = (v, a, b) => { const x = Math.min(1, Math.max(0, (v - a) / (b - a))); return x * x * (3 - 2 * x); };
 
-export function setupLive3d({section, reduced, getTarget}) {
+export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
   const root = document.getElementById('p3d');
   const stage = document.getElementById('p3d-stage');
   const live = document.getElementById('p3d-live');
@@ -28,6 +31,9 @@ export function setupLive3d({section, reduced, getTarget}) {
   const cancelBtn = $('[data-p3d="cancel"]'), retry = $('[data-p3d="retry"]'), msg = $('.p3d__msg');
   const tourBtn = $('[data-p3d="tour"]'), tourTxt = tourBtn.querySelector('.p3d__txt'), exit = $('[data-p3d="exit"]');
   const views = [...root.querySelectorAll('[data-p3d-view]')], hint = $('.p3d__hint');
+  // «Обычный вид» в главах: ряд первого экрана там скрыт вместе с .hero-bar.
+  const float = document.querySelector('[data-p3d-float]');
+  const skipLink = document.querySelector('.scene__skip');
   const listeners = new AbortController(), on = {signal: listeners.signal};
 
   let mode = 'idle';            // ряд первого экрана
@@ -36,7 +42,11 @@ export function setupLive3d({section, reduced, getTarget}) {
   let toured = false;           // показ — один раз за загрузку страницы
   let tourTimer = 0, hintTimer = 0, disposeTimer = 0;
   let guardUntil = 0;
-  let progress = 0, away = false, staticMode = false;
+  let progress = 0, away = false, staticMode = false, covering = false;
+  // «Обычный вид» встаёт под курсор на место «Оживить Porsche»: первую секунду
+  // клик по нему засчитываем, только если курсор успел уйти с кнопки.
+  let exitArmedAt = 0;
+  exit.addEventListener('pointerleave', () => { exitArmedAt = 0; });
   const cfg = {open: false, want: false, error: false, disabled: false, photo: false, button: null, msg: null, panel: null, refresh: null};
   // Гараж пересчитывает свою работу (кадр, шторка, камера): configurator.retarget.
   const refreshGarage = () => { if (cfg.refresh) cfg.refresh(); else target(getTarget?.()); };
@@ -44,22 +54,32 @@ export function setupLive3d({section, reduced, getTarget}) {
   // ── Поддержка WebGL ───────────────────────────────────────────────────────
   // Кнопку показываем, если браузер знает WebGL 2; настоящую проверку контекста
   // делаем в простое после загрузки — движок и модель при этом не грузятся.
-  if ('WebGL2RenderingContext' in window) {
-    root.hidden = false;
-    const probe = () => {
-      let ok = false;
-      try {
-        const gl = document.createElement('canvas').getContext('webgl2');
-        ok = !!gl; gl?.getExtension('WEBGL_lose_context')?.loseContext();
-      } catch { ok = false; }
-      if (!ok && mode === 'idle') { root.hidden = true; if (cfg.button) cfg.button.hidden = true; }
-    };
-    const idle = window.requestIdleCallback || (fn => setTimeout(fn, 1500));
-    addEventListener('load', () => idle(probe, {timeout: 4000}), {once: true, signal: listeners.signal});
+  // Модуль грузится после страницы (main.js). Проверка WebGL 2 — пробным
+  // контекстом, без движка; не вышло — кнопки нет, место под ряд снимается.
+  let capable = false;
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+    capable = !!gl; gl?.getExtension('WEBGL_lose_context')?.loseContext();
+  } catch { capable = false; }
+  if (!capable) {
+    document.documentElement.classList.remove('p3d-capable');
+    return null;
   }
+  // Стили кнопки, ракурсов и слоя сцены — с той же версией (?v=), что и модуль.
+  const version = new URL(import.meta.url).searchParams.get('v');
+  const css = new URL('../css/porsche3d.css', import.meta.url);
+  if (version) css.searchParams.set('v', version);
+  if (!document.querySelector('link[data-p3d-css]')) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet'; link.href = css.href; link.dataset.p3dCss = '';
+    link.addEventListener('load', () => { root.hidden = false; }, {once: true});
+    document.head.appendChild(link);
+  } else root.hidden = false;
 
   const say = text => { live.textContent = ''; requestAnimationFrame(() => { live.textContent = text; }); };
   const reducedNow = () => reduced() || staticMode;
+  // Камера по главам — только в живой витрине и без «уменьшить движение».
+  const chapters = () => !reducedNow();
   const visible = () => !!scene && (cfg.open ? cfg.want && !cfg.photo : mode === 'on');
 
   // ── Отображение ───────────────────────────────────────────────────────────
@@ -87,12 +107,22 @@ export function setupLive3d({section, reduced, getTarget}) {
     if (scene) scene.setSuspended('hidden', !shown);
     renderGarage();
     layout();
+    renderFloat();
+    // 3D закрывает фото-витрину: main.js перестаёт менять её кадры, а когда 3D
+    // уходит — сразу ставит кадр текущего места прокрутки.
+    const next = shown && chapters() && !cfg.open;
+    if (next !== covering) { covering = next; onCoverChange?.(covering); }
+  }
+  function renderFloat() {
+    if (!float) return;
+    float.hidden = !(mode === 'on' && scene && chapters() && !cfg.open && progress >= .09);
   }
   function applyOpacity() {
     const canvas = scene?.canvas;
     if (!canvas) return;
-    // Гараж открыт — 3D целиком; иначе уходит вместе с первым экраном.
-    const amount = cfg.open || staticMode ? 1 : 1 - smooth(progress, .02, .09);
+    // Гараж открыт или камера идёт по главам — 3D целиком; в статичном режиме
+    // и при «уменьшить движение» уходит вместе с первым экраном.
+    const amount = cfg.open || staticMode || chapters() ? 1 : 1 - smooth(progress, .02, .09);
     canvas.style.opacity = amount.toFixed(3);
     scene.setSuspended('away', amount <= 0.001);
   }
@@ -123,13 +153,24 @@ export function setupLive3d({section, reduced, getTarget}) {
     if (!scene) return;
     const box = stage.getBoundingClientRect();
     const header = document.getElementById('header')?.getBoundingClientRect();
-    const top = header ? Math.max(0, header.bottom - box.top) : 0;
+    let top = header ? Math.max(0, header.bottom - box.top) : 0;
+    // Телефон: верх свободной зоны — под кнопкой «Гараж услуг», иначе крыша уходит под неё.
+    const cfgButton = document.querySelector('.scene__cfg');
+    if (matchMedia('(max-width: 900px) and (orientation: portrait)').matches && cfgButton?.offsetParent) {
+      top = Math.max(top, cfgButton.getBoundingClientRect().bottom - box.top + 12);
+    }
     const area = {};
     if (cfg.open && cfg.panel && !cfg.panel.hidden) {
       area.top = top;
       const panel = cfg.panel.getBoundingClientRect();
       if (panel.left > box.left + box.width * 0.4) area.right = Math.max(0, box.right - panel.left + 16);
       else area.bottom = Math.max(0, box.bottom - panel.top);
+    } else if (!cfg.open && chapters() && progress >= .02) {
+      // Главы: текст слева (компьютер, альбом) или внизу (телефон в портрете).
+      const text = document.querySelector('.chapter[data-chapter="body"]')?.getBoundingClientRect();
+      area.top = top;
+      if (text && matchMedia('(max-width: 900px) and (orientation: portrait)').matches) area.bottom = Math.max(0, box.bottom - text.top + 8);
+      else if (text) area.left = Math.max(0, Math.min(box.width * 0.45, text.right - box.left + 16));
     } else if (!cfg.open && matchMedia('(max-width: 900px) and (orientation: portrait)').matches) {
       // Верх текста, а не блока: в статичном режиме у .hero большой верхний отступ.
       const hero = (document.querySelector('.hero__eyebrow') || document.querySelector('.hero'))?.getBoundingClientRect();
@@ -139,8 +180,31 @@ export function setupLive3d({section, reduced, getTarget}) {
   }
 
   // ── Загрузка ──────────────────────────────────────────────────────────────
+  // Адрес — строкой: так его видит npm run check, а stamp-assets ставит ?v=.
+  // Неудачный import() браузер запоминает, поэтому повтор после сбоя идёт по
+  // адресу с ?retry=N (и той же версией ?v=).
+  let importFailures = 0;
+  async function importBundle() {
+    try {
+      if (!importFailures) return await import('./porsche3d.bundle.js');
+      const url = new URL('./porsche3d.bundle.js', import.meta.url);
+      const v = new URL(import.meta.url).searchParams.get('v');
+      if (v) url.searchParams.set('v', v);
+      url.searchParams.set('retry', String(importFailures));
+      return await import(url.href);
+    } catch (error) {
+      importFailures++;
+      throw error;
+    }
+  }
   async function load(owner) {
-    if (job || scene) return;
+    if (job) return;
+    // Сцена ещё гаснет после «Обычного вида» — просто возвращаем её.
+    if (scene) {
+      clearTimeout(disposeTimer);
+      if (owner === 'hero' && mode !== 'on') { setMode('loading'); ready(owner); }
+      return;
+    }
     clearTimeout(disposeTimer);
     const controller = new AbortController();
     const mine = job = {controller, owner};
@@ -153,8 +217,7 @@ export function setupLive3d({section, reduced, getTarget}) {
     render();
     say('Загружаем 3D-модель Porsche.');
     try {
-      // Адрес — строкой: так его видит npm run check, а stamp-assets ставит ?v=.
-      const {mount} = await import('./porsche3d.bundle.js');
+      const {mount} = await importBundle();
       if (controller.signal.aborted) throw new DOMException('Загрузка 3D отменена', 'AbortError');
       const handle = await mount({
         container: stage,
@@ -207,8 +270,10 @@ export function setupLive3d({section, reduced, getTarget}) {
     if (heroWanted) {
       const focus = document.activeElement;
       setMode('on');
+      exitArmedAt = performance.now() + 1000;
       if (focus === start || focus === document.body || !focus) exit.focus({preventScroll: true});
     } else render();
+    if (cfg.open && heroWanted && !cfg.disabled) cfg.want = true;
     if (cfg.open && cfg.want) {
       // Включили из гаража: камера к детали выбранной работы, без показа.
       refreshGarage();
@@ -234,7 +299,7 @@ export function setupLive3d({section, reduced, getTarget}) {
     setTouring(true);
     tourTimer = setTimeout(() => {
       if (!scene || mode !== 'on' || cfg.open) { setTouring(false); return; }
-      if (away) { tourTimer = 0; return; }
+      if (away || progress > .02) { tourTimer = 0; setTouring(false); return; }
       toured = true;
       if (!scene.tour()) setTouring(false);
     }, TOUR_DELAY_MS);
@@ -260,6 +325,7 @@ export function setupLive3d({section, reduced, getTarget}) {
     msg.textContent = text;
     const focus = document.activeElement;
     if (cfg.want) { cfg.want = false; cfg.error = true; }
+    if (cfg.msg) cfg.msg.textContent = lostContext ? '3D остановилось. Нажмите ещё раз.' : 'Не удалось загрузить 3D. Нажмите ещё раз.';
     if (mode === 'loading' || mode === 'on') {
       setMode('error');
       if (focus === start || focus === exit || root.contains(focus) || focus === document.body) retry.focus({preventScroll: true});
@@ -290,9 +356,11 @@ export function setupLive3d({section, reduced, getTarget}) {
   }
 
   function goIdle() {
+    const inChapters = progress >= .09 && chapters();
     setMode('idle');
     release();
-    start.focus({preventScroll: true});
+    // В главах кнопка первого экрана скрыта (inert): фокус — на «Все услуги ↓».
+    (inChapters ? skipLink : start)?.focus({preventScroll: true});
   }
 
   // Работа гаража → камера. false — показываем фото (у модели нет детали).
@@ -315,7 +383,10 @@ export function setupLive3d({section, reduced, getTarget}) {
     if (action === 'cancel') { cancel(); start.focus({preventScroll: true}); return; }
     if (action === 'retry') { setMode('idle'); load('hero'); return; }
     if (action === 'dismiss') { goIdle(); return; }
-    if (action === 'exit') { goIdle(); say('Обычный вид.'); return; }
+    if (action === 'exit') {
+      if (performance.now() < exitArmedAt && e.detail > 0) return;
+      goIdle(); say('Обычный вид.'); return;
+    }
     if (action === 'tour' && scene) {
       clearTimeout(tourTimer);
       if (scene.touring || tourBtn.hasAttribute('data-playing')) { scene.stopTour(); setTouring(false); }
@@ -323,6 +394,10 @@ export function setupLive3d({section, reduced, getTarget}) {
       return;
     }
     if (view && scene) { clearTimeout(tourTimer); setTouring(false); scene.view(view); }
+  }, on);
+  float?.addEventListener('click', () => {
+    if (performance.now() < guardUntil) return;
+    goIdle(); say('Обычный вид.');
   }, on);
   root.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
@@ -346,9 +421,15 @@ export function setupLive3d({section, reduced, getTarget}) {
   return {
     // Прогресс сцены (apply в main.js): 3D уходит на 0.02–0.09 вместе с рядом.
     progress(p) {
+      const crossed = (p >= .02) !== (progress >= .02);
       progress = p;
       const wasAway = away;
-      away = !cfg.open && !staticMode && p >= .09;
+      away = !cfg.open && !staticMode && !chapters() && p >= .09;
+      if (scene) scene.setProgress(p, {camera: chapters() && !cfg.open});
+      if (crossed) layout();
+      renderFloat();
+      if (chapters() && p > .02 && scene?.touring) setTouring(false);
+      if (chapters() && p <= .02 && scene && mode === 'on' && !toured && !tourTimer) scheduleTour();
       section.toggleAttribute('data-p3d-away', away);
       if (away && !wasAway && scene?.touring) { scene.stopTour(); setTouring(false); }
       if (!away && wasAway && scene && mode === 'on' && !toured && !reducedNow()) scheduleTour();
@@ -404,6 +485,7 @@ export function setupLive3d({section, reduced, getTarget}) {
       },
       get active() { return cfg.open && cfg.want && !!scene && !cfg.photo; },
     },
+    get covering() { return covering; },
     destroy() {
       clearTimeout(tourTimer); clearTimeout(hintTimer); clearTimeout(disposeTimer);
       job?.controller.abort(); scene?.dispose(); scene = null;

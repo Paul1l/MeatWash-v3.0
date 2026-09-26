@@ -124,6 +124,18 @@ async function build(variant) {
   for (const mesh of docRoot.listMeshes()) for (const prim of mesh.listPrimitives()) prim.setAttribute('TANGENT', null);
   const rim = docRoot.listMaterials().find(m => m.getName() === '930_rim');
   rim.setNormalTexture(null);
+  // Колпачок вентиля в текстуре диска ярко-зелёный (заглушка автора) — перекрашиваем в тёмный.
+  const rimMap = rim.getBaseColorTexture();
+  if (rimMap) {
+    const {data, info} = await sharp(rimMap.getImage()).ensureAlpha().raw().toBuffer({resolveWithObject: true});
+    let painted = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2];
+      if (g > 90 && g > r * 1.35 && g > b * 1.35) { data[i] = 10; data[i + 1] = 8; data[i + 2] = 7; painted++; }
+    }
+    assert(painted < info.width * info.height * 0.02, 'Перекрашено слишком много пикселей диска');
+    rimMap.setImage(await sharp(data, {raw: {width: info.width, height: info.height, channels: 4}}).png().toBuffer()).setMimeType('image/png');
+  }
 
   // Все узлы — прямые дети сцены с мировыми матрицами, затем общий меш на материал.
   await document.transform(prune(), dedup(), flatten(), weld(), join({keepNamed: false}), prune());

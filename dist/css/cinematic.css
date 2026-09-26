@@ -153,3 +153,27 @@ body.menu-open { overflow:hidden; }
 @media (max-width: 640px) {
   .brand__logo { height: 24px; }
 }
+
+/* v3.0 «Оживить Porsche»: место под ряд 3D в .hero-bar. Только если браузер знает
+   WebGL 2 — класс p3d-capable ставит инлайн-скрипт в <head> до первой отрисовки;
+   без WebGL первый экран как в v2. Остальные стили 3D — porsche3d.css (грузится с кнопкой). */
+:root { --p3d-cta-top:calc(max(12px, env(safe-area-inset-bottom, 0px)) + 46px); --p3d-h:44px; }
+.p3d-capable .hero-bar { align-items:center; gap:clamp(20px, 2.8vw, 44px); pointer-events:none; }
+.p3d-capable .hero-bar > * { pointer-events:auto; }
+@media (max-width:900px) and (orientation:portrait) {
+  .p3d-capable .hero-bar { bottom:calc(var(--p3d-cta-top) + 14px); justify-content:space-between; }
+}
+@media (max-width:800px) and (orientation:portrait) {
+  .p3d-capable .hero { bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
+}
+/* Статичный режим: ряд 3D внизу первого экрана; на низком альбоме текст поднимается под шапку. */
+.p3d-capable.static-experience .hero-bar { display:flex; top:calc(100svh - 4svh - var(--p3d-h)); bottom:auto; }
+.p3d-capable.static-experience .hero-bar__scroll { display:none; }
+.p3d-capable.static-experience .hero { padding-bottom:calc(4svh + var(--p3d-h) + 24px); }
+@media (max-width:900px) and (orientation:portrait) {
+  .p3d-capable.static-experience .hero-bar { top:calc(100svh - var(--p3d-cta-top) - 14px - var(--p3d-h)); }
+  .p3d-capable.static-experience .hero { padding-bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h)); }
+}
+@media (orientation:landscape) and (max-height:500px) {
+  .p3d-capable.static-experience .hero { padding-top:max(var(--header-h), 22svh); }
+}

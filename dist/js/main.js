@@ -2,7 +2,6 @@ import {STOPS,clamp,smooth,LADDER} from './config.js';
 import {setupUI} from './ui.js';
 import {setupConfigurator} from './configurator.js';
 import {setupProof} from './proof.js';
-import {setupLive3d} from './live3d.js';
 
 const $=s=>document.querySelector(s);
 const section=$('#scene'),poster=$('.scene__poster'),posterImage=$('.scene__poster img');
@@ -51,13 +50,29 @@ function goToStop(key){
 // выбор кадра: ScrollTrigger при этом остаётся живым, просто мы не даём ему
 // менять кадр, пока открыта панель.
 // «Оживить Porsche»: сама сцена грузится только по нажатию (live3d.js → import()).
-const live3d=setupLive3d({section,reduced:()=>motion.matches||forceStatic,getTarget:()=>configurator.currentTarget()});
+// «Оживить Porsche» (live3d.js) подключается после загрузки страницы, в простое:
+// в обычном режиме он не задерживает первый экран. Сама 3D-сцена — только по нажатию.
+let live3d=null;
+function loadLive3d(){
+ import('./live3d.js').then(({setupLive3d})=>{
+  if(destroyed)return;
+  // 3D закрыл витрину — её кадры не меняем; ушёл — ставим кадр текущего места.
+  live3d=setupLive3d({section,reduced:()=>motion.matches||forceStatic,getTarget:()=>configurator.currentTarget(),onCoverChange:covering=>{if(!covering&&scene&&!configurator.isOpen)scene.update(state.progress);}});
+  if(!live3d)return;
+  configurator.attach3d(live3d);
+  if(staticMode)live3d.setStatic();
+  live3d.progress(state.progress);
+ }).catch(error=>console.warn('Кнопка 3D не подключилась, сайт работает без неё.',error));
+}
+if(document.documentElement.classList.contains('p3d-capable')){
+ const idle=()=>(window.requestIdleCallback||(fn=>setTimeout(fn,300)))(loadLive3d,{timeout:2500});
+ if(document.readyState==='complete')idle();else addEventListener('load',idle,{once:true});
+}
 const cfgMount=document.createElement('div');
 cfgMount.className='cfg-mount';
 section.firstElementChild.append(cfgMount);
 const configurator=setupConfigurator({
  mount:cfgMount,
- live3d,
  getScene:()=>scene,
  onOpen:()=>{document.querySelector('[data-cfg-open]')?.setAttribute('aria-expanded','true');},
  // После закрытия состояние слоёв восстанавливаем явно: иначе скрытые главы
@@ -114,7 +129,7 @@ function apply(progress,force=false){
   chapterNav.querySelectorAll('button').forEach((button,i)=>{if(i+1===index)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');});
  }
  updateChrome();
- if(scene&&!configurator.isOpen&&scrollY<section.offsetTop+section.offsetHeight)scene.update(p);
+ if(scene&&!configurator.isOpen&&!live3d?.covering&&scrollY<section.offsetTop+section.offsetHeight)scene.update(p);
  section.dataset.progress=p.toFixed(4);
 }
 function staticExperience(){

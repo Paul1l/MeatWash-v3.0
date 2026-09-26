@@ -14,7 +14,8 @@ const FILM_LEAD = 900;     // чистая пауза в начале ролик
 
 // live3d — переключатель «Показать в 3D» (js/live3d.js, может отсутствовать):
 // работа гаража уходит в 3D-камеру, а если у модели нет детали — остаётся фото.
-export function setupConfigurator({ mount, getScene, onOpen, onClose, live3d = null }) {
+export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
+  let live3d = null;       // подключает attach3d(), когда загрузился js/live3d.js
   const picked = new Set();
   // Все слушатели панели снимаются разом в destroy().
   const abort = new AbortController(), options = { signal: abort.signal };
@@ -33,7 +34,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose, live3d = n
       <div class="cfg__head">
         <div class="cfg__headrow">
           <p class="cfg__eyebrow">Гараж услуг</p>
-          <button class="cfg__3d" type="button" data-cfg-3d aria-pressed="false">
+          <button class="cfg__3d" type="button" data-cfg-3d aria-pressed="false" hidden>
             <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
             <span><span class="cfg__3d-long">Показать в </span>3D</span>
             <span class="p3d__bar" aria-hidden="true"><i></i></span>
@@ -349,7 +350,6 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose, live3d = n
   }, options);
 
   cinemaBtn.addEventListener('click', () => setCinema(!cinema), options);
-  live3d?.garage.bind({ button: mount.querySelector('[data-cfg-3d]'), message: mount.querySelector('[data-cfg-3dmsg]'), panel, refresh: () => { if (!show) retarget(null); } });
 
 
 
@@ -406,6 +406,15 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose, live3d = n
       opener = null;
     },
     get isOpen() { return open; },
+    // Подключение «Показать в 3D» (js/live3d.js грузится после страницы).
+    attach3d(api) {
+      if (live3d || !api) return;
+      live3d = api;
+      const button = mount.querySelector('[data-cfg-3d]');
+      button.hidden = false;
+      live3d.garage.bind({ button, message: mount.querySelector('[data-cfg-3dmsg]'), panel, refresh: () => { if (!show) retarget(null); } });
+      if (open) { live3d.garage.open(); retarget(null); }
+    },
     // Работа, которую сейчас показывает гараж (для камеры 3D); null — ничего не выбрано.
     currentTarget: () => target(null).id,
     film: () => { if (!open) api.open(); startFilm(); },

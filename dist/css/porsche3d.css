@@ -2,10 +2,9 @@
    Подключается последним: перекрывает положение hero и .hero-bar на телефоне
    и в статичном режиме. Цвета и шрифт — токены style.css. */
 
+/* Место под ряд на первом экране (положение hero и .hero-bar) — в cinematic.css:
+   оно нужно до первой отрисовки. Этот файл подгружает live3d.js вместе с кнопкой. */
 :root{
-  /* Верх нижней кнопки записи (cinematic.css: bottom max(12px, safe-area), высота 46px). */
-  --p3d-cta-top: calc(max(12px, env(safe-area-inset-bottom, 0px)) + 46px);
-  --p3d-h: 44px;
   --p3d-fs: clamp(12px, .9vw, 13px);
   --p3d-line: rgb(var(--ivory-rgb) / .3);
   --p3d-fill: rgb(var(--black-rgb) / .34);
@@ -37,11 +36,26 @@
 #scene[data-p3d="on"]:not([data-p3d-away]) .scene__cfg{ backdrop-filter:none; background:rgb(var(--black-rgb) / .74); }
 #scene[data-p3d="on"] .cfg{ backdrop-filter:none; background:rgb(var(--black-rgb) / .88); }
 
+/* «Обычный вид» в главах: под «Гаражом услуг», тем же стилем, что кнопки ряда. */
+.p3d-float{
+  position:absolute; z-index:7; right:clamp(14px,3vw,40px);
+  top:calc(var(--header-h) + clamp(12px,1.8vw,26px) + 58px);
+  display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0 14px;
+  border:1px solid var(--p3d-line); border-radius:var(--radius);
+  background:rgb(var(--black-rgb) / .62); color:var(--ivory);
+  font-size:var(--p3d-fs); letter-spacing:.04em; white-space:nowrap;
+  transition:border-color var(--t) var(--ease), background var(--t) var(--ease);
+}
+.p3d-float[hidden]{ display:none; }
+@media (hover:hover){ .p3d-float:hover{ border-color:rgb(var(--ivory-rgb) / .62); background:rgb(var(--burgundy-2-rgb) / .22); } }
+.p3d-float .p3d__ico{ width:16px; height:16px; }
+body.cfg-open .p3d-float, body.cfg-film .p3d-float{ display:none; }
+@media (max-width:720px){ .p3d-float{ top:calc(var(--header-h) + 12px + 56px); right:var(--gutter); } }
+
 /* ---------- Ряд в .hero-bar ---------- */
-.hero-bar{ align-items:center; gap:clamp(20px, 2.8vw, 44px); pointer-events:none; }
-.hero-bar > *{ pointer-events:auto; }
 
 .p3d{ position:relative; display:flex; align-items:center; gap:8px; min-width:0; }
+.p3d[hidden]{ display:none; }
 .p3d [data-in]{ display:none; }
 .p3d[data-state="idle"]    [data-in~="idle"],
 .p3d[data-state="loading"] [data-in~="loading"],
@@ -102,15 +116,15 @@
 .p3d__tour[data-playing] .p3d__ico--stop{ display:block; }
 .p3d__tour[data-playing] .p3d__ico--replay{ display:none; }
 
-/* «Отмена» слева — второй щелчок двойного клика не попадает в неё. */
-.p3d__cancel{ order:-1; }
+/* «Отмена» стоит в разметке перед кнопкой: слева и раньше в порядке Tab —
+   второй щелчок двойного клика в неё не попадает. */
 
 .p3d__views{
-  align-items:stretch; height:var(--p3d-h);
+  align-items:stretch;
   border:1px solid var(--p3d-line); border-radius:var(--radius); background:var(--p3d-fill); overflow:hidden;
 }
 .p3d__view{
-  padding:0 14px; color:var(--muted); font-size:var(--p3d-fs); letter-spacing:.04em; white-space:nowrap;
+  min-height:var(--p3d-h); padding:0 14px; color:var(--muted); font-size:var(--p3d-fs); letter-spacing:.04em; white-space:nowrap;
   transition:color var(--t) var(--ease), background var(--t) var(--ease);
 }
 .p3d__view + .p3d__view{ border-left:1px solid rgb(var(--ivory-rgb) / .14); }
@@ -139,6 +153,8 @@
 .p3d:not([data-state="on"]) .p3d__hint{ display:none; }
 
 @media (max-width:599px){
+  .p3d__tour[data-compact]{ height:var(--p3d-h); border:1px solid var(--p3d-line); border-radius:var(--radius); background:var(--p3d-fill); color:var(--ivory); }
+  .p3d__tour[data-compact] .p3d__ico{ color:rgb(var(--ivory-rgb) / .72); }
   .p3d{ gap:6px; }
   .p3d__view{ padding:0 10px; }
   .p3d [data-compact]{ width:var(--p3d-h); padding:0; justify-content:center; }
@@ -151,22 +167,11 @@
 }
 
 @media (max-width:900px) and (orientation:portrait){
-  .hero-bar{ bottom:calc(var(--p3d-cta-top) + 14px); justify-content:space-between; }
-  .p3d__cancel{ order:0; }
   .p3d__hint{ display:none; }
-}
-@media (max-width:800px) and (orientation:portrait){
-  .hero{ bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
 }
 @media (orientation:landscape) and (max-height:500px){ .p3d__hint{ display:none; } }
 
 .static-experience .p3d-stage{ inset:0 0 auto; height:100svh; z-index:1; }
-.static-experience .hero-bar{ display:flex; top:calc(100svh - 4svh - var(--p3d-h)); bottom:auto; }
-.static-experience .hero-bar__scroll{ display:none; }
-@media (max-width:900px) and (orientation:portrait){
-  .static-experience .hero-bar{ top:calc(100svh - var(--p3d-cta-top) - 14px - var(--p3d-h)); }
-  .static-experience .hero{ padding-bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
-}
 
 .cfg__headrow{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; }
 .cfg__headrow .cfg__eyebrow{ margin:0; }
@@ -183,6 +188,8 @@
 @media (hover:hover){ .cfg__3d:hover{ background:rgb(var(--burgundy-2-rgb) / .28); border-color:rgb(var(--burgundy-2-rgb) / .7); color:var(--ivory); } }
 .cfg__3d[aria-pressed="true"]{ background:var(--burgundy-2); border-color:var(--burgundy-2); color:var(--ivory); }
 .cfg__3d[aria-busy="true"]{ cursor:progress; }
+/* M2: при загрузке — контур с линией, а не заливка «включено». */
+.cfg__3d[aria-pressed="true"][aria-busy="true"]{ background:transparent; border-color:rgb(var(--burgundy-2-rgb) / .7); color:var(--ivory); }
 .cfg__3d.is-error{ border-color:var(--burgundy-2); }
 .cfg__3d:focus-visible{ outline:2px solid var(--ivory); outline-offset:2px; }
 .cfg__3d[aria-disabled="true"]{ opacity:.4; pointer-events:none; }
@@ -200,14 +207,16 @@
 
 /* Без движения (системная настройка, ?motion=reduce, статичный режим) показа нет. */
 .p3d[data-reduced][data-state] .p3d__tour{ display:none; }
-/* Статичный режим: место под ряд 3D внизу первого экрана, на низком альбоме
-   текст поднимается под шапку — иначе ряд ложился на подзаголовок. */
-.static-experience .hero{ padding-bottom:calc(4svh + var(--p3d-h) + 24px); }
-@media (orientation:landscape) and (max-height:500px){
-  .static-experience .hero{ padding-top:max(var(--header-h), 22svh); }
+@media (max-width:599px) and (orientation:portrait){
+  .hero-bar .p3d{ flex:1 1 auto; }
+  .p3d[data-state="on"] .p3d__views{ flex:1 1 auto; }
+  .p3d__view{ flex:1 1 auto; display:inline-flex; align-items:center; justify-content:center; }
 }
 
 @media (prefers-reduced-motion:reduce){
   .p3d__bar.is-indeterminate i{ width:100%; translate:none; opacity:.5; }
   .p3d[data-state="on"] .p3d__tour{ display:none; }
 }
+
+/* L3: подсказка про поворот — 12 px и контраст выше. */
+.p3d__hint{ font-size:12px; color:rgb(var(--ivory-rgb) / .78); }

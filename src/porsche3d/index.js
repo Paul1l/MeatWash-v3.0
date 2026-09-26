@@ -12,12 +12,14 @@
 // или горизонтальным жестом (порог 8 px); ракурсы и показ — программно.
 import {
   ACESFilmicToneMapping, Color, MathUtils, MeshPhysicalMaterial,
-  PerspectiveCamera, Scene, SRGBColorSpace, Vector3, WebGLRenderer,
+  PerspectiveCamera, Scene, SRGBColorSpace, Vector3, WebGLRenderer, WebGLRenderTarget,
 } from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {buildEnvironment, buildRoom} from './room.js';
-import {VIEWS, TOUR, SERVICE_VIEWS, PUBLIC_VIEWS, REF_ASPECT} from './views.js';
+import {buildInterior} from './interior.js';
+import {createWater} from './water.js';
+import {VIEWS, TOUR, SERVICE_VIEWS, SERVICE_FX, SCROLL_STOPS, PUBLIC_VIEWS, REF_ASPECT} from './views.js';
 import {MODELS} from './models.js';
 
 export {VIEWS, SERVICE_VIEWS, PUBLIC_VIEWS, MODELS};
@@ -34,13 +36,14 @@ export class Porsche3DError extends Error {
 
 const abortError = () => new DOMException('Загрузка 3D отменена', 'AbortError');
 
-// Выбор качества, если страница его не передала: телефон, сенсорный экран без
-// мыши, мало памяти или Save-Data — облегчённая модель.
+// Выбор качества, если страница его не передала: сенсорный экран без мыши
+// (телефон, планшет), мало памяти или Save-Data — облегчённая модель.
 export function pickQuality() {
   const coarse = matchMedia('(pointer: coarse)').matches && !matchMedia('(any-pointer: fine)').matches;
-  const small = Math.min(screen.width, screen.height) < 700 || innerWidth <= 900;
-  const weak = (navigator.deviceMemory && navigator.deviceMemory <= 4) || navigator.connection?.saveData;
-  return coarse || small || weak ? 'low' : 'high';
+  // Узкое окно с мышью — не телефон: модель для компьютера. Chrome округляет
+  // память вниз (6 ГБ → 4), поэтому слабым считаем только ≤ 2 ГБ.
+  const weak = (navigator.deviceMemory && navigator.deviceMemory < 4) || navigator.connection?.saveData;
+  return coarse || weak ? 'low' : 'high';
 }
 
 // Загрузка модели с честным прогрессом. Итог известен из манифеста сборки
@@ -115,6 +118,46 @@ function webglAvailable() {
 // Отдать главный поток странице между тяжёлыми шагами загрузки.
 const pause = () => new Promise(resolve => (globalThis.scheduler?.yield ? scheduler.yield().then(resolve) : setTimeout(resolve, 0)));
 const easeInOut = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const smoothRange = (v, a, b) => { const x = MathUtils.clamp((v - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
+
+// Лак с состояниями глав v1: uClean — пыль и разводы (0 — как на фото hero v2,
+// 1 — чистая машина), uFinish — риски полировки (0 — «паутинка», 1 — ровное
+// отражение). Грязь гуще внизу кузова и пятнами; на грязи верхний слой лака
+// почти не блестит. Координаты — мировые, в метрах.
+const PAINT_VERTEX = [
+  ['#include <common>', '#include <common>\nvarying vec3 vSurface;\nvarying float vUp;'],
+  ['#include <begin_vertex>', '#include <begin_vertex>\nvSurface = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvUp = normalize(mat3(modelMatrix) * objectNormal).y;'],
+];
+const PAINT_FRAGMENT = [
+  ['#include <common>', `#include <common>
+uniform float uClean;
+uniform float uFinish;
+varying vec3 vSurface;
+varying float vUp;
+float mwHash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
+float mwNoise(vec3 p) {
+  vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(mwHash(i), mwHash(i + vec3(1, 0, 0)), f.x), mix(mwHash(i + vec3(0, 1, 0)), mwHash(i + vec3(1, 1, 0)), f.x), f.y),
+             mix(mix(mwHash(i + vec3(0, 0, 1)), mwHash(i + vec3(1, 0, 1)), f.x), mix(mwHash(i + vec3(0, 1, 1)), mwHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
+}`],
+  ['#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+// Шум и кольца считаем, только когда они видны: на чистом отполированном
+// лаке (большая часть глав) пиксель обходится без них — крупные планы дешевле.
+if (uFinish < 0.999) {
+  float mwRings = pow(max(0.0, sin(length(vSurface.xz * 1.7 - vec2(0.2, 0.9)) * 1650.0)), 24.0);
+  roughnessFactor = clamp(roughnessFactor + (1.0 - uFinish) * (0.18 + 0.13 * mwRings), 0.035, 1.0);
+}
+float mwSpots = uClean < 0.999 ? mwNoise(vSurface * 7.0) * 0.6 + mwNoise(vSurface * 31.0) * 0.4 : 0.0;
+// Сверху (капот, крыша) грязи нет: даже немного серого в линейном цвете
+// делает насыщенный бордо розовым. Пыль — на вертикальных бортах снизу и сзади.
+float mwDirt = (1.0 - smoothstep(0.35, 0.7, vUp)) * (1.0 - uClean) * clamp(smoothstep(0.72, 0.28, vSurface.y) + max(vSurface.z, 0.0) * 0.12 * smoothstep(0.95, 0.6, vSurface.y), 0.0, 1.0) * (0.5 + 0.8 * mwSpots);
+mwDirt = clamp(mwDirt, 0.0, 1.0);
+diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.18, 0.16), mwDirt * 0.7);
+roughnessFactor = mix(roughnessFactor, 0.62, mwDirt);`],
+  ['#include <lights_physical_fragment>', `#include <lights_physical_fragment>
+material.clearcoat *= 1.0 - mwDirt * 0.8;
+material.clearcoatRoughness = mix(material.clearcoatRoughness, 0.45, mwDirt);`],
+];
 const DEG = Math.PI / 180;
 
 // Материалы в духе клуба: глубокий бордовый лак с прозрачным верхним слоем,
@@ -122,7 +165,7 @@ const DEG = Math.PI / 180;
 function restyle(car, {anisotropy}) {
   const replaced = [];
   const paint = new MeshPhysicalMaterial({
-    name: 'meatwash-oxblood', color: new Color('#420912'), metalness: 0.3, roughness: 0.26,
+    name: 'meatwash-oxblood', color: new Color('#4a0911'), metalness: 0.1, roughness: 0.24,
     clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.25,
   });
   const glass = new MeshPhysicalMaterial({
@@ -133,13 +176,22 @@ function restyle(car, {anisotropy}) {
     name: 'meatwash-lens', color: new Color('#ffffff'), metalness: 0, roughness: 0.04,
     transparent: true, opacity: 0.12, envMapIntensity: 1.3, depthWrite: false, clearcoat: 1,
   });
+  const fx = {clean: {value: 0}, finish: {value: 1}};
+  paint.onBeforeCompile = shader => {
+    shader.uniforms.uClean = fx.clean; shader.uniforms.uFinish = fx.finish;
+    for (const [a, b] of PAINT_VERTEX) shader.vertexShader = shader.vertexShader.replace(a, b);
+    for (const [a, b] of PAINT_FRAGMENT) shader.fragmentShader = shader.fragmentShader.replace(a, b);
+  };
+  paint.customProgramCacheKey = () => 'meatwash-paint-v3';
+  let paintMesh = null;
   car.traverse(o => {
     if (!o.isMesh) return;
     const m = o.material;
     if (m.map) m.map.anisotropy = anisotropy;
+    if (m.name === 'paint') paintMesh = o;
     switch (m.name) {
       case 'paint':
-        paint.aoMap = m.aoMap; paint.aoMapIntensity = 0.8;
+        paint.aoMap = m.aoMap; paint.aoMapIntensity = 0.5;
         o.material = paint; replaced.push(m); break;
       case 'glass': o.material = glass; o.renderOrder = 2; replaced.push(m); break;
       case '930_lights_refraction': o.material = lens; o.renderOrder = 2; replaced.push(m); break;
@@ -151,7 +203,7 @@ function restyle(car, {anisotropy}) {
       case '930_plastics': m.color.set('#6b625a'); break;
     }
   });
-  return {paint, replaced};
+  return {paint, glass, fx, paintMesh, replaced};
 }
 
 export async function mount({
@@ -191,8 +243,9 @@ export async function mount({
   // Обещание, которое выполняется при отмене: разбор и компиляцию после
   // dispose() не ждём — они могут не завершиться вовсе.
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
-  let disposed = false, raf = 0, room = null, environment = null, restyled = null;
+  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, water = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
+  let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'porsche3d__canvas';
@@ -212,7 +265,11 @@ export async function mount({
   }
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.2;
+  renderer.toneMappingExposure = 1.35;
+  renderer.transmissionResolutionScale = 0.5;
+  // Синхронные проверки шейдеров (getProgramInfoLog) давали длинные задачи
+  // при подготовке сцены; включаются для отладки параметром ?p3d-debug.
+  renderer.debug.checkShaderErrors = new URLSearchParams(location.search).has('p3d-debug');
   const maxDpr = low ? 1.5 : 1.75;
 
   const scene = new Scene();
@@ -224,11 +281,14 @@ export async function mount({
     disposed = true;
     if (active === handle) active = null;
     cancelAnimationFrame(raf); raf = 0;
+    clearTimeout(crispTimer);
     loading.abort();
     listeners.abort();
     if (firstFrame) { const done = firstFrame; firstFrame = null; done(); }
     intersection?.disconnect(); resize?.disconnect();
     container.classList.remove('is-dragging');
+    water?.dispose();
+    interior?.dispose();
     release(scene, restyled?.replaced);
     room?.dispose();
     environment?.dispose();
@@ -281,6 +341,10 @@ export async function mount({
     mark('parse');
     scene.add(gltf.scene);
     restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, renderer.capabilities.getMaxAnisotropy())});
+    await pause(); if (disposed) bail();
+    // Салон v1: кожаный кокпит вместо упрощённой «ванны» модели.
+    interior = buildInterior(gltf.scene);
+    scene.add(interior.group);
     container.appendChild(canvas);
   } catch (error) {
     const wasCancelled = disposed || signal?.aborted || error?.name === 'AbortError';
@@ -303,7 +367,9 @@ export async function mount({
   const state = viewState(startView);
   const inset = {top: 0, right: 0, bottom: 0, left: 0};
   let width = 0, height = 0, viewName = startView;
-  function frame() {
+  // Кадр рисует tick(): там состояние ручного ракурса смешивается с путём по главам.
+  function frame() { invalidate(); }
+  function project(state) {
     if (!width || !height) return;
     const k = state.fit;
     const l = inset.left * k, r = inset.right * k, t = inset.top * k, b = inset.bottom * k;
@@ -320,9 +386,103 @@ export async function mount({
     const w = Math.max(1, Math.round(rect.width)), h = Math.max(1, Math.round(rect.height));
     if (w === width && h === height) return;
     width = w; height = h;
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, maxDpr));
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, maxDpr) * dprScale);
     renderer.setSize(width, height, false);
     frame(); invalidate();
+  }
+
+  // ── Путь по главам (прокрутка, как в v1.0) ─────────────────────────────────
+  // setProgress(p, {camera}) — доля прокрутки сцены. camera: true — камера и
+  // эффекты глав ведутся прокруткой; на p≈0 остаётся ручной ракурс (показ,
+  // «Общий вид / Кузов / Диски»), дальше он плавно передаёт камеру пути.
+  const stops = SCROLL_STOPS.map(stop => stop.view ? viewState(stop.view) : {p: new Vector3(...stop.p), t: new Vector3(...stop.t), fov: stop.fov, focus: [...stop.focus], span: stop.span, fit: 1});
+  const scroll = {p: 0, camera: false};
+  const pathState = {p: new Vector3(), t: new Vector3(), fov: 0, focus: [0.5, 0.5], span: 0, fit: 0};
+  const view = {p: new Vector3(), t: new Vector3(), fov: 0, focus: [0.5, 0.5], span: 0, fit: 0};
+  const arc = (a, b, k, out) => {
+    const pa = polar(a.p), pb = polar(b.p);
+    let da = pb.a - pa.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
+    const angle = pa.a + da * k, r = MathUtils.lerp(pa.r, pb.r, k);
+    const lift = Math.sin(Math.PI * k) * Math.min(0.5, Math.abs(da) * 0.25);
+    out.p.set(center.x + Math.sin(angle) * r, MathUtils.lerp(pa.y, pb.y, k) + lift, center.z + Math.cos(angle) * r);
+    out.t.lerpVectors(a.t, b.t, k);
+    out.fov = MathUtils.lerp(a.fov, b.fov, k);
+    out.focus = [MathUtils.lerp(a.focus[0], b.focus[0], k), MathUtils.lerp(a.focus[1], b.focus[1], k)];
+    const sa = a.span || b.span, sb = b.span || a.span;
+    out.span = MathUtils.lerp(sa, sb, k);
+    out.fit = MathUtils.lerp(a.fit, b.fit, k);
+    return out;
+  };
+  function pathAt(p) {
+    const raw = MathUtils.clamp(p, 0, 1) * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(raw));
+    return arc(stops[i], stops[i + 1], smoothRange(raw - i, 0.13, 0.87), pathState);
+  }
+  // Доля пути в кадре: 0 — ручной ракурс первого экрана, 1 — путь по главам.
+  const pathWeight = () => scroll.camera ? smoothRange(scroll.p, 0, 0.035) : 0;
+  function resolveView() {
+    const w = pathWeight();
+    if (w <= 0) return Object.assign(view, {p: view.p.copy(state.p), t: view.t.copy(state.t), fov: state.fov, focus: [...state.focus], span: state.span, fit: state.fit});
+    pathAt(scroll.p);
+    if (w >= 1) return Object.assign(view, {p: view.p.copy(pathState.p), t: view.t.copy(pathState.t), fov: pathState.fov, focus: [...pathState.focus], span: pathState.span, fit: pathState.fit});
+    view.p.lerpVectors(state.p, pathState.p, w); view.t.lerpVectors(state.t, pathState.t, w);
+    view.fov = MathUtils.lerp(state.fov, pathState.fov, w);
+    view.focus = [MathUtils.lerp(state.focus[0], pathState.focus[0], w), MathUtils.lerp(state.focus[1], pathState.focus[1], w)];
+    view.span = MathUtils.lerp(state.span || pathState.span, pathState.span || state.span, w);
+    view.fit = MathUtils.lerp(state.fit, pathState.fit, w);
+    return view;
+  }
+
+  // ── Эффекты глав и работ гаража ───────────────────────────────────────────
+  // По прокрутке — как в v1: 01 грязь смывается, 02 стекло растворяется,
+  // 03 риски исчезают и по борту идёт свет, 04 капли. Работа гаража играет
+  // свой эффект после того, как камера доехала. Без прокрутки и гаража —
+  // пыльная машина, как на фото первого экрана.
+  let service = null;
+  function effectsAt(p) {
+    const polish = smoothRange(p, 0.535, 0.653);
+    const polishChapter = smoothRange(p, 0.47, 0.52) * (1 - smoothRange(p, 0.68, 0.70));
+    return {
+      clean: smoothRange(p, 0.095, 0.245),
+      finish: 1 - polishChapter * (1 - polish),
+      polish, sweep: polishChapter,
+      inside: smoothRange(p, 0.30, 0.37) * (1 - smoothRange(p, 0.44, 0.50)),
+      water: p,
+    };
+  }
+  function serviceEffects() {
+    const e = reducedMotion ? 1 : smoothRange(service.time / service.duration, 0, 1);
+    const base = {clean: 1, finish: 1, polish: 1, sweep: 0, inside: 0, water: 0};
+    if (service.kind === 'base') return {...base, clean: 0};
+    if (service.kind === 'wash') return {...base, clean: e};
+    if (service.kind === 'gloss') return {...base, finish: e, polish: e, sweep: Math.sin(Math.PI * Math.min(1, e * 1.05)) * 0.9 + 0.1};
+    if (service.kind === 'water') return {...base, water: 0.72 + e * 0.14};
+    if (service.kind === 'interior') return {...base, inside: e};
+    return base;
+  }
+  function applyEffects() {
+    if (!restyled) return;
+    const f = service ? serviceEffects() : pathWeight() > 0 ? effectsAt(scroll.p) : {clean: 0, finish: 1, polish: 0, sweep: 0, inside: 0, water: 0};
+    restyled.fx.clean.value = f.clean;
+    restyled.fx.finish.value = f.finish;
+    restyled.paint.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
+    restyled.paint.clearcoatRoughness = MathUtils.lerp(0.035, 0.018, f.polish);
+    restyled.glass.opacity = 0.55 * (1 - f.inside * 0.985);
+    if (room?.sweep) {
+      room.sweep.intensity = f.sweep * 7;
+      room.sweep.position.z = MathUtils.lerp(1.9, -1.9, f.polish);
+    }
+    // Глава 04: пятно света на капоте приглушается — капли читаются бликами на тёмном лаке.
+    if (room?.top) {
+      const wet = smoothRange(f.water, 0.7, 0.74) * (1 - smoothRange(f.water, 0.9, 0.93));
+      room.top.intensity = 14 * (1 - 0.75 * wet);
+    }
+    water?.update(f.water);
+  }
+  function stepService(dt) {
+    if (!service || move) return false;
+    if (service.time >= service.duration) return false;
+    service.time = Math.min(service.duration, service.time + dt);
+    return true;
   }
 
   // Параллакс за мышью (±1,5° по горизонтали, ±0,6° по вертикали): отражения
@@ -356,7 +516,7 @@ export async function mount({
   }
   function goTo(name, {instant = reducedMotion, duration = 1.25} = {}) {
     if (!VIEWS[name]) throw new Porsche3DError('view', `Нет ракурса ${name}`);
-    tour = null; drift = null; driftNext = null; spin = null; viewName = name;
+    tour = null; drift = null; driftNext = null; spin = null; viewName = name; service = null;
     if (instant) { move = null; Object.assign(state, viewState(name)); frame(); }
     else startMove(name, duration);
     onViewChange?.(name);
@@ -413,7 +573,7 @@ export async function mount({
     return !!drift;
   }
   function stepLean(dt) {
-    const on = parallaxOn && !tour && !drag;
+    const on = parallaxOn && !tour && !drag && pathWeight() < 0.01;
     const tx = on ? pointer.x : 0, ty = on ? pointer.y : 0;
     const k = 1 - Math.pow(1 - 0.06, dt * 60);
     lean.x += (tx - lean.x) * k; lean.y += (ty - lean.y) * k;
@@ -456,7 +616,7 @@ export async function mount({
   }
   if (interactive) {
     canvas.addEventListener('pointerdown', e => {
-      if (drag || e.button > 0) return;
+      if (drag || e.button > 0 || pathWeight() > 0.01) return;
       const mouse = e.pointerType === 'mouse';
       drag = {id: e.pointerId, type: e.pointerType, x: e.clientX, y: e.clientY, lastX: e.clientX, lastY: e.clientY, mode: mouse ? 'rotate' : 'wait', moved: 0, vAz: 0, vPol: 0, taken: false};
       spin = null;
@@ -504,28 +664,65 @@ export async function mount({
   // цикл стоит, показ на паузе.
   // compiled: до конца компиляции шейдеров не рисуем — первый render() ждал бы
   // сборку всех программ синхронно и блокировал страницу на секунду и больше.
-  let onScreen = true, frames = 0, last = 0, compiled = false;
+  // inTick: пока идёт кадр, invalidate() не заказывает новый — продолжение
+  // решает сам tick(); иначе кадры множились (каждый заказывал по два).
+  let onScreen = true, frames = 0, last = 0, compiled = false, inTick = false;
+  // Разрешение по нагрузке: пока камера движется, а кадры идут дольше ~30 мс
+  // (слабая видеокарта, крупный план лака на весь экран), сцена рисуется в
+  // меньшем разрешении (до 60 %); остановилась — последний кадр снова чёткий.
+  function setScale(next) {
+    if (next === dprScale) return;
+    dprScale = next;
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, maxDpr) * dprScale);
+    renderer.setSize(width, height, false);
+  }
+  function adaptResolution(now) {
+    const gap = prevRenderAt ? now - prevRenderAt : 0;
+    prevRenderAt = now;
+    if (gap > 0 && gap < 120) {
+      slowFrames = gap > 30 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
+      if (slowFrames >= 10 && dprScale > 0.6) { setScale(Math.max(0.6, +(dprScale - 0.15).toFixed(2))); slowFrames = 0; }
+    }
+    clearTimeout(crispTimer);
+    if (dprScale < 1) crispTimer = setTimeout(() => { if (disposed) return; setScale(1); slowFrames = 0; prevRenderAt = 0; invalidate(); }, 300);
+  }
   const suspended = new Set();
   const eye = new Vector3();
   function running() { return compiled && !disposed && onScreen && !document.hidden && !suspended.size; }
   function stop() { cancelAnimationFrame(raf); raf = 0; last = 0; }
-  function invalidate() { if (!raf && running()) raf = requestAnimationFrame(tick); }
+  function invalidate() { if (!raf && !inTick && running()) raf = requestAnimationFrame(tick); }
   function tick(now) {
     raf = 0;
-    const dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+    inTick = true;
+    try { render(now); } finally { inTick = false; }
+  }
+  function render(now) {
+    // Реальное время (не больше 0,25 с за кадр): показ длится ~7 с и при низком FPS.
+    const dt = last ? Math.min(0.25, (now - last) / 1000) : 1 / 60;
     last = now;
     let busy = stepTour(dt);
     if (!tour) busy = stepMove(dt) || busy;
     busy = stepDrift(dt) || busy;
     busy = stepSpin(dt) || busy;
     busy = stepLean(dt) || busy;
+    busy = stepService(dt) || busy;
+    // Ушли от первого экрана — ручной ракурс сбрасывается на hero: вернувшись
+    // наверх, человек видит общий вид, совпадающий с фото.
+    if (pathWeight() >= 1 && viewName !== 'hero') {
+      tour = null; move = null; drift = null; driftNext = null; spin = null;
+      Object.assign(state, viewState('hero')); viewName = 'hero'; onViewChange?.('hero');
+    }
+    const cam = resolveView();
+    project(cam);
+    applyEffects();
     // Параллакс — поворот вокруг точки взгляда на доли градуса.
-    offset.subVectors(state.p, state.t);
+    offset.subVectors(cam.p, cam.t);
     const r = offset.length();
     const az = Math.atan2(offset.x, offset.z) - lean.x * 1.5 * DEG;
     const pol = Math.acos(MathUtils.clamp(offset.y / r, -1, 1)) + lean.y * 0.6 * DEG;
-    eye.set(state.t.x + r * Math.sin(pol) * Math.sin(az), state.t.y + r * Math.cos(pol), state.t.z + r * Math.sin(pol) * Math.cos(az));
-    camera.position.copy(eye); camera.lookAt(state.t);
+    eye.set(cam.t.x + r * Math.sin(pol) * Math.sin(az), cam.t.y + r * Math.cos(pol), cam.t.z + r * Math.sin(pol) * Math.cos(az));
+    camera.position.copy(eye); camera.lookAt(cam.t);
+    adaptResolution(now);
     renderer.render(scene, camera);
     frames++;
     if (firstFrame) { const done = firstFrame; firstFrame = null; done(); }
@@ -543,7 +740,8 @@ export async function mount({
   fine.addEventListener('change', () => { parallaxOn = !reducedMotion && fine.matches; invalidate(); }, on);
 
   measure();
-  frame();
+  project(state);
+  applyEffects();
   camera.position.copy(state.p); camera.lookAt(state.t);
   try {
     // Шейдеры собираются параллельно (KHR_parallel_shader_compile), готовность
@@ -584,6 +782,25 @@ export async function mount({
   await new Promise(resolve => { firstFrame = resolve; last = 0; invalidate(); });
   if (disposed) throw lost || abortError();
   mark('firstFrame');
+  const idle = globalThis.requestIdleCallback || (fn => setTimeout(fn, 200));
+  idle(() => {
+    if (disposed || !restyled?.paintMesh) return;
+    water = createWater(scene, restyled.paintMesh, {low});
+    // Шейдер капель собирается заранее, параллельно — без рывка в главе 04
+    // (compile обходит только видимые объекты — на время сборки капли видимы).
+    const beads = scene.getObjectByName('water-beads');
+    if (beads) {
+      beads.visible = true; renderer.compile(scene, camera);
+      // Проход transmission собирает свои варианты шейдеров всех материалов —
+      // прогреваем их сейчас, в простое, кадром в крошечную цель, а не при
+      // первом появлении капель посреди прокрутки.
+      const warm = new WebGLRenderTarget(4, 4);
+      renderer.setRenderTarget(warm); renderer.render(scene, camera); renderer.setRenderTarget(null);
+      warm.dispose();
+      beads.visible = false;
+    }
+    applyEffects(); invalidate();
+  }, {timeout: 1500});
   if (fadeIn) canvas.style.opacity = '1';
   onFirstFrame?.();
 
@@ -615,6 +832,7 @@ export async function mount({
       const name = SERVICE_VIEWS[id];
       if (disposed || !name) return false;
       goTo(name);
+      service = {kind: SERVICE_FX[id] || 'clean', time: 0, duration: 2.6};
       // Полировка: доехав до борта, камера медленно ведёт вдоль него —
       // отражения скользят по лаку.
       if (id === 'polish' && !reducedMotion) {
@@ -624,6 +842,20 @@ export async function mount({
         if (!move) { drift = driftNext; driftNext = null; invalidate(); }
       }
       return true;
+    },
+    // Прокрутка сцены: p 0..1; camera — вести камеру и эффекты глав прокруткой.
+    setProgress(p, {camera = true} = {}) {
+      const next = MathUtils.clamp(p, 0, 1);
+      if (next === scroll.p && camera === scroll.camera) return;
+      if (camera && next > 0 && tour) { tour = null; onViewChange?.('free'); }
+      scroll.p = next; scroll.camera = camera;
+      invalidate();
+    },
+    // Гараж без выбранной работы: общий вид, пыльная машина (как в v1).
+    showBase() {
+      if (disposed) return;
+      goTo('overview');
+      service = {kind: 'base', time: 0, duration: 0.01};
     },
     // Свободная часть контейнера (px): шапка, панель гаража, нижняя кнопка.
     setSafeArea(next = {}) {
