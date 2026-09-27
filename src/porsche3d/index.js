@@ -325,7 +325,7 @@ export async function mount({
 
     // Шаги с паузами между ними: страница продолжает прокручиваться.
     await pause(); if (disposed) bail();
-    environment = buildEnvironment(scene, renderer);
+    environment = buildEnvironment(scene, renderer, {low});
     await pause(); if (disposed) bail();
     room = buildRoom(scene, {low});
     await pause(); if (disposed) bail();

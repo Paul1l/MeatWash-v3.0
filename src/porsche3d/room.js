@@ -92,7 +92,7 @@ function contactShadow() {
 
 // Окружение для отражений: тёплая комната, длинные софтбоксы над машиной
 // (они и дают блики на капоте и крыше), тёмные панели по кругу.
-function environment(renderer) {
+function environment(renderer, low) {
   const env = new Scene();
   env.background = new Color('#1a130e');
   const own = [];
@@ -119,7 +119,9 @@ function environment(renderer) {
   // Передний источник крупнее и ярче: его отражают хромированные фары.
   add(new PlaneGeometry(2.2, 2.4), '#ffdcb0', 3.2, m => { m.position.set(-2, 1.2, -7); m.material.side = 2; });
   const pmrem = new PMREMGenerator(renderer);
-  const target = pmrem.fromScene(env, 0.02, 0.1, 30);
+  // Телефон: карта отражений 128 вместо 256 — вчетверо меньше работы при
+  // подготовке сцены, на маленьком экране разницы не видно.
+  const target = pmrem.fromScene(env, 0.02, 0.1, 30, {size: low ? 128 : 256});
   pmrem.dispose();
   own.forEach(o => o.dispose());
   return target;
@@ -127,8 +129,8 @@ function environment(renderer) {
 
 // Окружение для отражений отдельно от комнаты: mount() делает между ними
 // паузу, чтобы ни один шаг не занимал главный поток надолго.
-export function buildEnvironment(scene, renderer) {
-  const target = environment(renderer);
+export function buildEnvironment(scene, renderer, {low = false} = {}) {
+  const target = environment(renderer, low);
   scene.environment = target.texture;
   scene.environmentIntensity = 1.0;
   scene.background = new Color('#0b0806');

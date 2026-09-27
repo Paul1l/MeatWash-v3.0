@@ -21,6 +21,12 @@ const HINT_KEY = 'p3d-hint-shown';
 
 const smooth = (v, a, b) => { const x = Math.min(1, Math.max(0, (v - a) / (b - a))); return x * x * (3 - 2 * x); };
 
+// Отказ WebGL (API есть, контекст не создаётся) запоминается на время визита:
+// после него кнопки 3D нет, бандл повторно не качается.
+const DENIED_KEY = 'p3d-webgl-denied';
+let webglDenied = false;
+try { webglDenied = sessionStorage.getItem(DENIED_KEY) === '1'; } catch { /* приватный режим */ }
+
 export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
   const root = document.getElementById('p3d');
   const stage = document.getElementById('p3d-stage');
@@ -28,7 +34,7 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
   if (!root || !stage) return null;
   const $ = s => root.querySelector(s);
   const start = $('[data-p3d="start"]'), label = $('.p3d__label'), pct = $('.p3d__pct'), bar = $('.p3d__bar');
-  const cancelBtn = $('[data-p3d="cancel"]'), retry = $('[data-p3d="retry"]'), msg = $('.p3d__msg');
+  const cancelBtn = $('[data-p3d="cancel"]'), retry = $('[data-p3d="retry"]'), msg = $('.p3d__msg'), dismiss = $('[data-p3d="dismiss"]');
   const tourBtn = $('[data-p3d="tour"]'), tourTxt = tourBtn.querySelector('.p3d__txt'), exit = $('[data-p3d="exit"]');
   const views = [...root.querySelectorAll('[data-p3d-view]')], hint = $('.p3d__hint');
   // «Обычный вид» в главах: ряд первого экрана там скрыт вместе с .hero-bar.
@@ -57,7 +63,7 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
   // Модуль грузится после страницы (main.js). До нажатия проверяем WebGL 2
   // только по наличию API (класс p3d-capable из <head>): пробный контекст стоил
   // до 0,7 с на свежем браузере. Настоящая проверка — в mount() по нажатию.
-  if (!('WebGL2RenderingContext' in window)) {
+  if (!('WebGL2RenderingContext' in window) || webglDenied) {
     document.documentElement.classList.remove('p3d-capable');
     return null;
   }
@@ -194,7 +200,7 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
     }
   }
   async function load(owner) {
-    if (job) return;
+    if (job || webglDenied) return;
     // Сцена ещё гаснет после «Обычного вида» — просто возвращаем её.
     if (scene) {
       clearTimeout(disposeTimer);
@@ -256,7 +262,8 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
         if (mode === 'loading') setMode('idle'); else render();
         return;
       }
-      console.warn('3D-режим не запустился, остаётся фото.', error);
+      // Нет WebGL — ожидаемый отказ, не ошибка сайта.
+      if (error?.code !== 'webgl') console.warn('3D-режим не запустился, остаётся фото.', error);
       fail(error);
     }
   }
@@ -322,16 +329,30 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
     // Браузер знает WebGL 2, но контекст не создаётся (видеокарта в чёрном
     // списке и т. п.): повторять бесполезно.
     const noWebgl = error?.code === 'webgl';
+    if (noWebgl) {
+      webglDenied = true;
+      try { sessionStorage.setItem(DENIED_KEY, '1'); } catch { /* приватный режим */ }
+    }
     const text = lostContext ? '3D остановилось' : noWebgl ? '3D недоступно на этом устройстве' : 'Не удалось загрузить 3D';
     msg.textContent = text;
     retry.hidden = noWebgl;
     const focus = document.activeElement;
     if (cfg.want) { cfg.want = false; cfg.error = true; }
-    if (cfg.msg) cfg.msg.textContent = lostContext ? '3D остановилось. Нажмите ещё раз.' : 'Не удалось загрузить 3D. Нажмите ещё раз.';
+    if (cfg.msg) cfg.msg.textContent = lostContext ? '3D остановилось. Нажмите ещё раз.' : noWebgl ? '3D недоступно на этом устройстве.' : 'Не удалось загрузить 3D. Нажмите ещё раз.';
+    // Без WebGL переключатель в гараже бесполезен: остаётся только сообщение.
+    if (noWebgl && cfg.button) {
+      if (cfg.button === document.activeElement) cfg.panel?.focus({preventScroll: true});
+      cfg.button.hidden = true;
+    }
     if (mode === 'loading' || mode === 'on') {
       setMode('error');
-      if (focus === start || focus === exit || root.contains(focus) || focus === document.body) retry.focus({preventScroll: true});
-    } else render();
+      // «Повторить» без WebGL скрыта — фокус на «×» (скрыть сообщение).
+      if (focus === start || focus === exit || root.contains(focus) || focus === document.body) (noWebgl ? dismiss : retry).focus({preventScroll: true});
+    } else {
+      // Отказ пришёл из гаража: кнопку первого экрана тоже убираем.
+      if (noWebgl) { root.hidden = true; document.documentElement.classList.remove('p3d-capable'); }
+      render();
+    }
     say(lostContext ? '3D остановилось, показываем фото.' : noWebgl ? '3D недоступно на этом устройстве. Остаётся фото.' : 'Не удалось загрузить 3D. Остаётся фото.');
   }
 
@@ -384,7 +405,17 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
     if (action === 'start') { if (mode === 'idle') load('hero'); return; }
     if (action === 'cancel') { cancel(); start.focus({preventScroll: true}); return; }
     if (action === 'retry') { setMode('idle'); load('hero'); return; }
-    if (action === 'dismiss') { goIdle(); return; }
+    if (action === 'dismiss') {
+      // Без WebGL ряд убирается совсем, как в браузере без API; фокус — на
+      // соседнюю ссылку первого экрана.
+      if (webglDenied) {
+        root.hidden = true;
+        document.documentElement.classList.remove('p3d-capable');
+        document.querySelector('.hero__more')?.focus({preventScroll: true});
+        return;
+      }
+      goIdle(); return;
+    }
     if (action === 'exit') {
       if (performance.now() < exitArmedAt && e.detail > 0) return;
       goIdle(); say('Обычный вид.'); return;
@@ -450,7 +481,7 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
     garage: {
       bind({button, message, panel, refresh}) {
         cfg.button = button; cfg.msg = message; cfg.panel = panel; cfg.refresh = refresh;
-        if (root.hidden && !('WebGL2RenderingContext' in window)) button.hidden = true;
+        if (webglDenied || !('WebGL2RenderingContext' in window)) button.hidden = true;
         button.addEventListener('click', () => {
           if (cfg.disabled || performance.now() < guardUntil) return;
           guardUntil = performance.now() + GUARD_MS;
