@@ -245,7 +245,7 @@ export async function mount({
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
   let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, water = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
-  let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0;
+  let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'porsche3d__canvas';
@@ -267,6 +267,9 @@ export async function mount({
   renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.35;
   renderer.transmissionResolutionScale = 0.5;
+  // Запрос к видеокарте, пока она свободна: позже, после окружения, он ждал
+  // её очередь ~150 мс.
+  const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
   // Синхронные проверки шейдеров (getProgramInfoLog) давали длинные задачи
   // при подготовке сцены; включаются для отладки параметром ?p3d-debug.
   renderer.debug.checkShaderErrors = new URLSearchParams(location.search).has('p3d-debug');
@@ -340,10 +343,11 @@ export async function mount({
     if (disposed) { if (gltf) release(gltf.scene); bail(); }
     mark('parse');
     scene.add(gltf.scene);
-    restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, renderer.capabilities.getMaxAnisotropy())});
+    restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, maxAnisotropy)});
     await pause(); if (disposed) bail();
     // Салон v1: кожаный кокпит вместо упрощённой «ванны» модели.
-    interior = buildInterior(gltf.scene);
+    interior = await buildInterior(gltf.scene, pause);
+    if (disposed) bail();
     scene.add(interior.group);
     container.appendChild(canvas);
   } catch (error) {
@@ -476,7 +480,7 @@ export async function mount({
       const wet = smoothRange(f.water, 0.7, 0.74) * (1 - smoothRange(f.water, 0.9, 0.93));
       room.top.intensity = 14 * (1 - 0.75 * wet);
     }
-    water?.update(f.water);
+    water?.update(warmed ? f.water : 0);
   }
   function stepService(dt) {
     if (!service || move) return false;
@@ -670,6 +674,21 @@ export async function mount({
   // Разрешение по нагрузке: пока камера движется, а кадры идут дольше ~30 мс
   // (слабая видеокарта, крупный план лака на весь экран), сцена рисуется в
   // меньшем разрешении (до 60 %); остановилась — последний кадр снова чёткий.
+  // Ждёт, пока программы соберутся (KHR_parallel_shader_compile), не блокируя поток.
+  // Пока шейдеры капель не собраны, капли не показываем: их первый кадр
+  // иначе ждал бы сборку синхронно.
+  let warmed = false;
+  function waitPrograms(programs) {
+    const pending = new Set(programs.filter(Boolean));
+    return new Promise(resolve => {
+      const check = () => {
+        if (disposed) return resolve();
+        for (const program of pending) if (program.isReady()) pending.delete(program);
+        if (pending.size) setTimeout(check, 32); else resolve();
+      };
+      check();
+    });
+  }
   function setScale(next) {
     if (next === dprScale) return;
     dprScale = next;
@@ -679,12 +698,16 @@ export async function mount({
   function adaptResolution(now) {
     const gap = prevRenderAt ? now - prevRenderAt : 0;
     prevRenderAt = now;
-    if (gap > 0 && gap < 120) {
+    // Только в главах (крупные планы лака на весь экран): на первом экране
+    // кадр лёгкий, а смена разрешения сама стоит ~100 мс.
+    if (gap > 0 && gap < 120 && pathWeight() > 0.5) {
       slowFrames = gap > 30 ? slowFrames + 1 : Math.max(0, slowFrames - 1);
-      if (slowFrames >= 10 && dprScale > 0.6) { setScale(Math.max(0.6, +(dprScale - 0.15).toFixed(2))); slowFrames = 0; }
+      // Смена разрешения — перевыделение буфера (~50–100 мс): не чаще раза в 3 с,
+      // сразу на 0,7, а полное — после секунды покоя.
+      if (slowFrames >= 12 && dprScale > 0.7 && now - scaledAt > 3000) { setScale(0.7); scaledAt = now; slowFrames = 0; }
     }
     clearTimeout(crispTimer);
-    if (dprScale < 1) crispTimer = setTimeout(() => { if (disposed) return; setScale(1); slowFrames = 0; prevRenderAt = 0; invalidate(); }, 300);
+    if (dprScale < 1) crispTimer = setTimeout(() => { if (disposed) return; setScale(1); slowFrames = 0; prevRenderAt = 0; invalidate(); }, 1000);
   }
   const suspended = new Set();
   const eye = new Vector3();
@@ -697,8 +720,9 @@ export async function mount({
     try { render(now); } finally { inTick = false; }
   }
   function render(now) {
-    // Реальное время (не больше 0,25 с за кадр): показ длится ~7 с и при низком FPS.
-    const dt = last ? Math.min(0.25, (now - last) / 1000) : 1 / 60;
+    // Реальное время: показ длится ~7 с при любом FPS (секунда — предел
+    // на случай паузы, например после скрытой вкладки).
+    const dt = last ? Math.min(1, (now - last) / 1000) : 1 / 60;
     last = now;
     let busy = stepTour(dt);
     if (!tour) busy = stepMove(dt) || busy;
@@ -739,6 +763,7 @@ export async function mount({
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else invalidate(); }, on);
   fine.addEventListener('change', () => { parallaxOn = !reducedMotion && fine.matches; invalidate(); }, on);
 
+  await pause(); if (disposed) throw lost || abortError();
   measure();
   project(state);
   applyEffects();
@@ -746,7 +771,15 @@ export async function mount({
   try {
     // Шейдеры собираются параллельно (KHR_parallel_shader_compile), готовность
     // проверяем сами: compileAsync из three после dispose() падает в таймере.
-    const pending = renderer.compile(scene, camera);
+    // Программы создаются по нескольку мешей за шаг — на стороне JS это
+    // 3–5 мс на программу, все сразу давали задачу ~100 мс.
+    const pending = new Set();
+    const meshes = [];
+    scene.traverseVisible(o => { if (o.isMesh || o.isLineSegments) meshes.push(o); });
+    for (const [i, mesh] of meshes.entries()) {
+      for (const m of renderer.compile(mesh, camera, scene)) pending.add(m);
+      if (i % 4 === 3) { await pause(); if (disposed) throw lost || abortError(); }
+    }
     await new Promise(resolve => {
       const check = () => {
         if (disposed) return resolve();
@@ -779,25 +812,52 @@ export async function mount({
   // проявляем canvas — до этого виден обычный фон страницы. Если сцена вне
   // экрана или вкладка скрыта, кадр нарисуется, когда станет видно.
   compiled = true;
+  // Первый кадр рисует все объекты без отсечения по камере: видеодрайвер
+  // (ANGLE) доделывает шейдер при первой отрисовке объекта, и без этого
+  // показ спотыкался, когда в кадр впервые попадали диск, салон, фары.
+  // Canvas в этот момент ещё не виден (проявляет страница после onFirstFrame).
+  const culled = [];
+  scene.traverse(o => { if ((o.isMesh || o.isLineSegments) && o.frustumCulled && o.name !== 'water-beads') { o.frustumCulled = false; culled.push(o); } });
   await new Promise(resolve => { firstFrame = resolve; last = 0; invalidate(); });
+  for (const o of culled) o.frustumCulled = true;
   if (disposed) throw lost || abortError();
   mark('firstFrame');
   const idle = globalThis.requestIdleCallback || (fn => setTimeout(fn, 200));
-  idle(() => {
+  idle(async () => {
     if (disposed || !restyled?.paintMesh) return;
-    water = createWater(scene, restyled.paintMesh, {low});
-    // Шейдер капель собирается заранее, параллельно — без рывка в главе 04
-    // (compile обходит только видимые объекты — на время сборки капли видимы).
+    const made = await createWater(scene, restyled.paintMesh, {low, pause, cancelled: () => disposed});
+    if (disposed) { made?.dispose(); return; }
+    water = made;
+    await pause(); if (disposed) return;
+    // Шейдеры главы 04 собираются заранее и только параллельно (без кадра):
+    // капли на экране и варианты всех материалов для прохода transmission —
+    // он рисует сцену в свою цель, без тонмаппинга, это другие программы.
+    // compile обходит только видимые объекты — на время сборки капли видимы.
+    // Кадр в цель здесь собирал бы их синхронно: на пустом кэше шейдеров это
+    // была одна задача на 6–7 с сразу после появления 3D.
     const beads = scene.getObjectByName('water-beads');
     if (beads) {
-      beads.visible = true; renderer.compile(scene, camera);
-      // Проход transmission собирает свои варианты шейдеров всех материалов —
-      // прогреваем их сейчас, в простое, кадром в крошечную цель, а не при
-      // первом появлении капель посреди прокрутки.
-      const warm = new WebGLRenderTarget(4, 4);
-      renderer.setRenderTarget(warm); renderer.render(scene, camera); renderer.setRenderTarget(null);
-      warm.dispose();
-      beads.visible = false;
+      // По одному мешу за шаг: сборка программы на стороне JS — 3–5 мс, все
+      // сразу давали задачу ~60 мс. Капли видимы только на время своей сборки
+      // (кадр между шагами их не нарисует).
+      const programs = [];
+      const target = new WebGLRenderTarget(4, 4);
+      const meshes = [];
+      scene.traverseVisible(o => { if (o.isMesh || o.isLineSegments) meshes.push(o); });
+      meshes.push(beads);
+      const take = set => { for (const m of set) programs.push(renderer.properties.get(m).currentProgram); };
+      for (const [i, mesh] of meshes.entries()) {
+        const isBeads = mesh === beads;
+        if (isBeads) beads.visible = true;
+        if (isBeads) take(renderer.compile(mesh, camera, scene));   // капли на экране
+        renderer.setRenderTarget(target);
+        if (!isBeads) take(renderer.compile(mesh, camera, scene));  // проход transmission
+        renderer.setRenderTarget(null);
+        if (isBeads) beads.visible = false;
+        if (i % 3 === 2) { await pause(); if (disposed) { target.dispose(); return; } }
+      }
+      target.dispose();
+      waitPrograms(programs).then(() => { warmed = true; applyEffects(); invalidate(); });
     }
     applyEffects(); invalidate();
   }, {timeout: 1500});

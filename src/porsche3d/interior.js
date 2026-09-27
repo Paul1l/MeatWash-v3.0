@@ -12,7 +12,9 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 
 const V1_TO_V3 = 0.971;
 
-export function buildInterior(car) {
+// Строится порциями: между шагами (текстуры, сиденья, приборы, склейка)
+// поток отдаётся странице — целиком это 0,3–0,5 с одной задачей.
+export async function buildInterior(car, pause = () => Promise.resolve()) {
   // Вырезаем упрощённую «ванну» салона из меша black (координаты v1 для проверки).
   let shell = null;
   car.traverse(o => { if (o.isMesh && o.material?.name === 'black') shell = o; });
@@ -33,7 +35,9 @@ export function buildInterior(car) {
     const cut = g.clone(); cut.setIndex(keep);
     shell.geometry = cut; removed.push(g);
   }
-  const cockpit = buildCockpit();
+  await pause();
+  const cockpit = await buildCockpit(pause);
+  await pause();
   batchInterior(cockpit);
   cockpit.rotation.y = Math.PI;
   cockpit.scale.setScalar(V1_TO_V3);
@@ -52,11 +56,12 @@ export function buildInterior(car) {
   };
 }
 
-function buildCockpit(){
+async function buildCockpit(pause){
  const cockpit=new THREE.Group();cockpit.name='Detailed atelier interior';
  const texture=(type)=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');let seed=931;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};ctx.fillStyle=type==='cloth'?'#746957':'#808080';ctx.fillRect(0,0,256,256);for(let y=0;y<256;y+=2)for(let x=0;x<256;x+=2){const n=rnd();if(type==='cloth'){const warp=((Math.floor(x/8)+Math.floor(y/8))%4)<2;ctx.fillStyle=warp?`rgba(29,27,22,${.25+n*.4})`:`rgba(205,183,147,${.15+n*.3})`;}else ctx.fillStyle=`rgba(${n>.5?'255,255,255':'0,0,0'},${.1+n*.27})`;ctx.fillRect(x,y,1+rnd(),1+rnd());}const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(type==='cloth'?3:5,type==='cloth'?4:5);tex.anisotropy=4;return tex;};
- const grain=texture('leather'),weave=texture('cloth');weave.colorSpace=THREE.SRGBColorSpace;
- const leather=new THREE.MeshPhysicalMaterial({color:'#362319',roughness:.82,metalness:0,bumpMap:grain,bumpScale:.0013,clearcoat:0});
+ const grain=texture('leather');await pause();const weave=texture('cloth');weave.colorSpace=THREE.SRGBColorSpace;await pause();
+ // Standard, а не Physical, как в v1: без лака разницы не видно, а программа легче.
+ const leather=new THREE.MeshStandardMaterial({color:'#362319',roughness:.82,metalness:0,bumpMap:grain,bumpScale:.0013});
  const edging=new THREE.MeshStandardMaterial({color:'#3c291c',roughness:.61});const cloth=new THREE.MeshStandardMaterial({color:'#594736',map:weave,roughness:.95,bumpMap:grain,bumpScale:.0006});
  // Светлее, чем в v1 (#181814): без теней в салоне торпедо сквозь стекло читалось чёрным бруском.
  const black=new THREE.MeshStandardMaterial({color:'#2a231d',roughness:.7,bumpMap:grain,bumpScale:.001});const metal=new THREE.MeshStandardMaterial({color:'#bcb09a',metalness:.84,roughness:.3});const thread=new THREE.MeshStandardMaterial({color:'#856b50',roughness:.9});
@@ -79,6 +84,7 @@ function buildCockpit(){
  function stitch(parent,x1,y1,z1,x2,y2,z2,count=26){const points=[];const a=new THREE.Vector3(x1,y1,z1),b=new THREE.Vector3(x2,y2,z2);for(let i=0;i<count;i++){points.push(a.clone().lerp(b,i/count),a.clone().lerp(b,(i+.43)/count));}const line=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:'#988069'}));parent.add(line);}
  box(cockpit,1.35,.065,1.95,.018,0,.39,-.32,black);
  for(const x of [-.36,.36]){
+  await pause();
   const seat=new THREE.Group();seat.position.set(x,0,-.24);cockpit.add(seat);
   box(seat,.49,.12,.51,.045,0,.515,-.04,leather);box(seat,.315,.022,.38,.014,0,.583,-.015,cloth);
   for(const sx of [-.203,.203])box(seat,.085,.11,.45,.036,sx,.58,-.04,leather);
@@ -93,6 +99,7 @@ function buildCockpit(){
   for(const sx of [-.237,.237])tube(seat,[[sx,.57,.14],[sx,.584,-.04],[sx,.565,-.24]],.0022,thread);
   box(seat,.047,.073,.055,.009,-Math.sign(x)*.285,.548,-.035,black);box(seat,.026,.01,.025,.003,-Math.sign(x)*.285,.585,-.032,new THREE.MeshStandardMaterial({color:'#793122',roughness:.6}));
  }
+ await pause();
  for(const x of [-.68,.68]){
   box(cockpit,.055,.37,1.24,.024,x,.70,-.21,leather);box(cockpit,.075,.08,1.29,.024,x,.907,-.21,black);
   box(cockpit,.09,.066,.43,.02,x-Math.sign(x)*.05,.71,-.16,edging);
@@ -102,9 +109,11 @@ function buildCockpit(){
  }
  box(cockpit,1.27,.16,.235,.042,0,.954,.52,black);box(cockpit,1.23,.13,.075,.017,0,.827,.43,leather);
  box(cockpit,.46,.071,.013,.009,-.37,.826,.387,edging);box(cockpit,.055,.009,.015,.003,-.37,.846,.376,metal);
+ await pause();
  const instruments=new THREE.Group();instruments.position.set(.25,.965,.389);cockpit.add(instruments);
  const gauge=(label,max,needle)=>{const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');ctx.fillStyle='#141611';ctx.fillRect(0,0,256,256);ctx.translate(128,128);ctx.strokeStyle='#d5cfb9';ctx.lineWidth=3;for(let i=0;i<=40;i++){const a=(-220+i*7)*Math.PI/180;ctx.beginPath();ctx.moveTo(Math.cos(a)*(i%5===0?86:96),Math.sin(a)*(i%5===0?86:96));ctx.lineTo(Math.cos(a)*107,Math.sin(a)*107);ctx.stroke();}ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='17px Arial';ctx.fillStyle='#d5cfb9';for(let i=0;i<=8;i++){const a=(-220+i*35)*Math.PI/180;ctx.fillText(String(Math.round(i*max/8)),Math.cos(a)*70,Math.sin(a)*70);}ctx.font='12px Arial';ctx.fillText(label,0,44);ctx.rotate(needle);ctx.fillStyle='#d78956';ctx.beginPath();ctx.moveTo(-4,14);ctx.lineTo(0,-88);ctx.lineTo(4,14);ctx.fill();ctx.beginPath();ctx.arc(0,0,9,0,Math.PI*2);ctx.fillStyle='#4a493e';ctx.fill();const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,toneMapped:false});};
  [-.285,-.14,0,.14,.265].forEach((x,i)=>{const r=i===2?.073:.060;const face=new THREE.Mesh(new THREE.CircleGeometry(r,48),gauge(i===2?'RPM x 1000':i===3?'km/h':'BAR',i===2?8:i===3?240:10,.22+i*.41));face.rotation.y=Math.PI;face.position.set(x,0,-.015);instruments.add(face);const ring=new THREE.Mesh(new THREE.TorusGeometry(r+.004,.004,6,48),metal);ring.position.set(x,0,-.017);instruments.add(ring);});
+ await pause();
  const wheel=new THREE.Group();wheel.position.set(.34,.93,.205);wheel.rotation.x=-.22;cockpit.add(wheel);
  const rim=new THREE.Mesh(new THREE.TorusGeometry(.155,.014,10,64),black);wheel.add(rim);
  for(const angle of [Math.PI/2,Math.PI*7/6,Math.PI*11/6]){const spoke=box(wheel,.03,.13,.008,.005,Math.cos(angle)*.075,Math.sin(angle)*.075,0,metal);spoke.rotation.z=angle-Math.PI/2;}

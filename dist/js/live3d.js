@@ -54,14 +54,10 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
   // ── Поддержка WebGL ───────────────────────────────────────────────────────
   // Кнопку показываем, если браузер знает WebGL 2; настоящую проверку контекста
   // делаем в простое после загрузки — движок и модель при этом не грузятся.
-  // Модуль грузится после страницы (main.js). Проверка WebGL 2 — пробным
-  // контекстом, без движка; не вышло — кнопки нет, место под ряд снимается.
-  let capable = false;
-  try {
-    const gl = document.createElement('canvas').getContext('webgl2');
-    capable = !!gl; gl?.getExtension('WEBGL_lose_context')?.loseContext();
-  } catch { capable = false; }
-  if (!capable) {
+  // Модуль грузится после страницы (main.js). До нажатия проверяем WebGL 2
+  // только по наличию API (класс p3d-capable из <head>): пробный контекст стоил
+  // до 0,7 с на свежем браузере. Настоящая проверка — в mount() по нажатию.
+  if (!('WebGL2RenderingContext' in window)) {
     document.documentElement.classList.remove('p3d-capable');
     return null;
   }
@@ -267,6 +263,8 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
 
   function ready(owner) {
     const heroWanted = mode === 'loading';
+    // Сцена могла загрузиться, когда человек уже в главах или в гараже.
+    scene.setProgress(progress, {camera: chapters() && !cfg.open});
     if (heroWanted) {
       const focus = document.activeElement;
       setMode('on');
@@ -321,8 +319,12 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
     clearTimeout(tourTimer); setTouring(false);
     if (scene) { scene.dispose(); scene = null; }
     job = null;
-    const text = lostContext ? '3D остановилось' : 'Не удалось загрузить 3D';
+    // Браузер знает WebGL 2, но контекст не создаётся (видеокарта в чёрном
+    // списке и т. п.): повторять бесполезно.
+    const noWebgl = error?.code === 'webgl';
+    const text = lostContext ? '3D остановилось' : noWebgl ? '3D недоступно на этом устройстве' : 'Не удалось загрузить 3D';
     msg.textContent = text;
+    retry.hidden = noWebgl;
     const focus = document.activeElement;
     if (cfg.want) { cfg.want = false; cfg.error = true; }
     if (cfg.msg) cfg.msg.textContent = lostContext ? '3D остановилось. Нажмите ещё раз.' : 'Не удалось загрузить 3D. Нажмите ещё раз.';
@@ -330,7 +332,7 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
       setMode('error');
       if (focus === start || focus === exit || root.contains(focus) || focus === document.body) retry.focus({preventScroll: true});
     } else render();
-    say(lostContext ? '3D остановилось, показываем фото.' : 'Не удалось загрузить 3D. Остаётся фото.');
+    say(lostContext ? '3D остановилось, показываем фото.' : noWebgl ? '3D недоступно на этом устройстве. Остаётся фото.' : 'Не удалось загрузить 3D. Остаётся фото.');
   }
 
   function cancel() {
@@ -466,10 +468,13 @@ export function setupLive3d({section, reduced, getTarget, onCoverChange}) {
         cfg.want = !!scene && mode === 'on';
         clearTimeout(tourTimer);
         if (scene?.touring) { scene.stopTour(); setTouring(false); }
+        // В гараже камеру ведёт работа, а не прокрутка глав.
+        scene?.setProgress(progress, {camera: false});
         render();
       },
       close() {
         cfg.open = false; cfg.photo = false;
+        scene?.setProgress(progress, {camera: chapters()});
         const had = cfg.want; cfg.want = false; cfg.error = false;
         if (job && job.owner === 'cfg' && mode !== 'loading') cancel();
         if (scene && mode === 'on') { scene.view('overview'); render(); }

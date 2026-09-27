@@ -55,7 +55,9 @@ body.cfg-open .p3d-float, body.cfg-film .p3d-float{ display:none; }
 /* ---------- Ряд в .hero-bar ---------- */
 
 .p3d{ position:relative; display:flex; align-items:center; gap:8px; min-width:0; }
-.p3d[hidden]{ display:none; }
+.p3d[hidden], .p3d [hidden]{ display:none !important; }
+/* Гараж в 3D в главах: затемнение под текст глав не нужно — как на первом экране. */
+body.cfg-open #scene[data-p3d="on"] .scene__sticky::after{ opacity:0; }
 .p3d [data-in]{ display:none; }
 .p3d[data-state="idle"]    [data-in~="idle"],
 .p3d[data-state="loading"] [data-in~="loading"],
