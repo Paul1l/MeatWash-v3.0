@@ -3,9 +3,9 @@
 // файлы остаются — это исходники (ttf, логобук в PNG и других цветах) и
 // картинки прошлых версий макета. Удалять их из репозитория решает владелец.
 //
-// Удаляются только пути из списка ниже и только если ни одной ссылки на имя
-// файла нет в HTML (все страницы: index, services, about, credits), CSS, JS и данных
-// выкладки. Сами кандидаты на отсев
+// Удаляются только пути из списка ниже (и кадры assets/shots) и только если ни
+// одной ссылки на имя файла нет в HTML (все страницы: index, services, about,
+// credits), CSS, JS и данных выкладки. Сами кандидаты на отсев
 // в этой проверке не участвуют.
 //
 // Запуск: node scripts/prune-deploy.mjs [папка]   (по умолчанию dist)
@@ -71,6 +71,10 @@ async function collect(dir) {
 }
 
 const all = await collect(dist);
+// Кадры бывшей фото-витрины: в выкладку идут только те, на которые ссылаются
+// страницы (первый экран, превью, «До и после», гараж); остальные — нет.
+const shots = all.filter(file => relative(dist, file).split(/[\\/]/).slice(0, 2).join('/') === 'assets/shots').map(file => relative(dist, file).split(/[\\/]/).join('/'));
+FILES.push(...shots);
 const candidates = new Set(FILES.map(entry => resolve(dist, entry)));
 const readable = all.filter(file => /\.(html|css|js|mjs|txt|xml)$/i.test(file) && !candidates.has(file));
 const sources = await Promise.all(readable.map(file => readFile(file, 'utf8')));

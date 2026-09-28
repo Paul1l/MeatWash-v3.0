@@ -95,6 +95,10 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .btn--ghost:hover { border-color: var(--ivory); background: rgb(var(--ivory-rgb) / .08); }
 .btn--ink { border-color: rgb(var(--ink-rgb) / .55); color: var(--ink); background: transparent; }
 .btn--ink:hover { background: var(--ink); color: var(--ivory); }
+/* Светлая заливка — вход в «Гараж услуг»: заметна рядом с бордовой «Записаться»,
+   но не спорит с ней цветом (ink на ivory — 13:1). */
+.btn--light { background: var(--ivory); color: var(--ink); border-color: var(--ivory); font-weight: 700; }
+.btn--light:hover { background: var(--ivory-3); border-color: var(--ivory-3); }
 /* Кнопка клуба — почти чёрное бордо версии Vercel, в тон фону секции. */
 .btn--ink-fill { background: #1a0709; color: var(--ivory); border-color: rgba(255, 255, 255, .16); padding-right: 10px; }
 .btn--ink-fill:hover { background: #0d0304; }
@@ -141,36 +145,29 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
 .mobile-menu .btn { align-self: flex-start; margin-top: 16px; }
 .mobile-cta { display: none; }
 
-/* ---------- Cinematic scene: hero → THE BODY ---------- */
-/* Высота трека — --scene-len в cinematic.css (одна переменная на все раскладки). */
-.scene { position: relative; background: var(--black); }
-.scene__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
-.scene__shade {
-  position: absolute; inset: 0; pointer-events: none;
+/* ---------- Первый экран: статичная фотография ---------- */
+/* Шапка сплошная (cinematic.css), поэтому фото начинается под ней. Компьютер и
+   альбом: фото на весь экран, текст слева внизу, вход в гараж справа внизу
+   (garage.css). Телефон в портрете — колонкой: фото, текст, вход в гараж. */
+.hero { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; background: var(--black); overflow: hidden; }
+.hero__media { position: absolute; inset: var(--header-h) 0 0; }
+.hero__photo { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; }
+.hero__media::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
   background:
-    linear-gradient(180deg, rgb(var(--black-rgb) / .55), rgb(var(--black-rgb) / 0) 26%, rgb(var(--black-rgb) / 0) 62%, rgb(var(--black-rgb) / .82) 100%),
-    linear-gradient(90deg, rgb(var(--black-rgb) / .35), rgb(var(--black-rgb) / 0) 40%);
+    linear-gradient(0deg, rgb(var(--black-rgb) / .88) 0%, rgb(var(--black-rgb) / .25) 36%, rgb(var(--black-rgb) / 0) 58%),
+    linear-gradient(90deg, rgb(var(--black-rgb) / .7) 0%, rgb(var(--black-rgb) / .2) 34%, rgb(var(--black-rgb) / 0) 56%);
 }
-.scene__sticky::after { /* text-side shade for THE BODY, driven by --shade */
-  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: var(--shade, 0);
-  background: linear-gradient(90deg, var(--black) 0%, var(--black) 26%, rgb(var(--black-rgb) / .85) 34%, rgb(var(--black-rgb) / 0) 52%);
-}
-[data-ui] { will-change: opacity, transform; }
-
-/* Hero copy — bottom-left, over the front of the car */
-.hero {
-  position: absolute; left: var(--gutter); bottom: clamp(110px, 13.5%, 150px); z-index: 2;
-  max-width: min(70vw, 900px);
-}
-/* Крупный вордмарк MEATWASH и подзаголовок — как в версии Vercel.
-   Действующие размеры — в cinematic.css (он перекрывает этот файл). */
+.hero__copy { position: absolute; z-index: 1; left: var(--gutter); bottom: var(--hero-bottom, clamp(36px, 8svh, 96px)); max-width: min(56vw, 760px); }
+.hero__eyebrow { margin-bottom: 18px; font-size: 11px; letter-spacing: .25em; color: var(--muted); text-shadow: 0 1px 12px rgb(var(--black-rgb) / .75); }
+/* Крупный вордмарк MEATWASH и подзаголовок — как в версии Vercel. */
 .hero__title {
-  font-size: clamp(36px, 4.9vw, 72px); line-height: .98; text-transform: uppercase; letter-spacing: .015em;
+  font-size: clamp(46px, 5.5vw, 90px); line-height: .96; text-transform: uppercase; letter-spacing: .005em;
   color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45);
 }
-.hero__sub { margin-top: clamp(10px, 1.4vw, 20px); font-size: clamp(15px, 1.75vw, 25px); font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
+.hero__sub { margin-top: clamp(14px, 2vw, 28px); font-size: clamp(15px, 1.75vw, 25px); font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
 /* Одна заливка и одна текстовая ссылка: уровни не спорят между собой. */
-.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(14px, 1.8vw, 28px); margin-top: 28px; }
+.hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(14px, 1.8vw, 28px); margin-top: clamp(18px, 2.4vw, 32px); }
 .hero__more {
   display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
   font-size: clamp(12px, .95vw, 14px); color: var(--ivory);
@@ -179,33 +176,8 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
 }
 .hero__more span { transition: transform var(--t) var(--ease); }
 .hero__more:hover { text-decoration-color: var(--ivory); }
-.hero__more:hover span { transform: translateY(3px); }
-
-/* Bottom bar: SCROLL */
-.hero-bar {
-  position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(18px, 4%, 40px); z-index: 2;
-  display: grid; grid-template-columns: 1fr auto auto; align-items: end; column-gap: clamp(20px, 2.8vw, 44px);
-}
-.hero-bar__scroll {
-  position: relative; display: inline-flex; align-items: center; height: clamp(44px, 3.4vw, 52px);
-  font-size: clamp(10px, .85vw, 12px); letter-spacing: .32em; text-transform: uppercase; color: var(--ivory); padding-bottom: 6px;
-}
-.hero-bar__scroll::after { content: ''; position: absolute; left: 0; right: 0; bottom: 8px; height: 1px; background: rgb(var(--ivory-rgb) / .55); }
-
-/* 01 · THE BODY copy — appears once the camera has arrived at the wing */
-.chapter {
-  position: absolute; z-index: 2; left: clamp(20px, 11.5vw, 190px); top: 50%; transform: translateY(-50%);
-  width: min(30vw, 420px); opacity: 0; pointer-events: none;
-}
-.chapter__index { display: flex; flex-direction: column; gap: 4px; }
-.chapter__index span:first-child { font-size: clamp(14px, 1.35vw, 20px); letter-spacing: .04em; }
-.chapter__index span:last-child { font-size: clamp(9px, .75vw, 11px); color: var(--muted); letter-spacing: .08em; }
-.chapter__title { margin-top: clamp(14px, 1.7vw, 26px); font-size: clamp(38px, 4.15vw, 62px); text-transform: uppercase; letter-spacing: .01em; line-height: 1; }
-/* Кегль ≤10px с --faint давал ~2.6:1 — подпись главы идёт на --muted. */
-.chapter__kicker { display: block; margin-top: clamp(8px, .9vw, 14px); font-size: clamp(9px, .7vw, 10px); letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
-.chapter__lead { margin-top: clamp(18px, 2.3vw, 36px); font-size: clamp(15px, 1.55vw, 23px); font-weight: 400; color: var(--ivory); line-height: 1.25; }
-.chapter__text { margin-top: clamp(10px, 1.2vw, 18px); font-size: clamp(12px, .95vw, 14px); line-height: 1.6; color: var(--muted); max-width: 30ch; }
-.chapter .btn { margin-top: clamp(20px, 2.4vw, 36px); height: clamp(36px, 2.9vw, 42px); padding: 0 clamp(18px, 1.7vw, 26px); font-size: clamp(11px, .9vw, 13px); pointer-events: auto; }
+.hero__more:hover span { transform: translateX(3px); }
+@media (min-width: 1700px) { .hero__title { font-size: 108px; } }
 
 /* ---------- 02 / 03 / 04 strip ---------- */
 .strip {
@@ -425,9 +397,6 @@ button.card { width: 100%; text-align: left; appearance: none; }
 @media (max-width: 900px) {
   .nav, .header__cta { display: none; }
   .burger { display: flex; }
-  .hero { max-width: 84vw; }
-  .hero-bar { grid-template-columns: 1fr auto; row-gap: 14px; }
-  .chapter { left: var(--gutter); width: min(62vw, 440px); }
   .strip { grid-template-columns: 1fr; }
   .card { border-left: 0; border-top: 1px solid var(--line); height: clamp(220px, 34vw, 300px); }
   .card:first-child { border-top: 0; }
@@ -474,18 +443,6 @@ button.card { width: 100%; text-align: left; appearance: none; }
 /* Portrait phone */
 @media (max-width: 800px) and (orientation: portrait) {
   :root { --header-h: 64px; --gutter: 16px; }
-  .scene__shade { background: linear-gradient(180deg, rgb(var(--black-rgb) / .6), rgb(var(--black-rgb) / 0) 30%, rgb(var(--black-rgb) / 0) 55%, rgb(var(--black-rgb) / .9) 100%); }
-  .scene__sticky::after { background: linear-gradient(0deg, var(--black) 0%, rgb(var(--black-rgb) / .9) 32%, rgb(var(--black-rgb) / 0) 62%); }
-  .hero { left: var(--gutter); right: var(--gutter); bottom: 200px; max-width: none; }
-  .hero__title { font-size: clamp(34px, 10.4vw, 48px); }
-  .hero__sub { font-size: 14px; }
-  .hero-bar { left: var(--gutter); right: var(--gutter); bottom: 80px; grid-template-columns: 1fr; row-gap: 16px; }
-  .hero-bar__scroll { display: none; }
-  .chapter { top: auto; bottom: 84px; transform: none; left: var(--gutter); right: var(--gutter); width: auto; }
-  .chapter__title { font-size: clamp(34px, 9.6vw, 44px); }
-  .chapter__lead { margin-top: 14px; font-size: 16px; }
-  .chapter__text { font-size: 12.5px; }
-  .chapter .btn { margin-top: 16px; }
   .about { grid-template-columns: 1fr; }
   .about__photo { grid-row: auto; height: 240px; }
   .about__photo::after { background: linear-gradient(180deg, transparent 90%, var(--ivory-2)); }
@@ -501,13 +458,6 @@ button.card { width: 100%; text-align: left; appearance: none; }
 
 /* Small landscape phones */
 @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
-  .hero { bottom: 74px; }
-  .hero__title { font-size: clamp(26px, 6vw, 40px); }
-  .hero__sub { font-size: 13px; margin-top: 6px; }
-  .hero-bar { bottom: 14px; }
-  .chapter__title { font-size: clamp(26px, 5.5vw, 40px); }
-  .chapter__lead { margin-top: 10px; font-size: 14px; }
-  .chapter .btn { margin-top: 12px; }
   /* Клуб: карта сверху занимала всю высоту экрана — здесь, как на компьютере, карта слева. */
   .membership { grid-template-columns: 46% 54%; }
   .membership__card { padding: 20px 12px 20px var(--gutter); }

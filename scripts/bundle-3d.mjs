@@ -1,6 +1,6 @@
-// Сборка 3D-режима: src/porsche3d → dist/js/porsche3d.bundle.js.
+// Сборка 3D-гаража: src/porsche3d → dist/js/porsche3d.bundle.js.
 // Бандл самодостаточен (three, GLTFLoader, декодер Meshopt внутри), importmap
-// не нужен. Страница грузит его только import() по нажатию «Оживить Porsche».
+// не нужен. Страница грузит его только import() по нажатию «Открыть 3D-гараж».
 // Правка в src/porsche3d без пересборки на сайт не попадает — это ловит
 // npm run check:3d.
 import {resolve, dirname} from 'node:path';

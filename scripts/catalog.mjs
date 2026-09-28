@@ -48,8 +48,8 @@ export function renderCatalog(){
 <!-- Кремовая полоса: гараж и индивидуальный уход — не прайс, их видно отдельно. -->
 <div class="services-extra">
  <section class="catalog__concierge cfg-teaser" id="garage-teaser" aria-labelledby="garage-teaser-title">
-  <div><p class="eyebrow">Гараж услуг</p><h2 id="garage-teaser-title">Соберите уход на одной машине</h2><p>Отметьте работы — витрина на главной покажет их на Porsche и посчитает ориентир по минимальным ценам.</p></div>
-  <a class="btn btn--ghost btn--ink" href="./#garage">Открыть гараж <span aria-hidden="true">→</span></a>
+  <div><p class="eyebrow">Гараж услуг · 3D</p><h2 id="garage-teaser-title">Соберите уход на одной машине</h2><p>Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p></div>
+  <a class="btn btn--ghost btn--ink" href="./#garage">Открыть 3D-гараж <span aria-hidden="true">→</span></a>
  </section>
  <section class="catalog__concierge" aria-labelledby="concierge-title"><div><p class="eyebrow" lang="en">INDIVIDUAL CARE</p><h2 id="concierge-title">Под вашу задачу.</h2><p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p></div><button class="btn btn--fill" type="button" data-membership="Индивидуальный уход">Обсудить уход <span aria-hidden="true">→</span></button></section>
 </div>
@@ -79,14 +79,15 @@ ${PREVIEW.map(c=>{
 }
 
 // Модуль данных для скриптов страницы. Только то, что им нужно: цены программ по
-// кузову, цены работ по названию и филиалы (окно карты).
+// кузову и их состав (гараж не берёт повторно работу, уже входящую в мойку),
+// цены работ по названию и филиалы (окно карты).
 export function renderData(){
  const prices=Object.fromEntries(d.groups.flatMap(g=>g.items));
  const locations=d.locations.map(l=>({id:l.id,name:l.name,type:l.type,address:l.address,hours:l.hours,phone:l.phone,tel:l.tel,booking:l.booking,map:l.map,mapWidget:l.mapWidget,route:l.route,entry:l.entry,onSite:l.onSite}));
  return `// Сгенерировано scripts/catalog.mjs из assets/meatwash-content.json — руками не править:
 // после правки JSON выполните npm run catalog (npm run check сверяет этот файл).
 export const BODY_TYPES = ${JSON.stringify(d.bodyTypes)};
-export const PROGRAMS = ${JSON.stringify(d.programs.map(([name,,time],i)=>({name,time,prices:d.programPrices[i]})),null,1)};
+export const PROGRAMS = ${JSON.stringify(d.programs.map(([name,,time],i)=>({name,time,prices:d.programPrices[i],includes:d.programIncludes[i]})),null,1)};
 export const PRICES = ${JSON.stringify(prices,null,1)};
 export const LOCATIONS = ${JSON.stringify(locations,null,1)};
 `;

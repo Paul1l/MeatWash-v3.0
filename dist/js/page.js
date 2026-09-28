@@ -1,6 +1,6 @@
 // Вход внутренних страниц (services.html, about.html): только общее — меню, окна
 // записи и карты, каталог (если он есть на странице) и шторки «до/после» (если есть).
-// Сцены, GSAP, ScrollTrigger и 3D здесь нет.
+// Гаража и 3D здесь нет.
 import { setupUI } from './ui.js';
 import { setupCatalog } from './catalog.js';
 

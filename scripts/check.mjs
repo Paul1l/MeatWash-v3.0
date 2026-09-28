@@ -1,8 +1,10 @@
 // npm run check — проверка сайта без браузера, для всех страниц dist:
 // ресурсы и якоря (в том числе межстраничные services.html#…), общие фрагменты
 // (src/partials) и сгенерированный каталог совпадают с источниками, цены (каталог,
-// окно услуги, гараж — суммы по каждому кузову), кадры витрины, 3D только по
-// нажатию и только на главной, ссылки записи обоих филиалов, окно карты, мета.
+// гараж — названия как в каталоге, суммы по каждому кузову, без повторного
+// начисления работ из программы мойки), первый экран без закреплённой сцены,
+// 3D только по нажатию и только в гараже главной, ссылки записи обоих филиалов,
+// окно карты, мета.
 import {readFile,readdir,stat} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -97,49 +99,49 @@ for(const group of content.groups){
 }
 for(const prices of content.programPrices)assert(services.includes(`data-prices="${prices.join(',')}"`),'Устарели цены по кузову');
 assert.equal([...services.matchAll(/data-price-item/g)].length,39);
-const sourcePrices=new Set([...content.programPrices.flat(),...content.groups.flatMap(g=>g.items.map(x=>x[1]))]);
 
 const config=await importDist(resolve(dist,'js/config.js'));
-assert.deepEqual(Object.values(config.STOPS),[0,.2,.4,.6,.8,1]);
-assert.equal(Object.keys(config.SERVICES).length,4);
-for(const service of Object.values(config.SERVICES))for(const [,price] of service.prices)assert(sourcePrices.has(price),'Цены нет в каталоге: '+price);
-// Кадры витрины: LADDER_AT — возрастающие границы с нуля, по одной на кадр.
-assert.equal(config.LADDER.length,6);
-assert.equal(config.LADDER_AT.length,config.LADDER.length,'LADDER_AT: по границе на каждый кадр LADDER');
-assert(config.LADDER_AT[0]===0&&config.LADDER_AT.every((v,i,a)=>!i||v>a[i-1]),'LADDER_AT должен возрастать от 0');
-
-// Гараж: каждая работа ссылается на цену каталога; сумма по каждому кузову = JSON.
-const {garageSum}=await importDist(resolve(dist,'js/configurator.js'));
+// Гараж: каждая работа ссылается на цену каталога; название — как в каталоге
+// services.html; сумма по каждому кузову = JSON.
+const {garageSum}=config;
 const itemPrice=Object.fromEntries(content.groups.flatMap(g=>g.items));
 const expected=(zone,body)=>zone.price.program!=null?content.programPrices[zone.price.program][body]:itemPrice[zone.price.item];
 for(const zone of config.ZONES){
  assert(zone.price&&(zone.price.program!=null?content.programPrices[zone.price.program]:zone.price.item in itemPrice),`Гараж: у работы ${zone.id} нет цены в каталоге`);
+ assert.equal(zone.title,zone.price.program!=null?content.programs[zone.price.program][0]:zone.price.item,`Гараж: название ${zone.id} не совпадает с каталогом`);
+ assert(services.includes(escape(zone.title)),`Гараж: «${zone.title}» нет в каталоге services.html`);
  assert.equal(zone.from,Math.min(...content.bodyTypes.map((_,b)=>expected(zone,b))),`Гараж: «от» у ${zone.id} не минимальная цена каталога`);
  for(let body=0;body<content.bodyTypes.length;body++)assert.equal(config.zonePrice(zone,body),expected(zone,body),`Гараж: цена ${zone.id} для кузова ${content.bodyTypes[body]}`);
 }
 // Программы мойки вложены друг в друга: в гараже они взаимоисключающие, и ни один набор не берёт две.
 const programZones=config.ZONES.filter(z=>z.price.program!=null).map(z=>z.id);
 assert(config.EXCLUSIVE.some(group=>programZones.every(id=>group.includes(id))),'Гараж: программы мойки должны быть в одной группе EXCLUSIVE');
+// Работа, уже входящая в программу мойки (programIncludes в JSON, с составом
+// предыдущих программ), при выборе вместе с программой в сумму не попадает.
+const includes=i=>content.programIncludes.slice(0,i+1).flat();
+let insideChecked=0;
+for(const program of config.ZONES.filter(z=>z.price.program!=null))for(const zone of config.ZONES.filter(z=>includes(program.price.program).includes(z.price.item))){
+ insideChecked++;
+ for(let body=0;body<content.bodyTypes.length;body++)assert.equal(garageSum([program.id,zone.id],body),expected(program,body),`Гараж: «${zone.title}» входит в «${program.title}», но считается второй раз`);
+}
+assert(insideChecked>0,'Гараж: не найдено ни одной работы, входящей в программу мойки (проверка состава не работает)');
 for(const preset of config.ZONE_PRESETS){
  for(const group of config.EXCLUSIVE)assert(preset.zones.filter(id=>group.includes(id)).length<=1,`Набор «${preset.title}» берёт две программы мойки`);
+ for(const id of preset.zones)assert(!config.includedIn(config.ZONES.find(z=>z.id===id),preset.zones),`Набор «${preset.title}»: работа ${id} уже входит в его программу мойки`);
  for(let body=0;body<content.bodyTypes.length;body++){
   const sum=preset.zones.reduce((s,id)=>s+expected(config.ZONES.find(z=>z.id===id),body),0);
   assert.equal(garageSum(preset.zones,body),sum,`Набор «${preset.title}»: сумма для кузова ${content.bodyTypes[body]}`);
  }
 }
 
-// Витрина на фотографиях: каждый кадр из config.js есть в двух размерах.
-const shots=new Set([...config.LADDER.map(step=>step.shot),config.SHOT_BASE,config.FILM_OPEN,...Object.keys(config.SHOT_FOCUS)]);
-for(const spec of Object.values(config.ZONE_SHOTS)){shots.add(spec.shot);if(spec.pair){shots.add(spec.pair.before);shots.add(spec.pair.after);}}
-for(const id of shots)for(const file of [`assets/shots/${id}.webp`,`assets/shots/${id}-s.webp`])if(!await exists(resolve(dist,file)))fail('Нет кадра витрины: '+file);
-
-// Длина сцены — одна переменная (--scene-len в cinematic.css), других высот у .scene нет
-// (кроме статичного режима: .static-experience .scene { height:auto }).
+// Первый экран — статичная фотография: закреплённой сцены, глав и ScrollTrigger нет.
+assert(!/class="scene\b|data-chapter|chapter-nav|ScrollTrigger|vendor\/gsap/.test(html['index.html']),'index.html: остатки закреплённой сцены или GSAP');
+assert(/<section class="hero" id="hero"/.test(html['index.html'])&&/class="hero__photo" src="assets\/shots\//.test(html['index.html']),'index.html: первый экран без фотографии');
+// Вход в гараж: на первом экране и в промоблоке, одинаковые кнопки.
+const entries=[...html['index.html'].matchAll(/<button\b[^>]*data-garage-open[^>]*>([^<]+)</g)].map(m=>m[1].trim());
+assert(entries.length>=2&&entries.every(t=>t==='Открыть 3D-гараж'),'index.html: нужны два входа «Открыть 3D-гараж» (первый экран и промоблок): '+entries.join(', '));
 const cinematic=await readFile(resolve(dist,'css/cinematic.css'),'utf8'),style=await readFile(resolve(dist,'css/style.css'),'utf8');
-assert(/\.scene \{ height:var\(--scene-len\); \}/.test(cinematic),'cinematic.css: высота .scene должна быть var(--scene-len)');
-for(const [name,css] of [['style.css',style],['cinematic.css',cinematic]])
- for(const [rule] of css.matchAll(/(?:^|[{}])\s*\.scene\s*\{[^}]*\bheight\s*:\s*[^;}]+/g))
-  if(!/var\(--scene-len\)/.test(rule))fail(`${name}: у .scene своя высота (${rule.trim()}) — длина задаётся только --scene-len`);
+for(const [name,css] of [['style.css',style],['cinematic.css',cinematic]])assert(!/\.scene\b|--scene-len|\.chapter\b|\.static-experience/.test(css),`${name}: правила удалённой сцены`);
 
 // ── Скрипты: синтаксис и граф модулей каждой страницы ────────────────────────
 for(const filename of await readdir(resolve(dist,'js'))){
@@ -170,11 +172,12 @@ for(const page of MAIN_PAGES){
  assert(!/<iframe\b/i.test(text)&&!/map-widget/.test(text),`${page}: iframe карты в разметке — он должен создаваться только при открытии окна`);
 }
 for(const entry of lazy3d)assert(/→ porsche3d\.bundle\.js$/.test(entry),'Лениво можно грузить только porsche3d.bundle.js: '+entry);
-// Главная — витрина и 3D по кнопке; внутренние страницы без сцены, GSAP и 3D.
-assert(graphs['index.html'].has('stage.js'),'Главная должна грузить фото-витрину (stage.js)');
-for(const name of ['scene.bundle.js','scene.js','garage.js','interior.js','water.js'])assert(!graphs['index.html'].has(name),'Главная грузит 3D-модуль: '+name);
+// Главная — гараж (оболочка сразу, 3D по кнопке); внутренние страницы без гаража, GSAP и 3D.
+assert(graphs['index.html'].has('garage.js'),'Главная должна подключать гараж (garage.js)');
+assert([...lazy3d].some(entry=>entry==='garage.js → porsche3d.bundle.js'),'3D грузит только garage.js по нажатию: '+[...lazy3d].join(', '));
+for(const name of ['stage.js','live3d.js','configurator.js','interior.js'])assert(!graphs['index.html'].has(name),'Главная грузит удалённый или 3D-модуль: '+name);
 for(const page of MAIN_PAGES.filter(p=>p!=='index.html')){
- for(const name of ['stage.js','live3d.js','configurator.js','main.js'])assert(!graphs[page].has(name),`${page}: грузит модуль главной ${name}`);
+ for(const name of ['garage.js','main.js'])assert(!graphs[page].has(name),`${page}: грузит модуль главной ${name}`);
  assert(![...graphs[page]].some(is3d)&&!/vendor\/(gsap|ScrollTrigger)/.test(html[page]),`${page}: GSAP, ScrollTrigger или 3D на внутренней странице`);
 }
 
@@ -194,4 +197,4 @@ assert.equal(bookings.size,content.locations.length,'У филиалов дол�
 for(const page of MAIN_PAGES)for(const [url] of pageCode[page].matchAll(/https?:\/\/[\w.-]*yclients\.com[^"'\s<)\\]*/g))assert(bookings.has(url),`${page}: неожиданная ссылка yclients ${url}`);
 
 assert.equal(failures.length,0,failures.join('\n'));
-console.log(`PASS: ${ALL_PAGES.length} страницы — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; цены каталога, окна услуги и гаража (по ${content.bodyTypes.length} кузовам, ${config.ZONE_PRESETS.length} набора); ${shots.size} кадров витрины; длина сцены — --scene-len; 3D только по нажатию и только на главной (${[...lazy3d].join(', ')}); внутренние страницы без сцены и GSAP; запись и карта обоих филиалов, iframe карты не в разметке.`);
+console.log(`PASS: ${ALL_PAGES.length} страницы — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${config.ZONE_PRESETS.length} набора, ${insideChecked} работ из программ мойки без повторного начисления); первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и карта обоих филиалов, iframe карты не в разметке.`);

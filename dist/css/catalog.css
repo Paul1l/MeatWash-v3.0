@@ -72,7 +72,6 @@
 .location__photo--technopark img{object-position:42% 62%}
 .location__photo>span{position:absolute;bottom:0;left:0;right:0;padding:42px 18px 18px;background:linear-gradient(transparent,rgb(var(--black-rgb)/.78));color:var(--ivory);font-size:11px;letter-spacing:.025em}
 @media(max-width:800px) and (orientation:portrait){.location__photo{height:260px}.location__photo--technopark img{object-position:50% 65%}}
-.service-all-prices{display:inline-flex;margin:22px 0;font-size:12px}
 /* До 1100px время программы уходило совсем. Теперь оно стоит под названием. */
 @media(max-width:1100px){
  .catalog__section{grid-template-columns:22% 1fr;gap:5%}
