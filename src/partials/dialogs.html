@@ -35,6 +35,8 @@
     <div class="map-dialog__info">
       <h2 id="map-title" tabindex="-1" data-map-field="name">{{loc:myasnitskaya:name}}</h2>
       <p class="map-dialog__type" data-map-field="type">{{loc:myasnitskaya:type}}</p>
+      <!-- Сразу под названием: в конце колонки подсказка уходила за видимую область. -->
+      <p class="map-dialog__slow" role="status" hidden>Карта долго грузится — <a data-map-external href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">откройте в Яндекс Картах <span aria-hidden="true">↗</span></a></p>
       <dl class="map-dialog__facts">
         <div><dt>Адрес</dt><dd data-map-field="address">{{loc:myasnitskaya:address}}</dd></div>
         <div><dt>Часы</dt><dd data-map-field="hours">{{loc:myasnitskaya:hours}}</dd></div>
@@ -46,7 +48,6 @@
         <a class="link-arrow" data-map-call href="tel:{{loc:myasnitskaya:tel}}">Позвонить <span aria-hidden="true">→</span></a>
         <a class="link-arrow" data-map-external href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах <span aria-hidden="true">↗</span></a>
       </div>
-      <p class="map-dialog__slow" role="status" hidden>Карта долго грузится — <a data-map-external href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">откройте в Яндекс Картах <span aria-hidden="true">↗</span></a></p>
     </div>
     <div class="map-dialog__actions">
       <a class="btn btn--fill" data-map-route href="{{loc:myasnitskaya:route}}" target="_blank" rel="noopener noreferrer"><span class="map-dialog__long">Построить маршрут</span><span class="map-dialog__short">Маршрут</span> <span aria-hidden="true">↗</span></a>
