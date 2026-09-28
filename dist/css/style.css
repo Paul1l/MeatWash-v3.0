@@ -508,6 +508,11 @@ button.card { width: 100%; text-align: left; appearance: none; }
   .chapter__title { font-size: clamp(26px, 5.5vw, 40px); }
   .chapter__lead { margin-top: 10px; font-size: 14px; }
   .chapter .btn { margin-top: 12px; }
+  /* Клуб: карта сверху занимала всю высоту экрана — здесь, как на компьютере, карта слева. */
+  .membership { grid-template-columns: 46% 54%; }
+  .membership__card { padding: 20px 12px 20px var(--gutter); }
+  .membership__card img { width: min(100%, 340px); }
+  .membership__copy { padding: 24px var(--gutter) 24px 0; }
 }
 
 /* Motion preferences: static cinematic frames instead of camera moves */
