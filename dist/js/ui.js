@@ -155,8 +155,8 @@ export function setupUI({ goToStop = null, services = null } = {}) {
  // Прямой заход по адресу с якорем (services.html#price-polish): раскрыть
  // <details> и встать к нему под шапкой. Браузер сам прокрутил к закрытому
  // блоку до раскрытия; повторяем после шрифтов — они меняют высоту строк.
- let arrival=null;
- try{arrival=location.hash.length>1?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;}catch{arrival=null;}
+ const hashTarget=()=>{try{return location.hash.length>1?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;}catch{return null;}};
+ const arrival=hashTarget();
  if(arrival&&arrival.tagName==='DETAILS'){
   arrival.open=true;
   // Второе выравнивание — только если человек ещё не прокрутил страницу сам.
@@ -165,6 +165,13 @@ export function setupUI({ goToStop = null, services = null } = {}) {
   requestAnimationFrame(settle);
   document.fonts?.ready.then(()=>requestAnimationFrame(settle));
  }
+ // Хеш сменили на открытой странице (адресная строка, «назад»): тоже раскрыть группу.
+ addEventListener('hashchange',()=>{
+  const target=hashTarget();
+  if(target?.tagName!=='DETAILS')return;
+  target.open=true;
+  requestAnimationFrame(()=>target.scrollIntoView({behavior:'instant'}));
+ },options);
 
  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('is-in');observer.unobserve(entry.target);}},{threshold:.1});
  document.querySelectorAll('[data-reveal]').forEach(el=>observer.observe(el));

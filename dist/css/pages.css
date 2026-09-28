@@ -207,3 +207,10 @@ a.card { display: block; }
 /* Превью услуг: подписи читаются и на светлых кадрах (салон). */
 .strip--4 .card::after { background: linear-gradient(180deg, rgb(var(--black-rgb) / .86), rgb(var(--black-rgb) / .5) 24%, transparent 44%, transparent 50%, rgb(var(--black-rgb) / .85)); }
 .strip--4 .card__label, .strip--4 .card__caption { text-shadow: 0 1px 10px rgb(var(--black-rgb) / .85); }
+
+/* Окно карты: подсказка, если виджет не ответил за 12 с (ошибкой это не считается). */
+.map-dialog p.map-dialog__slow { margin-top: 16px; padding: 10px 14px; border-left: 2px solid var(--burgundy-2); background: rgb(var(--ivory-rgb) / .05); font-size: 13px; color: var(--ivory); }
+.map-dialog__slow a { display: inline-flex; align-items: center; min-height: 44px; margin-block: -12px; text-decoration: underline; text-underline-offset: 4px; }
+/* Под iframe ссылка заглушки недоступна (inert) — и не видна, чтобы не казаться кнопкой.
+   Во время загрузки ссылка на Яндекс Карты есть в колонке информации. */
+.map-dialog__map:not([data-state="error"]) .map-dialog__placeholder .link-arrow { visibility: hidden; }

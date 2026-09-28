@@ -24,30 +24,38 @@ export function setupMaps({ dialog: element, onOpen }) {
   const frameBox = $('.map-dialog__map');
   const status = $('.map-dialog__status');
   const fail = $('.map-dialog__fail');
-  let current = null, opener = null, savedY = 0, frame = null, probe = null, probeTimer = 0;
+  const placeholder = $('.map-dialog__placeholder');
+  const slow = $('.map-dialog__slow');
+  let current = null, opener = null, savedY = 0, frame = null, probe = null, probeTimer = 0, slowTimer = 0;
 
   // Состояния области карты: loading → loaded | error. Под iframe всегда лежит
-  // заглушка (сетка, подпись, «Открыть в Яндекс Картах»): пока виджет не нарисовался,
-  // видна она; ошибка кладёт заглушку поверх iframe.
+  // заглушка (сетка, подпись): пока виджет не нарисовался, видна она. Ошибка
+  // кладёт заглушку поверх iframe.
   //
   // По load iframe успех не определить: страница ошибки браузера (виджет
-  // заблокирован, связь оборвалась) тоже присылает load, а на медленной сети
-  // настоящий load приходит, когда карта давно видна. Поэтому доступность виджета
-  // проверяем отдельным лёгким запросом HEAD (no-cors: ответ непрозрачный, важно
-  // только, дошёл ли он). Сетевая ошибка, блокировка или 12 с без ответа — ошибка;
-  // ответ пришёл — ошибки нет, как бы долго ни шёл load самого iframe.
+  // заблокирован, связь оборвалась) тоже присылает load, а бывает, что load не
+  // приходит и через 12 с при уже нарисованной карте. Поэтому:
+  // - нет сети при открытии или лёгкий запрос HEAD к виджету (no-cors: важно только,
+  //   дошёл ли он) отклонён — ошибка поверх iframe с «Повторить»;
+  // - 12 с без load — не ошибка (карта могла уже быть на экране), а подсказка в
+  //   колонке информации: «Карта долго грузится — откройте в Яндекс Картах».
   const setState = (state) => {
     frameBox.dataset.state = state;
     fail.hidden = state !== 'error';
     status.textContent = state === 'loading' ? 'Загружаем карту…' : state === 'error' ? 'Карта не загрузилась.' : '';
+    // Заглушка под iframe не должна ловить Tab: доступна, только когда она сверху.
+    placeholder.inert = Boolean(frame) && state !== 'error';
+    if (state !== 'loading') slow.hidden = true;
   };
 
   function unload() {
     clearTimeout(probeTimer);
+    clearTimeout(slowTimer);
     probe?.abort();
     probe = null;
     frame?.remove();
     frame = null;
+    slow.hidden = true;
     setState('idle');
   }
 
@@ -61,26 +69,26 @@ export function setupMaps({ dialog: element, onOpen }) {
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     // Итог проверки: 'ok', 'fail' — запрос отклонён (блокировка, обрыв, нет сети),
-    // 'timeout' — 12 с без ответа, null — ещё идёт. Отказ — ошибка всегда: load
-    // в этом случае пришёл от страницы ошибки браузера. Таймаут — ошибка, только
-    // если и сам iframe не загрузился: при нестабильной связи карта могла прийти,
-    // а проверка — застрять.
+    // 'timeout' — 12 с без ответа, null — ещё идёт. Отказ — ошибка: load в этом
+    // случае приходит от страницы ошибки браузера. Таймаут ошибкой не считается.
     let result = null, loaded = false;
     frame = iframe;
     const decide = () => {
       if (frame !== iframe) return;
-      if (result === 'fail' || (result === 'timeout' && !loaded)) setState('error');
+      if (result === 'fail') setState('error');
       else if (loaded) setState('loaded');
     };
     iframe.addEventListener('load', () => {
       if (frame !== iframe) return;
       loaded = true;
-      // Карта пришла после ошибки (сеть ожила) — проверяем ещё раз, а не верим load.
-      if (result === 'fail' || result === 'timeout') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
+      // Карта пришла после отказа (сеть ожила) — проверяем ещё раз, а не верим load.
+      if (result === 'fail') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
       else decide();
     });
     verify(iframe).then((r) => { if (r) { result = r; decide(); } });   // null — окно закрыли или сменили студию
+    slowTimer = setTimeout(() => { if (frame === iframe && !loaded && frameBox.dataset.state === 'loading') slow.hidden = false; }, LOAD_TIMEOUT_MS);
     frameBox.append(iframe);
+    setState(frameBox.dataset.state);
   }
 
   function verify(iframe) {
