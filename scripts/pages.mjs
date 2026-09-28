@@ -1,5 +1,5 @@
 // Общие части страниц (шапка с меню, подвал, окна записи и карты, карточки локаций,
-// блок записи) живут в src/partials/*.html и вставляются во все страницы между
+// блок записи, клубный блок «Больше, чем сервис») живут в src/partials/*.html и вставляются во все страницы между
 // маркерами <!-- SHARED:<имя>:START --> и <!-- SHARED:<имя>:END -->.
 // Руками внутри маркеров не править: npm run pages перезапишет, npm run check
 // сверяет каждую страницу с результатом этого скрипта.
@@ -18,9 +18,9 @@ import {content,escape} from './catalog.mjs';
 const root=new URL('../',import.meta.url);
 // Какие общие части есть на какой странице.
 export const PAGES={
- 'index.html':{id:'home',shared:['header','locations','footer','dialogs']},
+ 'index.html':{id:'home',shared:['header','locations','membership','footer','dialogs']},
  'services.html':{id:'services',shared:['header','book','footer','dialogs']},
- 'about.html':{id:'about',shared:['header','locations','book','footer','dialogs']},
+ 'about.html':{id:'about',shared:['header','membership','locations','book','footer','dialogs']},
 };
 const NAV_NEXT='\n    <button class="nav__next" type="button" data-scroll-next aria-label="Следующий раздел"><span class="nav__line"></span><span aria-hidden="true">→</span></button>';
 
