@@ -24,8 +24,18 @@ export function setupMaps({ dialog: element, onOpen }) {
   const frameBox = $('.map-dialog__map');
   const status = $('.map-dialog__status');
   const fail = $('.map-dialog__fail');
-  let current = null, opener = null, savedY = 0, timer = 0, frame = null;
+  let current = null, opener = null, savedY = 0, frame = null, probe = null, probeTimer = 0;
 
+  // Состояния области карты: loading → loaded | error. Под iframe всегда лежит
+  // заглушка (сетка, подпись, «Открыть в Яндекс Картах»): пока виджет не нарисовался,
+  // видна она; ошибка кладёт заглушку поверх iframe.
+  //
+  // По load iframe успех не определить: страница ошибки браузера (виджет
+  // заблокирован, связь оборвалась) тоже присылает load, а на медленной сети
+  // настоящий load приходит, когда карта давно видна. Поэтому доступность виджета
+  // проверяем отдельным лёгким запросом HEAD (no-cors: ответ непрозрачный, важно
+  // только, дошёл ли он). Сетевая ошибка, блокировка или 12 с без ответа — ошибка;
+  // ответ пришёл — ошибки нет, как бы долго ни шёл load самого iframe.
   const setState = (state) => {
     frameBox.dataset.state = state;
     fail.hidden = state !== 'error';
@@ -33,7 +43,9 @@ export function setupMaps({ dialog: element, onOpen }) {
   };
 
   function unload() {
-    clearTimeout(timer);
+    clearTimeout(probeTimer);
+    probe?.abort();
+    probe = null;
     frame?.remove();
     frame = null;
     setState('idle');
@@ -48,11 +60,39 @@ export function setupMaps({ dialog: element, onOpen }) {
     iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    // Поздний load снимает ошибку: сеть медленная, но карта всё же пришла.
-    iframe.addEventListener('load', () => { if (frame === iframe) { clearTimeout(timer); setState('loaded'); } });
-    timer = setTimeout(() => { if (frame === iframe && frameBox.dataset.state !== 'loaded') setState('error'); }, LOAD_TIMEOUT_MS);
+    // Итог проверки: 'ok', 'fail' — запрос отклонён (блокировка, обрыв, нет сети),
+    // 'timeout' — 12 с без ответа, null — ещё идёт. Отказ — ошибка всегда: load
+    // в этом случае пришёл от страницы ошибки браузера. Таймаут — ошибка, только
+    // если и сам iframe не загрузился: при нестабильной связи карта могла прийти,
+    // а проверка — застрять.
+    let result = null, loaded = false;
     frame = iframe;
+    const decide = () => {
+      if (frame !== iframe) return;
+      if (result === 'fail' || (result === 'timeout' && !loaded)) setState('error');
+      else if (loaded) setState('loaded');
+    };
+    iframe.addEventListener('load', () => {
+      if (frame !== iframe) return;
+      loaded = true;
+      // Карта пришла после ошибки (сеть ожила) — проверяем ещё раз, а не верим load.
+      if (result === 'fail' || result === 'timeout') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
+      else decide();
+    });
+    verify(iframe).then((r) => { if (r) { result = r; decide(); } });   // null — окно закрыли или сменили студию
     frameBox.append(iframe);
+  }
+
+  function verify(iframe) {
+    probe?.abort();
+    clearTimeout(probeTimer);
+    const check = new AbortController();
+    probe = check;
+    let timedOut = false;
+    probeTimer = setTimeout(() => { timedOut = true; check.abort(); }, LOAD_TIMEOUT_MS);
+    return fetch(iframe.src, { method: 'HEAD', mode: 'no-cors', cache: 'no-store', credentials: 'omit', signal: check.signal })
+      .then(() => 'ok', () => (timedOut ? 'timeout' : check.signal.aborted ? null : 'fail'))
+      .finally(() => { if (probe === check) { clearTimeout(probeTimer); probe = null; } });
   }
 
   const fields = {
