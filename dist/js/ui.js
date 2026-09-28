@@ -1,14 +1,11 @@
-// Общее для всех страниц: меню, окна записи, услуги и карты, переходы по якорям,
-// появление блоков. Страница передаёт то, что есть только у неё:
-//   goToStop  — переходы по главам сцены (главная); без него «следующий раздел» —
-//               просто следующий блок страницы;
-//   services  — тексты окна услуги (главная, config.js SERVICES).
+// Общее для всех страниц: меню, окна записи и карты, переходы по якорям,
+// появление блоков. «Следующий раздел» — первый блок страницы ниже текущего места.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
-export function setupUI({ goToStop = null, services = null } = {}) {
+export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
  const root=document.documentElement;
- const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), details=$('#service-dialog'), mapDialog=$('#map-dialog');
+ const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), mapDialog=$('#map-dialog');
  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  // Прокрутка фона выключена, пока открыто меню или окно. Класс на <html>: iOS
  // не считается с overflow у одного body. Место полосы прокрутки держит
@@ -41,14 +38,14 @@ export function setupUI({ goToStop = null, services = null } = {}) {
   dialog.showModal(); openedAt=performance.now(); syncLock();
  };
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
- const closeDialogs=()=>{ details?.close(); booking?.close(); mapDialog?.close(); };
+ const closeDialogs=()=>{ booking?.close(); mapDialog?.close(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
  // Что именно выбрал человек — только текстом, без разметки.
  const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
  // Запись: филиал выбирается здесь, потому что у площадок разные компании в yclients.
  const openBooking=(note='')=>{
    if(!booking)return;
-   closeMenu(); details?.close(); mapDialog?.close();
+   closeMenu(); mapDialog?.close();
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
    show(booking);
@@ -58,24 +55,10 @@ export function setupUI({ goToStop = null, services = null } = {}) {
  // Разговор с администратором: телефоны без онлайн-записи.
  const openMembership=(title='')=>{
    if(!booking)return;
-   closeMenu(); details?.close(); mapDialog?.close();
+   closeMenu(); mapDialog?.close();
    $('#booking-title').textContent=title||'Meatwash Car Care Club';
    setContext(''); lead.hidden=false; hint.hidden=true; branches.hidden=true;
    show(booking);
- };
- const openService=key=>{
-   const service=services?.[key]; if(!service||!details)return;
-   closeMenu();
-   // «Записаться» из окна услуги уносит её название в выбор филиала.
-   details.querySelector('[data-book]').dataset.bookContext=service.title;
-   $('#service-all-prices').href='services.html#'+({body:'programs',interior:'price-interior',polish:'price-polish',ceramic:'price-protection'}[key]||'programs');
-   $('#service-label').textContent=service.label; $('#service-title').textContent=service.title;
-   $('#service-description').textContent=service.description;
-   $('#service-prices').replaceChildren(...service.prices.map(([name,price])=>{
-    const row=document.createElement('div'),dt=document.createElement('dt'),dd=document.createElement('dd');
-    dt.textContent=name;dd.textContent=`от ${price.toLocaleString('ru-RU')} ₽`;row.append(dt,dd);return row;
-   }));
-   show(details);
  };
 
  // Окно карты: модуль грузится в простое после загрузки страницы (или при наведении
@@ -114,7 +97,7 @@ export function setupUI({ goToStop = null, services = null } = {}) {
   target.focus({preventScroll:true});
   if(hash)history.replaceState(null,'',hash);
  };
- // «Следующий раздел» без сцены: первый блок, который начинается ниже текущего места.
+ // «Следующий раздел»: первый блок, который начинается ниже текущего места.
  const nextBlock=()=>{
   const pad=parseFloat(getComputedStyle(root).scrollPaddingTop)||0;
   const next=[...document.querySelectorAll('main > section, main > header, main > div, body > footer')].find(el=>el.offsetHeight&&el.getBoundingClientRect().top-pad>8);
@@ -125,16 +108,14 @@ export function setupUI({ goToStop = null, services = null } = {}) {
   const control=e.target.closest('a,button'); if(!control)return;
   if(control.hasAttribute('data-book')) return openBooking(control.dataset.bookContext||'');
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
-  if(control.dataset.service){ e.preventDefault(); openService(control.dataset.service); return; }
   if(control.dataset.map){
    // Ctrl/Cmd/Shift-клик и средняя кнопка — как у обычной ссылки: карточка в новой вкладке.
    if(!maps||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
-   e.preventDefault(); closeMenu(); details?.close(); booking?.close();
+   e.preventDefault(); closeMenu(); booking?.close();
    maps.openMap(control.dataset.map,control);
    return;
   }
-  if(control.dataset.sceneStop){e.preventDefault();closeMenu();goToStop?.(control.dataset.sceneStop);return;}
-  if(control.hasAttribute('data-scroll-next')){ if(goToStop) goToStop('next'); else nextBlock(); return; }
+  if(control.hasAttribute('data-scroll-next')){ nextBlock(); return; }
   const hash=control.getAttribute('href');
   if(hash?.startsWith('#')&&hash.length>1){const target=document.getElementById(hash.slice(1));if(target){e.preventDefault();closeMenu();closeDialogs();jump(target,hash);}}
  },options);

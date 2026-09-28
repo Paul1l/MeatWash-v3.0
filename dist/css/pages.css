@@ -55,8 +55,6 @@ a.card { display: block; }
 .catalog--page > .catalog__section:first-child { margin-top: 0; }
 .catalog .catalog__aside h2, .catalog .catalog__concierge h2 { font-size: clamp(26px, 2.5vw, 40px); line-height: 1.2; margin: 20px 0; letter-spacing: 0; }
 @media (max-width: 800px) { .catalog .catalog__aside h2 { font-size: 30px; } .catalog__aside h2 br { display: none; } }
-/* Гараж без живой витрины не работает (статичный режим) — тизер не показываем. */
-@media (prefers-reduced-motion: reduce) { .cfg-teaser { display: none; } }
 
 /* ---------- Фото-заголовок «О нас» ---------- */
 .page-hero { position: relative; display: grid; align-items: end; min-height: clamp(520px, 78svh, 820px); padding: calc(var(--header-h) + 40px) var(--gutter) clamp(40px, 6vw, 88px); overflow: hidden; background: var(--black); }

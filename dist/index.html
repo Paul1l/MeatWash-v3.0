@@ -18,32 +18,14 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/arsenal-sc-bold.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/arsenal.woff2" as="font" type="font/woff2" crossorigin>
-<!-- Первый кадр витрины ставится фоном из JS, поэтому браузер сам его не найдёт.
-     Подгрузка заранее — только если витрина будет: в статичном режиме (?motion=reduce,
-     «уменьшить движение», Save-Data) кадр не нужен, а media у preload не видит параметр
-     адреса. Скрипт стоит до таблиц стилей, поэтому выполняется сразу, их не ожидая.
-     Размер кадра — по тому же правилу, что в stage.js: innerWidth <= 900 — малый. -->
-<script>
-// Место под кнопку «Оживить Porsche» резервируется до первой отрисовки, только если
-// браузер знает WebGL 2 (cinematic.css, .p3d-capable). Сам 3D грузится по нажатию.
-if('WebGL2RenderingContext' in window)document.documentElement.classList.add('p3d-capable');
-(function(){
- var c=navigator.connection;
- if(/[?&]motion=reduce(&|$)/.test(location.search)||(c&&c.saveData)||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
- var l=document.createElement('link');l.rel='preload';l.as='image';
- l.href=innerWidth<=900?'assets/shots/cf-hero-dirty-s.webp':'assets/shots/cf-hero-dirty.webp';
- document.head.appendChild(l);
-})();
-</script>
 <link rel="icon" href="assets/favicon-bull.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/cinematic.css">
-<link rel="stylesheet" href="css/stage.css">
 <link rel="stylesheet" href="css/proof.css">
-<link rel="stylesheet" href="css/configurator.css">
 <link rel="stylesheet" href="css/catalog.css">
 <link rel="stylesheet" href="css/pages.css">
+<link rel="stylesheet" href="css/garage.css">
 <script type="application/ld+json">[{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Мясницкая","url":"https://paul1l.github.io/MeatWash-v3.0/#locations","image":"https://paul1l.github.io/MeatWash-v3.0/assets/img/studio-myasnitskaya-1200.webp","telephone":"+79300352325","address":{"@type":"PostalAddress","streetAddress":"Мясницкая ул., 11","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"22:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":["Saturday","Sunday"],"opens":"09:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash/191686454110/"]},{"@context":"https://schema.org","@type":"AutoWash","name":"MEATWASH Car Care Club — Технопарк","url":"https://paul1l.github.io/MeatWash-v3.0/#locations","image":"https://paul1l.github.io/MeatWash-v3.0/assets/img/studio-technopark-1200.webp","telephone":"+79324916991","address":{"@type":"PostalAddress","streetAddress":"просп. Андропова, 8, стр. 2","addressLocality":"Москва","addressCountry":"RU"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"opens":"08:00","closes":"22:00"}],"sameAs":["https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/"]}]</script>
 </head>
 <body data-page="home">
@@ -72,111 +54,28 @@ if('WebGL2RenderingContext' in window)document.documentElement.classList.add('p3
 
 <main id="top">
 
-<!-- ============ CINEMATIC SCENE: hero → THE BODY ============ -->
-<section class="scene" id="scene" aria-label="MEATWASH — больше, чем мойка">
-  <div class="scene__sticky">
-    <div class="scene__poster" aria-hidden="true" hidden><img data-static-src="assets/shots/cf-hero-clean.webp" width="1600" height="900" alt="Автомобиль после ухода MEATWASH"></div>
-    <!-- aria-hidden — на слоях-картинках внутри (stage.js): ручка шторки должна быть доступна. -->
-    <div class="stage-mount"></div>
-    <!-- 3D-режим «Оживить Porsche»: canvas вставляет js/live3d.js только после нажатия. -->
-    <div class="p3d-stage" id="p3d-stage" aria-hidden="true"></div>
-    <div class="scene__shade" aria-hidden="true"></div>
-    <a class="scene__skip" href="#services">К услугам ↓</a>
-    <button class="scene__cfg" type="button" data-cfg-open aria-expanded="false" aria-controls="cfg-panel">Гараж услуг</button>
-    <!-- «Обычный вид» в главах 3D-режима: ряд первого экрана там скрыт. -->
-    <button class="p3d-float" type="button" data-p3d-float hidden><svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span>Обычный вид</span></button>
-    <!-- hero UI -->
-    <div class="hero" data-ui="hero">
-      <p class="hero__eyebrow" lang="en">CAR CARE CLUB</p>
-      <h1 class="hero__title">MEATWASH</h1>
-      <p class="hero__sub">Уход, который сохраняет ценность</p>
-      <div class="hero__actions">
-        <button class="btn btn--fill hero__booking" type="button" data-book>Записаться</button>
-        <a class="hero__more" href="services.html">Услуги и цены <span aria-hidden="true">→</span></a>
-      </div>
+<!-- ============ ПЕРВЫЙ ЭКРАН: статичная фотография, вход в «Гараж услуг» ============ -->
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <div class="hero__media">
+    <img class="hero__photo" src="assets/shots/cf-hero-clean.webp" srcset="assets/shots/cf-hero-clean-s.webp 900w, assets/shots/cf-hero-clean.webp 1600w" sizes="100vw" width="1600" height="894" alt="Бордовый Porsche 930 Turbo в клубном зале MEATWASH" fetchpriority="high" decoding="async">
+  </div>
+  <div class="hero__copy">
+    <p class="hero__eyebrow" lang="en">CAR CARE CLUB</p>
+    <h1 class="hero__title" id="hero-title">MEATWASH</h1>
+    <p class="hero__sub">Уход, который сохраняет ценность</p>
+    <div class="hero__actions">
+      <button class="btn btn--fill hero__booking" type="button" data-book>Записаться</button>
+      <a class="hero__more" href="services.html">Услуги и цены <span aria-hidden="true">→</span></a>
     </div>
-    <div class="hero-bar" data-ui="bar">
-      <!-- hidden снимает live3d.js, если браузер умеет WebGL 2. Состояния: idle, loading, on, error. -->
-      <div class="p3d" id="p3d" role="group" aria-label="Porsche в 3D" data-state="idle" hidden>
-        <p class="p3d__hint" aria-hidden="true">Потяните машину, чтобы повернуть</p>
-        <button class="p3d__link p3d__cancel" type="button" data-p3d="cancel" data-in="loading">Отмена</button>
-        <button class="p3d__btn p3d__start" type="button" data-p3d="start" data-in="idle loading">
-          <svg class="p3d__ico" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-          <span class="p3d__label">Оживить Porsche</span>
-          <span class="p3d__pct" aria-hidden="true"></span>
-          <span class="p3d__bar" aria-hidden="true"><i></i></span>
-        </button>
-        <p class="p3d__msg" data-in="error">Не удалось загрузить 3D</p>
-        <button class="p3d__btn p3d__retry" type="button" data-p3d="retry" data-in="error">
-          <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M15.6 11.2A5.8 5.8 0 1 1 13.9 5.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M14.4 2.4v3.6h-3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <span>Повторить</span>
-        </button>
-        <button class="p3d__close" type="button" data-p3d="dismiss" data-in="error" aria-label="Скрыть сообщение"><svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg></button>
-        <div class="p3d__views" role="group" aria-label="Ракурс" data-in="on">
-          <button class="p3d__view" type="button" data-p3d-view="overview" aria-pressed="false">Общий вид</button>
-          <button class="p3d__view" type="button" data-p3d-view="body" aria-pressed="false">Кузов</button>
-          <button class="p3d__view" type="button" data-p3d-view="wheel" aria-pressed="false">Диски</button>
-        </div>
-        <button class="p3d__link p3d__tour" type="button" data-p3d="tour" data-in="on" data-compact>
-          <svg class="p3d__ico p3d__ico--replay" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M15.6 11.2A5.8 5.8 0 1 1 13.9 5.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M14.4 2.4v3.6h-3.6" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <svg class="p3d__ico p3d__ico--stop" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><rect x="6" y="6" width="8" height="8" rx="1.2" fill="currentColor"/></svg>
-          <span class="p3d__txt">Повторить показ</span>
-        </button>
-        <button class="p3d__btn p3d__exit" type="button" data-p3d="exit" data-in="on" data-compact>
-          <svg class="p3d__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          <span class="p3d__txt">Обычный вид</span>
-        </button>
-      </div>
-      <button class="hero-bar__scroll" type="button" data-scroll-next lang="en">SCROLL</button>
+  </div>
+  <!-- Вход в гараж. Фото — только превью: 3D (js/garage.js) грузится после нажатия. -->
+  <div class="garage-entry" role="group" aria-labelledby="garage-entry-title">
+    <img class="garage-entry__photo" src="assets/shots/cf-hero-dirty-s.webp" width="900" height="503" alt="" decoding="async">
+    <div class="garage-entry__body">
+      <h2 class="garage-entry__title" id="garage-entry-title">Гараж услуг <span class="garage-entry__badge">3D</span></h2>
+      <p class="garage-entry__text">Выберите услуги и рассмотрите автомобиль в 3D</p>
     </div>
-
-    <article class="chapter" data-chapter="body" aria-hidden="true" inert>
-      <div class="chapter__index"><span>01</span><span>Кузов</span></div>
-      <h2 class="chapter__title" lang="en">The<span class="chapter__break"> </span>Body</h2>
-      <span class="chapter__kicker">Мойка</span>
-      <p class="chapter__lead">Чистота — основа характера</p>
-      <p class="chapter__text">2–3-фазная ручная мойка, которая раскрывает настоящий цвет.</p>
-      <button class="btn btn--ghost" type="button" data-service="body">Подробнее <span aria-hidden="true">→</span></button>
-    </article>
-    <article class="chapter" data-chapter="interior" aria-hidden="true" inert>
-      <div class="chapter__index"><span>02</span><span>Салон</span></div>
-      <h2 class="chapter__title" lang="en">The<span class="chapter__break"> </span>Interior</h2>
-      <span class="chapter__kicker">Химчистка салона</span>
-      <p class="chapter__lead">Красота изнутри</p>
-      <p class="chapter__text">Салон должен выглядеть так, будто в нём ещё никто не ездил.</p>
-      <button class="btn btn--ghost" type="button" data-service="interior">Подробнее <span aria-hidden="true">→</span></button>
-    </article>
-    <article class="chapter" data-chapter="polish" aria-hidden="true" inert>
-      <div class="chapter__index"><span>03</span><span>Полировка</span></div>
-      <h2 class="chapter__title" lang="en">The<span class="chapter__break"> </span>Reflection</h2>
-      <span class="chapter__kicker">Полировка кузова</span>
-      <p class="chapter__lead">Свет показывает всё.</p>
-      <p class="chapter__text">Полировка кузова и восстановление глубины цвета.</p>
-      <button class="btn btn--ghost" type="button" data-service="polish">Подробнее <span aria-hidden="true">→</span></button>
-    </article>
-    <article class="chapter" data-chapter="ceramic" aria-hidden="true" inert>
-      <div class="chapter__index"><span>04</span><span>Керамика</span></div>
-      <h2 class="chapter__title" lang="en">The<span class="chapter__break"> </span>Protection</h2>
-      <span class="chapter__kicker">Керамическая защита</span>
-      <p class="chapter__lead">Сохранить безупречность</p>
-      <p class="chapter__text">Глубина цвета. Защита поверхности.</p>
-      <button class="btn btn--ghost" type="button" data-service="ceramic">Подробнее <span aria-hidden="true">→</span></button>
-    </article>
-    <div class="finale" aria-hidden="true" inert>
-      <span class="eyebrow" lang="en">CAR CARE CLUB</span><p class="finale__title">MEATWASH</p>
-      <p>Уход, который сохраняет ценность</p>
-      <div class="hero__actions finale__actions">
-        <button class="btn btn--fill" type="button" data-book>Записаться</button>
-        <a class="hero__more finale__more" href="#services">К услугам <span aria-hidden="true">↓</span></a>
-      </div>
-    </div>
-    <nav class="chapter-nav" aria-label="Главы ухода" hidden>
-      <button data-scene-stop="body" aria-label="Кузов">01</button>
-      <button data-scene-stop="interior" aria-label="Салон">02</button>
-      <button data-scene-stop="polish" aria-label="Полировка">03</button>
-      <button data-scene-stop="ceramic" aria-label="Керамика">04</button>
-      <span class="chapter-nav__line"><i></i></span>
-    </nav>
+    <button class="btn btn--light garage-entry__btn" type="button" data-garage-open>Открыть 3D-гараж</button>
   </div>
 </section>
 
@@ -195,6 +94,24 @@ if('WebGL2RenderingContext' in window)document.documentElement.classList.add('p3
   </div>
   <!-- PREVIEW:END -->
   <a class="link-arrow services-preview__all" href="services.html">Все услуги и цены <span aria-hidden="true">→</span></a>
+</section>
+
+<!-- ============ ГАРАЖ УСЛУГ: промоблок, второй вход в то же окно ============ -->
+<section class="garage-promo" id="garage-promo" aria-labelledby="garage-promo-title">
+  <div class="garage-promo__media">
+    <img src="assets/shots/cf-hero-dirty.webp" srcset="assets/shots/cf-hero-dirty-s.webp 900w, assets/shots/cf-hero-dirty.webp 1600w" sizes="(max-width: 900px) 100vw, 58vw" width="1600" height="894" alt="Фотография Porsche 930 в студии MEATWASH — превью гаража услуг" loading="lazy" decoding="async">
+  </div>
+  <div class="garage-promo__copy">
+    <p class="eyebrow" lang="en">SERVICE GARAGE · 3D</p>
+    <h2 id="garage-promo-title">Гараж услуг</h2>
+    <p class="garage-promo__lead">Выберите услуги и рассмотрите автомобиль в 3D</p>
+    <ul class="garage-promo__points">
+      <li>Камера показывает деталь работы: колесо, крыло, капот, фары</li>
+      <li>Итог «от» по ценам каталога и вашему типу кузова</li>
+      <li>Выбранный состав виден при записи в студию</li>
+    </ul>
+    <button class="btn btn--light garage-promo__btn" type="button" data-garage-open>Открыть 3D-гараж</button>
+  </div>
 </section>
 
 <!-- ============ ДО / ПОСЛЕ ============ -->
@@ -357,17 +274,6 @@ if('WebGL2RenderingContext' in window)document.documentElement.classList.add('p3
 </footer>
 <!-- SHARED:footer:END -->
 
-<!-- Сообщения 3D-режима для чтения с экрана: вне .hero-bar, который получает inert. -->
-<p class="visually-hidden" id="p3d-live" role="status" aria-live="polite" aria-atomic="true"></p>
-
-<!-- Окно услуги: его открывают «Подробнее» в главах сцены. -->
-<dialog class="dialog service-dialog" id="service-dialog" aria-labelledby="service-title">
-  <form method="dialog"><button class="dialog__close" aria-label="Закрыть">×</button></form>
-  <span class="eyebrow" id="service-label" lang="en"></span><h2 id="service-title"></h2>
-  <p id="service-description"></p><dl class="service-prices" id="service-prices"></dl>
-  <a class="service-all-prices link-arrow" id="service-all-prices" href="services.html#programs">Полный перечень работ и цены <span aria-hidden="true">→</span></a>
-  <button class="btn btn--fill" type="button" data-book>Записаться</button>
-</dialog>
 <!-- SHARED:dialogs:START -->
 <button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
 
@@ -436,8 +342,6 @@ if('WebGL2RenderingContext' in window)document.documentElement.classList.add('p3
   </div>
 </dialog>
 <!-- SHARED:dialogs:END -->
-<script src="vendor/gsap.min.js" defer></script>
-<script src="vendor/ScrollTrigger.min.js" defer></script>
 <script type="module" src="js/main.js"></script>
 </body>
 </html>

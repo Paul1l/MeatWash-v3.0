@@ -1,196 +1,59 @@
-/* Cinematic layer. Reference typography/grid remain in style.css. */
+/* Поверх style.css: сплошная шапка, раскладка первого экрана на телефоне и в
+   альбоме, карточки, окна, нижняя кнопка записи, «уменьшить движение». */
 html { scroll-behavior:auto; }
 .header,.header.is-solid, body.menu-open .header { background:var(--black); backdrop-filter:none; }
-/* Длина закреплённой сцены — одна переменная. Доли глав (STOPS, LADDER_AT в config.js,
-   окна глав в main.js, путь 3D в src/porsche3d/views.js) считаются от высоты трека,
-   поэтому меняется только скорость: пикселей прокрутки на главу = 0.2 · (длина − 1 экран).
-   Компьютер — 780svh, как в версии Vercel (≈1 220 px на главу при 900 px высоты);
-   телефон и планшет в портрете — 400svh (≈500 px на главу при 844: один обычный свайп);
-   низкий альбом — 540svh. svh не меняется от панели адреса, поэтому трек не прыгает
-   при прокрутке; поворот и смену раскладки держит keepSceneProgress() в main.js. */
-:root { --scene-len:780svh; }
-@media (max-width:900px) and (orientation:portrait) { :root { --scene-len:400svh; } }
-@media (orientation:landscape) and (max-height:500px) { :root { --scene-len:540svh; } }
-.scene { height:var(--scene-len); }
-.scene__sticky { height:100svh; isolation:isolate; }
-.scene__poster { position:absolute; inset:0; width:100%; height:100%; }
-.scene__poster { display:none; z-index:1; pointer-events:none; overflow:hidden; }
-.scene__poster img { width:100%; height:100%; object-fit:cover; }
-.scene__poster img { object-position:50% 45%; transform-origin:60% 53%; }
-.scene__shade { z-index:1; background:linear-gradient(0deg,rgb(var(--black-rgb)/.72),transparent 45%,transparent 83%,rgb(var(--black-rgb)/.3)); }
-.scene__sticky::after { z-index:1; background:linear-gradient(90deg,var(--black) 0%,rgb(var(--black-rgb)/.96) 20%,rgb(var(--black-rgb)/.55) 32%,transparent 50%); }
-.hero { bottom:14.5%; }
-.hero__eyebrow { color:var(--muted); font-size:11px; letter-spacing:.25em; margin-bottom:20px; }
-/* Размеры hero живут здесь (этот файл перекрывает style.css) и повторяют
-   версию Vercel: крупный вордмарк MEATWASH, под ним подзаголовок.
-   Ряд «Записаться + Услуги и цены» стоит на отступе Vercel-кнопки .hero__booking. */
-.hero__actions { margin-top:28px; }
-.hero__title { font-size:clamp(46px,5.5vw,90px); line-height:.96; letter-spacing:.005em; }
-.hero__sub { margin-top:32px; }
-.hero-bar { bottom:4%; }
-.hero-bar { display:flex; justify-content:flex-end; }
-.chapter { width:min(30vw,440px); top:50%; transform:translateY(-50%); }
-.chapter__title { font-size:clamp(42px,4.1vw,68px); line-height:1.02; letter-spacing:.008em; }
-.chapter__break { display:block; }
-.chapter[data-chapter=ceramic] .chapter__title,.chapter[data-chapter=polish] .chapter__title { font-size:clamp(38px,3.75vw,62px); }
-.chapter__lead { font-size:clamp(18px,1.55vw,24px); }
-.chapter__text { font-size:14px; }
-.chapter__kicker { font-size:10px; }
-.chapter-nav { position:absolute; z-index:3; left:11.5vw; bottom:32px; display:flex; align-items:center; gap:6px; }
-/* Номера глав — цель 44×44 без прибавки визуального веса: центрируем в боксе. */
-.chapter-nav button { display:inline-flex; align-items:center; justify-content:center; min-width:44px; height:44px; font-size:12px; color:var(--muted); }
-.chapter-nav button[aria-current] { color:var(--ivory); }
-.chapter-nav__line { height:1px; width:90px; margin-left:12px; background:var(--line); }
-.chapter-nav__line i { display:block; height:1px; width:0; background:var(--ivory); }
-.scene__skip { position:absolute; z-index:3; bottom:34px; right:var(--gutter); display:inline-flex; align-items:center; min-height:44px; padding:0 2px; color:var(--muted); font-size:12px; opacity:0; visibility:hidden; }
-.scene__skip.is-visible:hover { color:var(--ivory); }
-.scene__skip.is-visible { opacity:1; visibility:visible; }
-.finale { position:absolute; z-index:2; left:var(--gutter); bottom:11%; opacity:0; pointer-events:none; }
-/* Финал сцены — не заголовок раздела: те же начертание и размер на абзаце. */
-.finale p.finale__title { font-family:var(--font-display); font-weight:700; line-height:1.04; font-size:clamp(42px,5.4vw,88px); margin:16px 0 20px; letter-spacing:.005em; }
-.finale p { color:var(--ivory); margin-bottom:24px; }
-.finale:not([inert]) { pointer-events:auto; }
 .card__caption { opacity:1; transform:none; }
 .card::after { background:linear-gradient(0deg,rgb(var(--black-rgb)/.48),transparent 40%,rgb(var(--black-rgb)/.48)); }
 .card { transition:filter .5s ease; }
 .card:hover { filter:brightness(1.12); }
 .membership__card img { opacity:1; transform:none; }
-.service-dialog { width:min(92vw,570px); }
-.service-prices { margin:24px 0 0; }
-.service-prices div { display:flex; justify-content:space-between; gap:24px; padding:13px 0; border-top:1px solid var(--line); font-size:13px; }
-.service-prices dd { white-space:nowrap; }
-.service-dialog .btn { width:100%; }
 body:has(dialog[open]) { overflow:hidden; }
 body.menu-open { overflow:hidden; }
 /* Цель 44px; отрицательные поля не дают ссылке раздвинуть строку подвала. */
 .credits-link { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; margin-block:-12px; }
 .dialog::backdrop { backdrop-filter:none; }
-@media(min-width:1700px) { .hero__title { font-size:108px; } }
-@media(max-width:1100px) { .chapter { left:var(--gutter); width:37vw; } .chapter__title { font-size:54px; } .chapter-nav { left:var(--gutter); } }
-/* Портрет до 900px: запись — только в нижней кнопке, поэтому в hero и финале её нет.
-   Блок стоит выше блока 800px, чтобы телефонные значения перебивали планшетные. */
+
+/* Портрет до 900px: запись — только в нижней кнопке (.mobile-cta), в hero её нет.
+   Первый экран — колонкой: фото с машиной, текст, вход в гараж; снизу место
+   под нижнюю кнопку. Фото забирает всё, что остаётся от экрана (не меньше
+   190px и не больше 62% высоты): композиция закончена на любой высоте. */
+:root { --cta-zone:calc(46px + max(12px, env(safe-area-inset-bottom, 0px)) + 20px); }
 @media(max-width:900px) and (orientation:portrait) {
-  .hero__booking, .finale .btn { display:none; }
+  .hero__booking { display:none; }
   .mobile-cta { bottom:max(12px,env(safe-area-inset-bottom)); height:46px; box-shadow:0 0 0 8px var(--black); }
   body:has(dialog[open]) .mobile-cta { visibility:hidden; }
-  .chapter-nav { bottom:72px; }
-  .scene__skip { bottom:72px; }
+  .hero { display:flex; flex-direction:column; padding:var(--header-h) 0 var(--cta-zone); }
+  .hero__media { position:relative; inset:auto; flex:1 0 190px; max-height:62svh; }
+  .hero__photo { object-position:41% 64%; }
+  .hero__media::after { background:linear-gradient(0deg,var(--black) 0%,rgb(var(--black-rgb)/.62) 20%,rgb(var(--black-rgb)/0) 46%); }
+  .hero__copy { position:relative; left:auto; bottom:auto; max-width:none; margin-top:-64px; padding:0 var(--gutter); }
+  .hero__eyebrow { margin-bottom:10px; }
+  .hero__title { font-size:clamp(36px,10.4vw,65px); line-height:.95; }
+  .hero__sub { margin-top:10px; font-size:15px; }
+  .hero__actions { margin-top:4px; }
 }
 @media(max-width:800px) and (orientation:portrait) {
   :root { --gutter:16px; }
   .header { background:var(--black); border-bottom:1px solid var(--line); }
-  .scene__poster img { object-position:55% 35%; }
-  .hero { bottom:116px; }
-  .hero__title { font-size:clamp(36px,10.4vw,65px); line-height:.95; }
-  .hero__sub { margin-top:16px; font-size:14px; }
-  /* Кнопки записи здесь нет (она внизу экрана) — остаётся ссылка «Услуги и цены». */
-  .hero__actions { margin-top:16px; }
-  .hero-bar { bottom:85px; row-gap:12px; }
-  .chapter { top:auto; bottom:116px; left:var(--gutter); right:var(--gutter); width:auto; transform:none; }
-  .chapter__index { flex-direction:row; align-items:center; gap:12px; }
-  .chapter__index span:first-child { font-size:12px; }
-  .chapter__title { font-size:clamp(30px,8.6vw,44px); margin-top:12px; }
-  .chapter__break { display:inline; white-space:pre; }
-  .chapter[data-chapter=ceramic] .chapter__title,.chapter[data-chapter=polish] .chapter__title { font-size:clamp(29px,8vw,44px); }
-  .chapter__kicker { margin-top:10px; }
-  .chapter__lead { font-size:17px; margin-top:14px; }
-  .chapter__text { font-size:13px; line-height:1.5; max-width:36ch; margin-top:8px; }
-  .chapter .btn { height:38px; margin-top:16px; }
-  .chapter-nav { left:var(--gutter); bottom:66px; gap:0; }
-  .chapter-nav__line { width:60px; margin-left:8px; }
-  .scene__skip { bottom:76px; right:var(--gutter); font-size:11px; padding:0 4px; }
-  .scene__sticky::after { background:linear-gradient(0deg,var(--black) 0%,rgb(var(--black-rgb)/.95) 25%,rgb(var(--black-rgb)/.18) 49%,transparent 63%); }
-  .scene__shade { background:linear-gradient(0deg,rgb(var(--black-rgb)/.94),transparent 58%); }
-  .finale { bottom:120px; right:var(--gutter); }
-  .finale p.finale__title { font-size:44px; }
   .about__copy { padding-bottom:24px; }
   .location__meta { font-size:13px; }
   .about__stats dt { font-size:24px; }
 }
-@media(max-height:560px) and (orientation:landscape) {
-  .chapter { top:55%; width:36vw; }
-  /* Глава выше свободной высоты под шапкой — номер уходил под неё. */
-  .chapter__index { display:none; }
-  .chapter__title { font-size:34px; margin-top:8px; }
-  .chapter__lead { font-size:15px; margin-top:12px; }
-  .chapter__text { font-size:12px; }
-  .chapter .btn { margin-top:12px; }
-  .scene__skip { bottom:env(safe-area-inset-bottom, 0px); }
-  /* Номера глав — справа над «Все услуги»: слева на низком экране они касались «Подробнее». */
-  .chapter-nav { left:auto; right:var(--gutter); bottom:44px; }
-}
-/* Compact landscape windows need a single-row footer beneath the hero copy. */
+/* Альбом до 900px и невысокие окна: фото на весь экран, текст и вход в гараж
+   ужимаются по высоте, кегль заголовка — от ширины. */
 @media(max-width:900px) and (orientation:landscape) {
-  .hero { bottom:100px; }
   .hero__title { font-size:clamp(30px,6vw,48px); }
-  .hero__sub { font-size:14px; margin-top:14px; }
-  .hero-bar { bottom:24px; grid-template-columns:1fr auto; }
+  .hero__sub { font-size:14px; margin-top:8px; }
+  .hero__eyebrow { margin-bottom:8px; }
+  .hero__actions { margin-top:8px; }
 }
-/* Совсем низкий альбом (740×360, 568×320): крупный вордмарк с рядом кнопок
-   упирался в шапку. Размеры шрифта те же, ужимаются только отступы. */
-@media(max-width:900px) and (orientation:landscape) and (max-height:380px) {
-  .hero { bottom:88px; }
-  .hero__eyebrow { margin-bottom:10px; }
-  .hero__actions { margin-top:16px; }
+@media(orientation:landscape) and (max-height:500px) {
+  .hero { --hero-bottom:max(16px, env(safe-area-inset-bottom, 0px)); }
+  .hero__copy { left:max(var(--gutter), env(safe-area-inset-left, 0px)); max-width:48vw; }
+  .hero__eyebrow { display:none; }
 }
-/* No animation: genuine static frames, with no pinned multi-screen empty track. */
-.static-experience .scene { height:auto; }
-.static-experience .scene__sticky { position:relative; height:auto; overflow:visible; }
-.static-experience .stage-mount,.static-experience .scene__shade,.static-experience .scene__sticky::after,.static-experience .hero-bar,.static-experience .chapter-nav,.static-experience .scene__skip { display:none; }
-.static-experience .scene__poster { display:block; height:100svh; }
-/* min-height, а не height: на низком экране крупный hero с кнопками не влезал
-   в 100svh, и следующая глава перекрывала «Записаться». */
-.static-experience .hero { position:relative; left:auto; right:auto; bottom:auto; min-height:100svh; padding:60svh var(--gutter) 70px; max-width:none; }
-.static-experience .chapter { position:relative; inset:auto; min-height:90svh; width:100%; opacity:1; padding:20svh 11.5vw 10svh; transform:none; background:linear-gradient(90deg,var(--black),transparent 80%),var(--static-image) center/cover; pointer-events:auto; }
-.static-experience .chapter[data-chapter=body] { --static-image:url('../assets/shots/cf-foam-crop.webp'); }
-.static-experience .chapter[data-chapter=interior] { --static-image:url('../assets/shots/cf-interior-seat.webp'); }
-.static-experience .chapter[data-chapter=polish] { --static-image:url('../assets/shots/cf-rq-bay.webp'); }
-.static-experience .chapter[data-chapter=ceramic] { --static-image:url('../assets/shots/cf-bead-macro.webp'); }
-.static-experience .finale { position:relative; inset:auto; opacity:1; padding:70px var(--gutter); }
-/* До 900px — кадры 900 px (-s), как у витрины в stage.js: 1600 px телефону не нужны. */
-@media(max-width:900px) {
-  .static-experience .chapter[data-chapter=body] { --static-image:url('../assets/shots/cf-foam-crop-s.webp'); }
-  .static-experience .chapter[data-chapter=interior] { --static-image:url('../assets/shots/cf-interior-seat-s.webp'); }
-  .static-experience .chapter[data-chapter=polish] { --static-image:url('../assets/shots/cf-rq-bay-s.webp'); }
-  .static-experience .chapter[data-chapter=ceramic] { --static-image:url('../assets/shots/cf-bead-macro-s.webp'); }
-}
-/* Статичные главы на телефоне — на общем поле страницы, а не на 11.5vw. */
-@media(max-width:800px) and (orientation:portrait) { .static-experience .chapter { min-height:64svh; padding:12svh var(--gutter) 8svh; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 
 @media (max-width: 640px) {
   .brand__logo { height: 24px; }
 }
-
-/* v3.0 «Оживить Porsche»: место под ряд 3D в .hero-bar. Только если браузер знает
-   WebGL 2 — класс p3d-capable ставит инлайн-скрипт в <head> до первой отрисовки;
-   без WebGL первый экран как в v2. Остальные стили 3D — porsche3d.css (грузится с кнопкой). */
-:root { --p3d-cta-top:calc(max(12px, env(safe-area-inset-bottom, 0px)) + 46px); --p3d-h:44px; }
-.p3d-capable .hero-bar { align-items:center; gap:clamp(20px, 2.8vw, 44px); pointer-events:none; }
-.p3d-capable .hero-bar > * { pointer-events:auto; }
-@media (max-width:900px) and (orientation:portrait) {
-  .p3d-capable .hero-bar { bottom:calc(var(--p3d-cta-top) + 14px); justify-content:space-between; }
-}
-@media (max-width:800px) and (orientation:portrait) {
-  .p3d-capable .hero { bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h) + 12px); }
-}
-/* Статичный режим: ряд 3D внизу первого экрана; на низком альбоме текст поднимается под шапку. */
-.p3d-capable.static-experience .hero-bar { display:flex; top:calc(100svh - 4svh - var(--p3d-h)); bottom:auto; }
-.p3d-capable.static-experience .hero-bar__scroll { display:none; }
-.p3d-capable.static-experience .hero { padding-bottom:calc(4svh + var(--p3d-h) + 24px); }
-@media (max-width:900px) and (orientation:portrait) {
-  .p3d-capable.static-experience .hero-bar { top:calc(100svh - var(--p3d-cta-top) - 14px - var(--p3d-h)); }
-  .p3d-capable.static-experience .hero { padding-bottom:calc(var(--p3d-cta-top) + 14px + var(--p3d-h)); }
-}
-@media (orientation:landscape) and (max-height:500px) {
-  .p3d-capable.static-experience .hero { padding-top:max(var(--header-h), 22svh); }
-}
-
-/* v3.0 к показу. Финал: кнопка записи в портрете — внизу экрана (.mobile-cta),
-   поэтому в финале остаётся переход к услугам. */
-.finale .hero__actions { margin-top:0; }
-.finale p.finale__title + p { margin-bottom:20px; }
-/* Мелкие подписи на светлых участках фото (320 px, альбом) — лёгкая тень. */
-.hero__eyebrow, .chapter__kicker, .chapter__index, .scene__skip { text-shadow:0 1px 12px rgb(var(--black-rgb) / .75); }
-/* 320–374 px: номера глав заходили под «К услугам ↓» — без линии прогресса они короче. */
-@media (max-width:374px) { .chapter-nav__line { display:none; } }

@@ -1,8 +1,8 @@
-// Проверка 3D-режима «Оживить Porsche» (npm run check:3d):
+// Проверка 3D-гаража (npm run check:3d):
 // - dist/js/porsche3d.bundle.js собран из текущего src/porsche3d;
 // - модели в dist/assets/3d совпадают с отчётом optimize-3d (не правлены руками),
 //   сжаты Meshopt, текстуры WebP не больше заданных размеров, без касательных;
-// - у каждой работы «Гаража услуг» есть ракурс или явный отказ (фото);
+// - у каждой работы «Гаража услуг» есть ракурс, эффекты — только у известных работ;
 // - размеры укладываются в бюджет; печатается таблица raw / gzip / brotli.
 // Что страница не грузит 3D до нажатия, проверяет npm run check (check.mjs).
 import {readFile, readdir, mkdtemp, rm} from 'node:fs/promises';
@@ -88,15 +88,14 @@ check(gzipSync(bundle, {level: 9}).length <= 180e3, 'Бандл больше 180
 const views = await import('data:text/javascript;base64,' + Buffer.from(await readFile(resolve(root, 'src/porsche3d/views.js'), 'utf8')).toString('base64'));
 // config.js импортирует data.js — относительные импорты подставляет importDist.
 const config = await importDist(resolve(root, 'dist/js/config.js'));
+// Внутри гаража машину показывает 3D: у каждой работы — ракурс модели, без фото.
+check('overview' in views.VIEWS, 'Нет ракурса «Общий вид» (overview)');
 for (const zone of config.ZONES) {
-  check(zone.id in views.SERVICE_VIEWS, `Работа гаража ${zone.id} без ракурса (или null — показать фото)`);
   const view = views.SERVICE_VIEWS[zone.id];
-  check(view === null || view in views.VIEWS, `Работа ${zone.id} ссылается на несуществующий ракурс ${view}`);
+  check(view in views.VIEWS, `Работа гаража ${zone.id} без ракурса или с несуществующим ракурсом ${view}`);
 }
-for (const id of Object.keys(views.SERVICE_VIEWS)) check(config.ZONES.some(z => z.id === id), `В SERVICE_VIEWS лишняя работа ${id}`);
-for (const name of views.PUBLIC_VIEWS) check(name in views.VIEWS, `Нет ракурса ${name}`);
-for (const step of views.TOUR.steps) check(step.view in views.VIEWS, 'Показ: нет ракурса ' + step.view);
-check(views.TOUR.duration >= 6 && views.TOUR.duration <= 8, 'Показ должен длиться 6–8 с');
+for (const id of [...Object.keys(views.SERVICE_VIEWS), ...Object.keys(views.SERVICE_FX)]) check(config.ZONES.some(z => z.id === id), `В SERVICE_VIEWS/SERVICE_FX лишняя работа ${id}`);
+for (const fx of Object.values(views.SERVICE_FX)) check(['wash', 'gloss'].includes(fx), `Неизвестный эффект ${fx}: модель убедительно показывает только wash и gloss`);
 
 const pad = (v, n) => String(v).padStart(n);
 console.log('Размеры 3D-ресурсов, байт:');
@@ -104,4 +103,4 @@ console.log(`${'файл'.padEnd(46)}${pad('raw', 11)}${pad('gzip', 11)}${pad('b
 for (const [label, raw, gz, br] of rows) console.log(`${label.padEnd(46)}${pad(raw, 11)}${pad(gz, 11)}${pad(br, 11)}`);
 
 assert.equal(failures.length, 0, failures.join('\n'));
-console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс или фото.');
+console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели.');
