@@ -107,13 +107,14 @@ a.card { display: block; }
 
 /* ---------- Карточка локации: «Записаться» и «На карте» ---------- */
 .location__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 8px; }
-.location__actions .btn { height: 44px; padding: 0 18px; font-size: 13px; }
+.location__actions .btn { height: 44px; padding: 0 14px; font-size: 13px; }
 .location__card .location__book { margin-top: 0; }
 .btn__ico { flex: 0 0 auto; }
 @media (max-width: 800px) and (orientation: portrait) { .location__actions .btn { flex: 1 1 140px; } }
 
 /* ---------- Подвал: «На карте» у адресов ---------- */
 .footer__branch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; }
+.footer__branch .footer__map { gap: 6px; }
 .footer__branch .footer__map { color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
 .footer__branch .footer__map:hover { color: var(--ivory); }
 

@@ -159,7 +159,9 @@ export function setupUI({ goToStop = null, services = null } = {}) {
  try{arrival=location.hash.length>1?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;}catch{arrival=null;}
  if(arrival&&arrival.tagName==='DETAILS'){
   arrival.open=true;
-  const settle=()=>arrival.scrollIntoView({behavior:'instant'});
+  // Второе выравнивание — только если человек ещё не прокрутил страницу сам.
+  let placed=-1;
+  const settle=()=>{if(placed>=0&&Math.abs(scrollY-placed)>2)return;arrival.scrollIntoView({behavior:'instant'});placed=scrollY;};
   requestAnimationFrame(settle);
   document.fonts?.ready.then(()=>requestAnimationFrame(settle));
  }

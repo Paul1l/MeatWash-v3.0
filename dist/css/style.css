@@ -535,7 +535,7 @@ html { scrollbar-gutter: stable; }
 html.is-locked, html.is-locked body { overflow: hidden; }
 /* Меню — на весь экран под шапкой: свайп «мимо меню» больше не закрывал его
    и не прокручивал страницу под ним. Прокручивается само меню (низкий альбом). */
-.mobile-menu { inset: var(--header-h) 0 0; max-height: none; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+.mobile-menu { inset: var(--header-h) 0 0; max-height: none; padding-bottom: max(28px, env(safe-area-inset-bottom)); background: var(--black); }
 /* Нижняя кнопка записи уходит при любом открытом окне (запасной путь к :has). */
 body.dialog-open .mobile-cta { visibility: hidden; }
 /* Окна записи и услуги на телефоне — нижний лист: крестик и «Записаться» ближе к пальцу. */
