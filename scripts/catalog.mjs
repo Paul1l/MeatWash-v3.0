@@ -38,15 +38,18 @@ export function renderCatalog(){
   </div>
  </section>
  <section class="catalog__section" id="price-list" aria-labelledby="price-list-title">
-  <div class="catalog__aside"><span class="eyebrow" lang="en">02 / DETAILING</span><h2 id="price-list-title">Услуги<br> и цены</h2><p>${servicesLine}. Дополните программу мойки или запишитесь на отдельную услугу.</p><a class="link-arrow" href="#book">Выбрать студию <span aria-hidden="true">↓</span></a></div>
+  <div class="catalog__aside"><span class="eyebrow" lang="en">02 / DETAILING</span><h2 id="price-list-title">Детейлинг</h2><p>${servicesLine}. Дополните программу мойки или запишитесь на отдельную услугу.</p><a class="link-arrow" href="#book">Выбрать студию <span aria-hidden="true">↓</span></a></div>
   <div class="catalog__content">${d.groups.map((group,i)=>`<details class="catalog__entry service-group" id="price-${escape(group.id)}"><summary><span class="catalog__number">${number(i)}</span><span class="catalog__name">${escape(group.title)}</span><span class="catalog__count">${group.items.length} поз.</span><span class="catalog__toggle" aria-hidden="true">+</span></summary><div class="catalog__expanded"><p>${escape(group.desc)}</p><dl class="catalog__prices">${group.items.map(([name,price])=>`<div data-price-item><dt>${escape(name)}</dt><dd>${money(price)}</dd></div>`).join('')}</dl><button class="btn btn--ghost" type="button" data-book data-book-context="${escape(group.title)}">Записаться <span aria-hidden="true">→</span></button></div></details>`).join('\n')}
    <div class="catalog__extra"><span>Порошковая покраска дисков<small>Детейлинг-центр Технопарк</small></span><button type="button" class="link-arrow" data-membership="Покраска дисков">Уточнить стоимость <span aria-hidden="true">→</span></button></div>
    <p class="catalog__note">Стоимость зависит от типа кузова и состояния автомобиля. Итоговый объём и цену согласуем перед работой. Не является публичной офертой.</p>
   </div>
  </section>
+</div>
+<!-- Кремовая полоса: гараж и индивидуальный уход — не прайс, их видно отдельно. -->
+<div class="services-extra">
  <section class="catalog__concierge cfg-teaser" id="garage-teaser" aria-labelledby="garage-teaser-title">
   <div><p class="eyebrow">Гараж услуг</p><h2 id="garage-teaser-title">Соберите уход на одной машине</h2><p>Отметьте работы — витрина на главной покажет их на Porsche и посчитает ориентир по минимальным ценам.</p></div>
-  <a class="btn btn--ghost" href="./#garage">Открыть гараж <span aria-hidden="true">→</span></a>
+  <a class="btn btn--ghost btn--ink" href="./#garage">Открыть гараж <span aria-hidden="true">→</span></a>
  </section>
  <section class="catalog__concierge" aria-labelledby="concierge-title"><div><p class="eyebrow" lang="en">INDIVIDUAL CARE</p><h2 id="concierge-title">Под вашу задачу.</h2><p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p></div><button class="btn btn--fill" type="button" data-membership="Индивидуальный уход">Обсудить уход <span aria-hidden="true">→</span></button></section>
 </div>
