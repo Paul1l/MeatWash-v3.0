@@ -1,0 +1,42 @@
+<footer class="footer" id="contacts">
+  <h2 class="visually-hidden">Контакты</h2>
+  <div class="footer__row">
+    <a class="brand" href="{{top}}" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
+    <nav class="footer__nav" aria-label="Навигация в подвале">
+      <a href="services.html"{{current:services}}>Услуги</a><a href="about.html"{{current:about}}>О нас</a><a href="{{home}}#locations">Локации</a><a href="{{home}}#contacts">Контакты</a>
+    </nav>
+    <div class="footer__social">
+      <button type="button" data-book aria-label="Онлайн-запись">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1" fill="none" stroke="currentColor"/><path d="M7 2v6M17 2v6M3 10h18M8 15h8" fill="none" stroke="currentColor"/></svg>
+      </button>
+      <a href="tel:{{loc:myasnitskaya:tel}}" aria-label="Позвонить">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.6 8.2c.4-.4 1-.4 1.3 0l1 1.3c.3.4.3.9 0 1.3l-.6.7c.6 1.1 1.5 2 2.6 2.6l.7-.6c.4-.3.9-.3 1.3 0l1.3 1c.4.3.4.9 0 1.3l-.7.7c-.6.6-1.5.7-2.3.4-2.5-1.1-4.5-3.1-5.6-5.6-.3-.8-.2-1.7.4-2.3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+      </a>
+    </div>
+    <button class="btn btn--fill" type="button" data-book>Записаться</button>
+  </div>
+  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). -->
+  <div class="footer__contacts">
+    <div class="footer__branch">
+      <h3>{{loc:myasnitskaya:name}}</h3>
+      <p>{{loc:myasnitskaya:address}}<br>{{loc:myasnitskaya:hours}}</p>
+      <div class="footer__branch-actions">
+        <a href="tel:{{loc:myasnitskaya:tel}}">{{loc:myasnitskaya:phone}}</a>
+        <a class="footer__map" href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer" data-map="myasnitskaya">На карте<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+    <div class="footer__branch">
+      <h3>{{loc:technopark:name}}</h3>
+      <p>{{loc:technopark:address}}<br>{{loc:technopark:hours}}</p>
+      <div class="footer__branch-actions">
+        <a href="tel:{{loc:technopark:tel}}">{{loc:technopark:phone}}</a>
+        <a class="footer__map" href="{{loc:technopark:map}}" target="_blank" rel="noopener noreferrer" data-map="technopark">На карте<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer__base">
+    <span>© 2026 Meatwash. Все права защищены.</span>
+    <span>Moscow, Russia</span>
+    <span>Чистота. Стиль. Характер. <a class="credits-link" href="credits.html" aria-label="Авторы визуальных материалов">→</a></span>
+  </div>
+</footer>

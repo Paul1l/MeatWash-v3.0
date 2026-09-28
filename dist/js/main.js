@@ -1,4 +1,4 @@
-import {STOPS,clamp,smooth,LADDER} from './config.js';
+import {STOPS,clamp,smooth,LADDER,LADDER_AT,SERVICES} from './config.js';
 import {setupUI} from './ui.js';
 import {setupConfigurator} from './configurator.js';
 import {setupProof} from './proof.js';
@@ -64,10 +64,32 @@ function loadLive3d(){
   live3d.progress(state.progress);
  }).catch(error=>console.warn('Кнопка 3D не подключилась, сайт работает без неё.',error));
 }
+// Настоящая проба WebGL 2 до показа кнопки: API есть, а контекст может не создаться
+// (выключенная видеокарта, блок-лист драйвера). Без пробы кнопка появлялась и по
+// нажатию качала 656 КБ бандла ради «3D недоступно». Проба — обычный canvas в простое
+// после загрузки (OffscreenCanvas в Worker не подходит: он создаёт контекст и там, где
+// WebGL страницы выключен). Результат помнится до конца визита — проба одна.
+// Не вышло — место под ряд (p3d-capable) остаётся пустым: снимать класс поздно,
+// первый экран уже отрисован, и он бы прыгнул.
+const P3D_OK='p3d-webgl-ok',P3D_DENIED='p3d-webgl-denied';
+function probeWebGL2(){
+ try{if(sessionStorage.getItem(P3D_OK)==='1')return true;if(sessionStorage.getItem(P3D_DENIED)==='1')return false;}catch{/* приватный режим */}
+ const started=performance.now();let ok=false;
+ try{const gl=document.createElement('canvas').getContext('webgl2',{failIfMajorPerformanceCaveat:false});ok=Boolean(gl);gl?.getExtension('WEBGL_lose_context')?.loseContext();}catch{ok=false;}
+ document.documentElement.dataset.p3dProbeMs=String(Math.round(performance.now()-started));
+ try{sessionStorage.setItem(ok?P3D_OK:P3D_DENIED,'1');}catch{/* приватный режим */}
+ return ok;
+}
 if(document.documentElement.classList.contains('p3d-capable')){
- const idle=()=>(window.requestIdleCallback||(fn=>setTimeout(fn,300)))(loadLive3d,{timeout:2500});
+ const idle=()=>(window.requestIdleCallback||(fn=>setTimeout(fn,300)))(()=>{if(probeWebGL2()&&!destroyed)loadLive3d();},{timeout:2500});
  if(document.readyState==='complete')idle();else addEventListener('load',idle,{once:true});
 }
+// ./#garage (тизер на services.html): гараж открывается сам, когда витрина готова,
+// на первом экране. Хеш убираем сразу — обновление страницы не открывает его снова.
+// В статичном режиме гаража нет (он работает только поверх живой витрины) —
+// человек просто остаётся на первом экране.
+const wantGarage=location.hash==='#garage';
+if(wantGarage){history.replaceState(null,'',location.pathname+location.search);scrollTo({top:0,behavior:'instant'});}
 const cfgMount=document.createElement('div');
 cfgMount.className='cfg-mount';
 section.firstElementChild.append(cfgMount);
@@ -85,7 +107,7 @@ document.addEventListener('click',e=>{
 },{signal:controller.signal});
 // Esc обрабатывает сам гараж: сначала выход из ролика или кинорежима и только
 // потом закрытие панели. Здесь дубля быть не должно — он закрывал всё разом.
-const cleanupUI=setupUI(goToStop);
+const cleanupUI=setupUI({goToStop,services:SERVICES});
 // Шторки «до/после» живут отдельно от витрины: они работают и в статическом режиме.
 const cleanupProof=setupProof();
 
@@ -108,21 +130,32 @@ function setVisibility(el,amount,interactive=true,force=false){
   el.inert=hidden||!interactive||configurator.isOpen;
  }
 }
+// Окна видимости текста глав. Центры глав — .2/.4/.6/.8; полностью видна при
+// |p−центр|<.06 и гаснет к .10, поэтому между главами пустого кадра почти нет
+// (~1% прокрутки, как раз там меняется кадр витрины — LADDER_AT в config.js).
+// Первая глава проявляется сразу за уходящим hero, последняя уступает финалу:
+// раньше здесь были пустые участки 0,058–0,106 и 0,894–0,925.
+const FIRST_IN=[.045,.13],LAST_OUT=[.86,.905],FINALE_IN=[.895,.95];
+function chapterAlpha(i,p){
+ const center=(i+1)/5;
+ if(i===0&&p<center)return smooth(p,FIRST_IN[0],FIRST_IN[1]);
+ if(i===chapters.length-1&&p>center)return 1-smooth(p,LAST_OUT[0],LAST_OUT[1]);
+ return 1-smooth(Math.abs(p-center),.06,.10);
+}
 function apply(progress,force=false){
  const p=clamp(progress);state.progress=p;
- const intro=1-smooth(p,.008,.07);
+ const intro=1-smooth(p,.008,.06);
  setVisibility(hero,intro,true,force);setVisibility(bar,1-smooth(p,.015,.09),true,force);
  live3d?.progress(p);
  // Номер главы 1–4: на 0.90–0.91 (финал, навигация ещё видна) активной остаётся последняя.
  const index=Math.min(4,Math.floor(p*5+.5));
  section.firstElementChild.style.setProperty('--shade',String(smooth(p,.06,.15)*(1-smooth(p,.90,.97))));
  for(let i=0;i<chapters.length;i++){
-  const center=(i+1)/5,d=Math.abs(p-center);
-  const alpha=(1-smooth(d,.06,.10));setVisibility(chapters[i],alpha,true,force);
+  const alpha=chapterAlpha(i,p);setVisibility(chapters[i],alpha,true,force);
   chapters[i].style.transform=isMobile()?`translateY(${(1-alpha)*16}px)`:`translateY(calc(-50% + ${(1-alpha)*20}px))`;
  }
- setVisibility(finale,smooth(p,.91,.98),true,force);
- chapterNav.hidden=p<.10||p>.91;skip.classList.toggle('is-visible',p>.09&&p<.94);
+ setVisibility(finale,smooth(p,FINALE_IN[0],FINALE_IN[1]),true,force);
+ chapterNav.hidden=p<.07||p>.91;skip.classList.toggle('is-visible',p>.09&&p<.94);
  chapterNav.querySelector('i').style.width=`${p*100}%`;
  if(index!==active){
   active=index;
@@ -155,11 +188,18 @@ function staticExperience(){
  if(below)scrollBy(0,anchor.getBoundingClientRect().top-anchorTop);
  updateChrome();
 }
+// Snap к главам по умолчанию выключен: на iOS инерция вместе со snap ощущается как
+// залипание закреплённого экрана. Для проверки на устройстве — ?snap=1: мягкий,
+// только по направлению прокрутки, после паузы 0,15 с и не дольше 0,35 с.
+function snapOption(){
+ if(!new URLSearchParams(location.search).has('snap'))return {};
+ return {snap:{snapTo:Object.values(STOPS),directional:true,delay:.15,duration:{min:.12,max:.35},ease:'power1.out',inertia:false}};
+}
 async function start(){
  if(motion.matches||forceStatic||navigator.connection?.saveData){staticExperience();return;}
  if(!window.gsap||!window.ScrollTrigger){staticExperience();return;}
  const {gsap,ScrollTrigger}=window;gsap.registerPlugin(ScrollTrigger);
- tween=gsap.to(state,{progress:1,ease:'none',onUpdate:()=>apply(state.progress),scrollTrigger:{trigger:section,start:'top top',end:'bottom bottom',scrub:1.35,invalidateOnRefresh:true}});
+ tween=gsap.to(state,{progress:1,ease:'none',onUpdate:()=>apply(state.progress),scrollTrigger:{trigger:section,start:'top top',end:'bottom bottom',scrub:1.35,invalidateOnRefresh:true,...snapOption()}});
  trigger=tween.scrollTrigger;apply(clamp(scrollY/range()));
  let st=null,timer=0;
  const mount=document.querySelector('.stage-mount');
@@ -170,7 +210,7 @@ async function start(){
   const started=performance.now();
   const {createStage}=await import('./stage.js');
   st=createStage(mount);
-  const shotAt=p=>LADDER[Math.min(LADDER.length-1,Math.floor(clamp(p)*LADDER.length))].shot;
+  const shotAt=p=>LADDER[Math.max(0,LADDER_AT.findLastIndex(at=>clamp(p)>=at))].shot;
   // Витрина готова, когда загрузился кадр текущего места прокрутки. Не
   // загрузился (ошибка или лимит времени) — статичная версия.
   const first=st.preload(shotAt(state.progress));
@@ -193,6 +233,7 @@ async function start(){
   if(destroyed||staticMode){loaded.dispose();return;}
   scene=loaded;section.dataset.mode='photo';
   document.body.classList.add('cfg-ready');apply(state.progress);
+  if(wantGarage)configurator.open(document.querySelector('[data-cfg-open]'));
  }catch(error){
   clearTimeout(timer);
   console.warn('Витрина не поднялась, остаётся статический вариант.',error);
@@ -201,7 +242,8 @@ async function start(){
  }
 }
 
-// Поворот телефона: высота трека сцены меняется (780svh ↔ 690svh, и сами svh),
+// Поворот телефона: высота трека сцены меняется (--scene-len в cinematic.css:
+// 780svh ↔ 400svh ↔ 540svh, и сами svh),
 // а scrollY остаётся прежним — человек оказывался в другой главе. Помним, где
 // он был в прошлой раскладке, и после смены высоты трека возвращаем его туда же:
 // внутри сцены — на ту же долю прогресса, ниже сцены — в то же место своего блока

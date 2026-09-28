@@ -292,11 +292,36 @@ body.cfg-cinema .cfg-fold:hover{ opacity:1; }
   .cfg-stage__bar i{ transition:none; }
 }
 
-/* Панель — колонка: шапка и итог закреплены, список забирает остаток. */
-.cfg__head{ flex:0 0 auto; }
-.cfg__presets{ flex:0 0 auto; }
-.cfg__scroll{ flex:1 1 auto; max-height:none; min-height:0; }
-.cfg__total, .cfg__act, .cfg__note{ flex:0 0 auto; }
+/* Панель — три зоны (разметка — configurator.js): шапка и низ закреплены,
+   прокручивается только .cfg__body. Итог, «Записаться» и крестик видны всегда,
+   на любой высоте экрана; блоки внутри тела не сжимаются. */
+.cfg{ padding:0; overflow:hidden; }
+.cfg__head{ flex:0 0 auto; padding:22px 22px 0; }
+.cfg__close{ right:6px; top:10px; }
+.cfg__3dmsg{ flex:0 0 auto; margin:0; padding:0 22px 8px; }
+.cfg__body{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:0 22px 8px;
+  display:flex; flex-direction:column;
+  scrollbar-width:thin; scrollbar-color:rgba(233,223,208,.25) transparent; }
+.cfg__body > *{ flex-shrink:0; }
+.cfg__scroll{ max-height:none; overflow:visible; margin:0 0 8px; padding:0; -webkit-mask-image:none; mask-image:none; }
+.cfg__foot{ flex:0 0 auto; padding:12px 22px 18px; border-top:1px solid rgba(233,223,208,.14); }
+.cfg__foot .cfg__total{ border-top:0; padding-top:0; margin-bottom:12px; }
+/* Четыре действия одной строкой: «Записаться» шире, остальные поровну. */
+.cfg__act{ display:grid; grid-template-columns:minmax(0,1.35fr) repeat(3,minmax(0,1fr)); gap:6px; }
+.cfg__act .btn{ min-width:0; padding:0 6px; font-size:12px; }
+/* Заметка о ценах — в прокручиваемой части: видна на любой высоте, низ не раздувает. */
+.cfg__body .cfg__note{ display:block; order:9; margin:6px 0 4px; }
+.cfg__total b.is-empty{ font-family:inherit; font-size:13px; font-weight:400; color:var(--muted); }
+/* Тип кузова: цены моек в списке и итог — для него (общий выбор с каталогом). */
+.cfg__bodytype{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; font-size:12px; color:#9a8f80; }
+.cfg__bodytype select{ min-height:44px; min-width:0; flex:0 1 190px; padding:0 34px 0 12px; border:1px solid rgba(233,223,208,.22); border-radius:3px;
+  background:rgba(8,8,8,.5) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%278%27%3E%3Cpath d=%27M1 1l5 5 5-5%27 fill=%27none%27 stroke=%27%23e9dfd0%27 stroke-width=%271.3%27/%3E%3C/svg%3E") right 12px center no-repeat;
+  color:#e9dfd0; font:inherit; font-size:13px; appearance:none; cursor:pointer; }
+.cfg__bodytype select:focus-visible{ outline:2px solid #e9dfd0; outline-offset:2px; }
+.cfg__bodytype option{ background:#0d0b0a; color:#e9dfd0; }
+/* Цели нажатия 44 px (на сенсорных экранах и в альбоме тоже). */
+.cfg__preset, .cfg__tab, .cfg-fold{ min-height:44px; }
+.cfg-fold{ display:inline-flex; align-items:center; }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
 /* Ролик: в кадре остаётся машина и подпись работы — это заготовка под съёмку. */
@@ -339,16 +364,12 @@ body.cfg-film .cfg-stage{ pointer-events:none; }
    десктопе, но блоки не сжимаются в ноль — панель прокручивается целиком.
    Снизу место под «Скрыть панель». */
 @media (max-height:600px) and (min-width:721px){
-  .cfg{ top:calc(var(--header-h) + 8px); bottom:60px; padding:14px 16px 12px; }
-  .cfg > *{ flex-shrink:0; }
-  .cfg__scroll{ flex:0 0 auto; overflow:visible; -webkit-mask-image:none; mask-image:none; }
+  .cfg{ top:calc(var(--header-h) + 8px); bottom:60px; }
   .cfg__note{ display:none; }
 }
 /* Узкий телефон в альбомной (568×320, 667×375): нижний лист низкий, и flex
    ужимал вкладки и список работ в ноль. Лист прокручивается целиком. */
 @media (max-width:720px) and (orientation:landscape){
-  .cfg > *{ flex-shrink:0; }
-  .cfg__scroll{ flex:0 0 auto; overflow:visible; -webkit-mask-image:none; mask-image:none; }
   .cfg__note{ display:none; }
 }
 
@@ -361,4 +382,42 @@ body.cfg-film .cfg-stage{ pointer-events:none; }
   .cfg__eyebrow{ margin-bottom:12px; }
   .cfg__presets{ margin-bottom:12px; }
   .cfg__preset i{ display:none; }
+}
+
+/* ── Телефон: нижний лист (≤720) ─────────────────────────────────────────────
+   Шапка и низ закреплены, середина прокручивается. Высота — по содержимому, но
+   не выше половины экрана: машина остаётся на виду («Скрыть панель» убирает лист
+   целиком). На низких экранах лист выше — иначе список не помещается. */
+@media (max-width:720px){
+  .cfg{ left:0; right:0; bottom:0; transform:none; width:auto; padding:0; overflow:hidden;
+    max-height:min(46svh, calc(100svh - var(--header-h) - 72px));
+    border-radius:var(--radius) var(--radius) 0 0; border-bottom:0; }
+  .cfg__head{ padding:10px 56px 6px 16px; }
+  .cfg__close{ top:2px; right:4px; }
+  .cfg__3dmsg{ padding:0 16px 6px; }
+  .cfg__body{ padding:4px 16px 8px; }
+  /* Порядок на телефоне: группа и её работы первыми, наборы и кузов — ниже. */
+  .cfg__tabs{ order:1; margin:0 -16px 10px; padding:0 16px 2px; }
+  .cfg__scroll{ order:2; }
+  .cfg__pairhint{ order:3; margin:0 0 10px; }
+  .cfg__presets{ order:4; }
+  .cfg__bodytype{ order:5; margin:0 0 4px; }
+  .cfg__foot{ padding:10px 16px calc(10px + env(safe-area-inset-bottom)); background:rgb(var(--black-rgb) / .92); }
+  .cfg__foot .cfg__total{ margin-bottom:8px; }
+}
+@media (max-width:720px) and (max-height:700px){
+  .cfg{ max-height:calc(100svh - var(--header-h) - 64px); }
+}
+@media (max-width:720px) and (orientation:landscape){
+  .cfg{ max-height:calc(100svh - var(--header-h) - 12px); }
+}
+/* Альбом шире 720: панель справа — те же три зоны, действия в одну строку. */
+@media (max-height:600px) and (min-width:721px){
+  .cfg__head{ padding:12px 16px 0; }
+  .cfg__body{ padding:0 16px 6px; }
+  .cfg__foot{ padding:8px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .cfg__foot .cfg__total{ margin-bottom:8px; }
+  /* Панель справа до низа экрана, «Скрыть панель» — слева внизу, под ней не лежит. */
+  .cfg{ bottom:max(12px, env(safe-area-inset-bottom)); }
+  .cfg-fold{ right:auto; left:clamp(14px,3vw,40px); bottom:max(12px, env(safe-area-inset-bottom)); }
 }

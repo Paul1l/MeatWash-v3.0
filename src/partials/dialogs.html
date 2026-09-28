@@ -1,0 +1,65 @@
+<button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
+
+<!-- Запись: у Мясницкой и Технопарка разные компании в yclients,
+     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес. -->
+<dialog class="dialog" id="booking" aria-labelledby="booking-title">
+  <form method="dialog"><button class="dialog__close" aria-label="Закрыть">×</button></form>
+  <span class="eyebrow" lang="en">MEATWASH / CAR CARE CLUB</span>
+  <!-- Начальный фокус — на заголовке: на ссылке филиала он выглядел выбором по умолчанию. -->
+  <h2 id="booking-title" tabindex="-1" autofocus>Записаться</h2>
+  <p class="dialog__context" id="booking-context" hidden></p>
+  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на вопросы и подберёт время.</p>
+  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её онлайн-записи.</p>
+  <div class="dialog__branches">
+    <a class="dialog__branch" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>{{loc:myasnitskaya:name}}</strong><span>{{loc:myasnitskaya:address}}</span></a>
+    <a class="dialog__branch" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>{{loc:technopark:name}}</strong><span>{{loc:technopark:address}}</span></a>
+  </div>
+  <div class="dialog__phones">
+    <a href="tel:{{loc:myasnitskaya:tel}}"><span>{{loc:myasnitskaya:name}}</span><strong>{{loc:myasnitskaya:phone}}</strong></a>
+    <a href="tel:{{loc:technopark:tel}}"><span>{{loc:technopark:name}}</span><strong>{{loc:technopark:phone}}</strong></a>
+  </div>
+</dialog>
+
+<!-- Карта филиала: iframe виджета Яндекс Карт создаёт js/maps.js только при открытии
+     и только для выбранной студии; при закрытии он удаляется. Данные — js/data.js. -->
+<dialog class="dialog map-dialog" id="map-dialog" aria-labelledby="map-title">
+  <div class="map-dialog__bar">
+    <span class="eyebrow" lang="en">MEATWASH / LOCATIONS</span>
+    <div class="map-dialog__tabs" role="tablist" aria-label="Студия">
+      <button class="map-dialog__tab" type="button" role="tab" id="map-tab-myasnitskaya" data-map-tab="myasnitskaya" aria-controls="map-panel" aria-selected="true">{{loc:myasnitskaya:name}}</button>
+      <button class="map-dialog__tab" type="button" role="tab" id="map-tab-technopark" data-map-tab="technopark" aria-controls="map-panel" aria-selected="false" tabindex="-1">{{loc:technopark:name}}</button>
+    </div>
+    <form method="dialog"><button class="dialog__close" aria-label="Закрыть карту">×</button></form>
+  </div>
+  <div class="map-dialog__body" id="map-panel" role="tabpanel" aria-labelledby="map-tab-myasnitskaya">
+    <div class="map-dialog__info">
+      <h2 id="map-title" tabindex="-1" data-map-field="name">{{loc:myasnitskaya:name}}</h2>
+      <p class="map-dialog__type" data-map-field="type">{{loc:myasnitskaya:type}}</p>
+      <dl class="map-dialog__facts">
+        <div><dt>Адрес</dt><dd data-map-field="address">{{loc:myasnitskaya:address}}</dd></div>
+        <div><dt>Часы</dt><dd data-map-field="hours">{{loc:myasnitskaya:hours}}</dd></div>
+        <div><dt>Телефон</dt><dd><a data-map-call href="tel:{{loc:myasnitskaya:tel}}" data-map-field="phone">{{loc:myasnitskaya:phone}}</a></dd></div>
+        <div><dt data-map-field="entry-label">{{loc:myasnitskaya:entry-label}}</dt><dd data-map-field="entry-text">{{loc:myasnitskaya:entry-text}}</dd></div>
+        <div><dt>На месте</dt><dd data-map-field="on-site">{{loc:myasnitskaya:on-site}}</dd></div>
+      </dl>
+      <div class="map-dialog__links">
+        <a class="link-arrow" data-map-call href="tel:{{loc:myasnitskaya:tel}}">Позвонить <span aria-hidden="true">→</span></a>
+        <a class="link-arrow" data-map-external href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах <span aria-hidden="true">↗</span></a>
+      </div>
+    </div>
+    <div class="map-dialog__actions">
+      <a class="btn btn--fill" data-map-route href="{{loc:myasnitskaya:route}}" target="_blank" rel="noopener noreferrer"><span><span class="map-dialog__long">Построить </span>маршрут</span> <span aria-hidden="true">↗</span></a>
+      <a class="btn btn--ghost" data-map-book href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer">Записаться <span aria-hidden="true">↗</span></a>
+    </div>
+    <div class="map-dialog__map" data-state="idle">
+      <div class="map-dialog__placeholder">
+        <p class="map-dialog__status" role="status">Загружаем карту…</p>
+        <div class="map-dialog__fail" hidden>
+          <p>Карта не загрузилась.</p>
+          <button class="btn btn--ghost" type="button" data-map-retry>Повторить</button>
+          <a class="link-arrow" data-map-external href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>

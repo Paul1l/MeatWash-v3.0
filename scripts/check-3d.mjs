@@ -16,6 +16,7 @@ import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {MeshoptDecoder} from 'meshoptimizer';
 import sharp from 'sharp';
 import {bundle3d, root, BUNDLE} from './bundle-3d.mjs';
+import {importDist} from './dist-module.mjs';
 
 const failures = [];
 const check = (ok, message) => { if (!ok) failures.push(message); };
@@ -85,7 +86,8 @@ check(gzipSync(bundle, {level: 9}).length <= 180e3, 'Бандл больше 180
 
 // 3. Ракурсы и работы гаража.
 const views = await import('data:text/javascript;base64,' + Buffer.from(await readFile(resolve(root, 'src/porsche3d/views.js'), 'utf8')).toString('base64'));
-const config = await import('data:text/javascript;base64,' + Buffer.from(await readFile(resolve(root, 'dist/js/config.js'), 'utf8')).toString('base64'));
+// config.js импортирует data.js — относительные импорты подставляет importDist.
+const config = await importDist(resolve(root, 'dist/js/config.js'));
 for (const zone of config.ZONES) {
   check(zone.id in views.SERVICE_VIEWS, `Работа гаража ${zone.id} без ракурса (или null — показать фото)`);
   const view = views.SERVICE_VIEWS[zone.id];

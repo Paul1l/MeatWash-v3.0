@@ -1,0 +1,143 @@
+// Окно «На карте»: данные филиала и виджет Яндекс Карт.
+//
+// Виджет — официальный iframe карточки организации (Яндекс Карты → карточка →
+// «Поделиться» → «Встроить»): map-widget/v1/org/<slug>/<id>/?ll=<lon,lat>&z=16,
+// адрес лежит в meatwash-content.json (mapWidget). В нём метка организации,
+// кнопки масштаба и атрибуция Яндекса — поверх углов iframe ничего не кладём.
+//
+// iframe создаётся только при открытии окна и только для выбранной студии;
+// при переключении вкладки он заменяется, при закрытии удаляется. Ссылка
+// «Открыть в Яндекс Картах» есть всегда, даже если виджет не загрузился.
+import { LOCATIONS } from './data.js';
+
+const LOAD_TIMEOUT_MS = 12000;
+let dialog = null, api = null;
+
+export function setupMaps({ dialog: element, onOpen }) {
+  if (api) return api;
+  dialog = element;
+  const $ = (s) => dialog.querySelector(s);
+  const tabs = [...dialog.querySelectorAll('[data-map-tab]')];
+  const panel = $('#map-panel');
+  const title = $('#map-title');
+  const info = $('.map-dialog__info');
+  const frameBox = $('.map-dialog__map');
+  const status = $('.map-dialog__status');
+  const fail = $('.map-dialog__fail');
+  let current = null, opener = null, savedY = 0, timer = 0, frame = null;
+
+  const setState = (state) => {
+    frameBox.dataset.state = state;
+    fail.hidden = state !== 'error';
+    status.textContent = state === 'loading' ? 'Загружаем карту…' : state === 'error' ? 'Карта не загрузилась.' : '';
+  };
+
+  function unload() {
+    clearTimeout(timer);
+    frame?.remove();
+    frame = null;
+    setState('idle');
+  }
+
+  function load(location) {
+    unload();
+    setState('loading');
+    if (navigator.onLine === false) { setState('error'); return; }
+    const iframe = document.createElement('iframe');
+    iframe.src = location.mapWidget;
+    iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    // Поздний load снимает ошибку: сеть медленная, но карта всё же пришла.
+    iframe.addEventListener('load', () => { if (frame === iframe) { clearTimeout(timer); setState('loaded'); } });
+    timer = setTimeout(() => { if (frame === iframe && frameBox.dataset.state !== 'loaded') setState('error'); }, LOAD_TIMEOUT_MS);
+    frame = iframe;
+    frameBox.append(iframe);
+  }
+
+  const fields = {
+    name: (l) => l.name,
+    type: (l) => l.type,
+    address: (l) => l.address,
+    phone: (l) => l.phone,
+    'entry-label': (l) => l.entry.label,
+    'entry-text': (l) => l.entry.text,
+    'on-site': (l) => l.onSite.join(' · '),
+  };
+
+  function fill(location) {
+    for (const el of dialog.querySelectorAll('[data-map-field]')) {
+      const key = el.dataset.mapField;
+      if (key === 'hours') el.replaceChildren(...location.hours.flatMap((line, i) => i ? [document.createElement('br'), line] : [line]));
+      else if (fields[key]) el.textContent = fields[key](location);
+    }
+    dialog.querySelectorAll('[data-map-call]').forEach((a) => { a.href = 'tel:' + location.tel; });
+    dialog.querySelectorAll('[data-map-external]').forEach((a) => { a.href = location.map; });
+    dialog.querySelectorAll('[data-map-route]').forEach((a) => { a.href = location.route; });
+    dialog.querySelectorAll('[data-map-book]').forEach((a) => { a.href = location.booking; });
+    for (const tab of tabs) {
+      const on = tab.dataset.mapTab === location.id;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      if (on) panel.setAttribute('aria-labelledby', tab.id);
+    }
+  }
+
+  function select(id, { loadMap = true } = {}) {
+    const location = LOCATIONS.find((l) => l.id === id) || LOCATIONS[0];
+    if (current === location.id && frame) return;
+    current = location.id;
+    fill(location);
+    info.scrollTop = 0;
+    if (loadMap) load(location);
+  }
+
+  // Вкладки: щелчок, стрелки, Home/End. Филиалов два — вкладка активируется сразу.
+  dialog.addEventListener('click', (e) => {
+    const tab = e.target.closest('[data-map-tab]');
+    if (tab) { select(tab.dataset.mapTab); return; }
+    if (e.target.closest('[data-map-retry]')) { const l = LOCATIONS.find((x) => x.id === current); if (l) load(l); }
+  });
+  dialog.addEventListener('keydown', (e) => {
+    const tab = e.target.closest('[data-map-tab]');
+    if (!tab) return;
+    const i = tabs.indexOf(tab);
+    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    const target = tabs[(next + tabs.length) % tabs.length];
+    target.focus();
+    select(target.dataset.mapTab);
+  });
+
+  dialog.addEventListener('close', () => {
+    unload();
+    current = null;
+    // Страница остаётся, где была; фокус — на кнопку, которой открыли окно.
+    if (Math.abs(scrollY - savedY) > 1) scrollTo({ top: savedY, behavior: 'instant' });
+    opener?.focus({ preventScroll: true });
+    opener = null;
+  });
+
+  api = {
+    open(id, from) {
+      opener = from || null;
+      savedY = scrollY;
+      select(id, { loadMap: false });
+      if (!dialog.open) {
+        dialog.scrollTop = 0;
+        dialog.showModal();
+        onOpen?.();
+      }
+      const location = LOCATIONS.find((l) => l.id === current);
+      load(location);
+      title.focus({ preventScroll: true });
+    },
+  };
+  return api;
+}
+
+export function openMap(id, from) {
+  if (!api) throw new Error('setupMaps() не вызван');
+  api.open(id, from);
+}

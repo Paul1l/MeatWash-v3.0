@@ -17,8 +17,10 @@ if (!version) { console.error('Нужна версия: node scripts/stamp-asset
 let count = 0;
 const stamp = (text, re) => text.replace(re, (m, pre, path, post) => { count++; return `${pre}${path}?v=${version}${post}`; });
 
-// Страницы: локальные таблицы стилей и скрипты.
-for (const page of ['index.html', 'credits.html']) {
+// Страницы: все *.html в dist (index, services, about, credits) — локальные таблицы
+// стилей и скрипты. Общие файлы получают одну версию на всех страницах.
+const pages = (await readdir(dist)).filter((name) => name.endsWith('.html'));
+for (const page of pages) {
   const file = resolve(dist, page);
   let html = await readFile(file, 'utf8');
   html = stamp(html, /(<link\b[^>]*\bhref=")((?:css|vendor)\/[^"?#]+\.css)(")/g);
@@ -36,4 +38,4 @@ for (const name of await readdir(resolve(dist, 'js'))) {
   await writeFile(file, js);
 }
 
-console.log(`Версия ${version}: адресов помечено — ${count}.`);
+console.log(`Версия ${version}: страниц — ${pages.length}, адресов помечено — ${count}.`);

@@ -106,3 +106,25 @@
  .visit-notes{grid-template-columns:1fr;gap:28px;padding:20px var(--gutter) 60px}
  .catalog__count{font-size:10px}
 }
+/* Телефон: строка услуги — название (в две строки, если длинное) и под ним время
+   или число позиций, цена справа по центру строки, номер скрыт. Стоит после блока
+   1100px: там grid-area той же специфичности. */
+@media(max-width:600px){
+ .catalog__entry summary,.program-entry summary,.service-group summary{grid-template-columns:minmax(0,1fr) auto 24px;column-gap:12px;row-gap:2px;padding:16px 0;min-height:60px}
+ .catalog__entry .catalog__number{display:none}
+ .catalog__entry .catalog__name{grid-area:1/1/2/2;font-size:15px;line-height:1.35}
+ .catalog__entry .catalog__time,.catalog__entry .catalog__count{grid-area:2/1/3/2}
+ .catalog__entry .catalog__price{grid-area:1/2/3/3;align-self:center;text-align:right;font-size:14px}
+ .catalog__entry .catalog__toggle{grid-area:1/3/3/4;align-self:center}
+ .service-group .catalog__toggle{grid-area:1/2/3/4;justify-self:end}
+ .catalog__expanded{padding:0 0 24px}
+ .catalog__expanded .btn{width:100%}
+ .catalog__prices>div{grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:12px 0;font-size:13px}
+}
+/* Переключатель кузова: ровная сетка 2×2 вместо рваного переноса чипов. */
+@media(max-width:430px){
+ .body-types{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .body-types legend{grid-column:1/-1}
+ .body-types label,.body-types span{width:100%}
+ .body-types span{justify-content:center;padding:0 8px}
+}

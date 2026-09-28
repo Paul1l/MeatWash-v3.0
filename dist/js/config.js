@@ -1,9 +1,18 @@
+// Цены — только из assets/meatwash-content.json: data.js генерирует npm run catalog.
+import { PROGRAMS, PRICES } from './data.js';
+
 export const STOPS = { hero:0, body:.20, interior:.40, polish:.60, ceramic:.80, final:1 };
+// Кадр витрины по месту прокрутки: LADDER[i] держится с LADDER_AT[i] до LADDER_AT[i+1].
+// Границы стоят между главами (центры .2/.4/.6/.8, окна видимости в main.js),
+// поэтому кадр меняется, когда текст прошлой главы уже ушёл, а «Готова» совпадает с финалом.
+export const LADDER_AT = [0, .12, .30, .50, .70, .90];
+const program = (i, withTime = true) => [withTime ? `${PROGRAMS[i].name} · ${PROGRAMS[i].time}` : PROGRAMS[i].name, Math.min(...PROGRAMS[i].prices)];
+const item = name => { if (!(name in PRICES)) throw new Error('Нет цены в каталоге: ' + name); return [name, PRICES[name]]; };
 export const SERVICES = {
- body: { label:'01 / THE BODY', title:'Мойка кузова', description:'Трёхфазная мойка: предварительная очистка, ручная проработка и финишный уход.', prices:[['Трёхфазная · 30 минут',2150],['Комплексная с воском · 60 минут',2850],['Детейлинг-мойка от реагентов',4950]] },
- interior: { label:'02 / THE INTERIOR', title:'Химчистка салона', description:'Уход за кожей, тканью и алькантарой: от отдельной детали до полной химчистки.', prices:[['Химчистка руля',1000],['Химчистка сиденья',2000],['Детейлинг-химчистка салона',20000]] },
- polish: { label:'03 / THE REFLECTION', title:'Полировка кузова', description:'Восстановление глубины цвета и чистоты отражения. Состав работ подбирается после осмотра автомобиля.', prices:[['Полировка кузова + 2 слоя керамики',40000]] },
- ceramic: { label:'04 / THE PROTECTION', title:'Керамическая защита', description:'Защитное покрытие для лакокрасочной поверхности. Состав и количество слоёв подбираются под автомобиль.', prices:[['Керамическое покрытие кузова',15000]] }
+ body: { label:'01 / THE BODY', title:'Мойка кузова', description:'Трёхфазная мойка: предварительная очистка, ручная проработка и финишный уход.', prices:[program(0),program(1),program(2,false)] },
+ interior: { label:'02 / THE INTERIOR', title:'Химчистка салона', description:'Уход за кожей, тканью и алькантарой: от отдельной детали до полной химчистки.', prices:[item('Химчистка руля'),item('Химчистка сиденья'),item('Детейлинг-химчистка салона')] },
+ polish: { label:'03 / THE REFLECTION', title:'Полировка кузова', description:'Восстановление глубины цвета и чистоты отражения. Состав работ подбирается после осмотра автомобиля.', prices:[item('Полировка кузова + 2 слоя керамики')] },
+ ceramic: { label:'04 / THE PROTECTION', title:'Керамическая защита', description:'Защитное покрытие для лакокрасочной поверхности. Состав и количество слоёв подбираются под автомобиль.', prices:[item('Керамическое покрытие кузова')] }
 };
 export const clamp = (v,a=0,b=1) => Math.min(b,Math.max(a,v));
 export const smooth = (v,a,b) => { const x=clamp((v-a)/(b-a)); return x*x*(3-2*x); };
@@ -16,7 +25,9 @@ export const smooth = (v,a,b) => { const x=clamp((v-a)/(b-a)); return x*x*(3-2*x
 // (ZONE_SHOTS ниже).
 //
 // hold   — сколько секунд держать кадр в режиме показа
-// Цены — минимальные из каталога meatwash-content.json.
+// price  — ссылка на цену каталога: { program: i } — программа мойки (цена зависит
+//          от кузова), { item: "название" } — работа из прайса. Числа здесь не пишем:
+//          они приходят из data.js (npm run catalog), npm run check сверяет суммы.
 export const ZONE_GROUPS = [
   { id: 'wash',    title: 'Мойка' },
   { id: 'paint',   title: 'Кузов и лак' },
@@ -26,66 +37,77 @@ export const ZONE_GROUPS = [
 
 export const ZONES = [
   {
-    id: 'three-phase', group: 'wash', title: 'Трёхфазная мойка', from: 2150,
+    id: 'three-phase', group: 'wash', title: 'Трёхфазная мойка', price: { program: 0 },
     caption: 'Пена, выдержка, ручная проработка — без кругов на лаке.',
     hold: 3.2,
   },
   {
-    id: 'complex', group: 'wash', title: 'Комплексная с воском', from: 2850,
+    id: 'complex', group: 'wash', title: 'Комплексная с воском', price: { program: 1 },
     caption: 'Кузов, диски и салон за один визит. Финиш горячим воском.',
     hold: 3.2,
   },
   {
-    id: 'reagents', group: 'wash', title: 'Детейлинг от реагентов', from: 4950,
+    id: 'reagents', group: 'wash', title: 'Детейлинг от реагентов', price: { program: 2 },
     caption: 'Соль уходит из порогов и арок — туда, куда пена не достаёт.',
     hold: 3.6,
   },
   {
-    id: 'wheels', group: 'wash', title: 'Диски и шины', from: 400,
+    id: 'wheels', group: 'wash', title: 'Диски и шины', price: { item: 'Чернение шин' },
     caption: 'Диск чистится с внутренней стороны, резина — в чернение.',
     hold: 3.4,
   },
   {
-    id: 'polish', group: 'paint', title: 'Полировка кузова', from: 40000,
+    id: 'polish', group: 'paint', title: 'Полировка кузова', price: { item: 'Полировка кузова + 2 слоя керамики' },
     caption: 'Снимаем паутинку — отражение становится ровным.',
     hold: 4.2,
   },
   {
-    id: 'chips', group: 'paint', title: 'Сколы и подкраска', from: 5000,
+    id: 'chips', group: 'paint', title: 'Сколы и подкраска', price: { item: 'Удаление сколов и подкраска' },
     caption: 'Точечно по месту, без перекраса всего элемента.',
     hold: 3.2,
   },
   {
-    id: 'headlights', group: 'paint', title: 'Полировка фар', from: 5000,
+    id: 'headlights', group: 'paint', title: 'Полировка фар', price: { item: 'Полировка фар' },
     caption: 'Мутный поликарбонат снова даёт чёткий пучок света.',
     hold: 3.4,
   },
   {
-    id: 'interior', group: 'cabin', title: 'Химчистка салона', from: 1000,
+    id: 'interior', group: 'cabin', title: 'Химчистка салона', price: { item: 'Химчистка отдельного элемента' },
     caption: 'Ткань, алькантара и кожа — от детали до полной химчистки.',
     hold: 4.0,
   },
   {
-    id: 'leather', group: 'cabin', title: 'Кожа и пластик', from: 2000,
+    id: 'leather', group: 'cabin', title: 'Кожа и пластик', price: { item: 'Кондиционер кожи сидений' },
     caption: 'Чистка и питание кожи, восстановление выгоревшего пластика.',
     hold: 3.6,
   },
   {
-    id: 'ceramic', group: 'protect', title: 'Керамическое покрытие', from: 15000,
+    id: 'ceramic', group: 'protect', title: 'Керамическое покрытие', price: { item: 'Керамическое покрытие кузова' },
     caption: 'Вода собирается в каплю и уходит, не оставляя следов.',
     hold: 4.4,
   },
   {
-    id: 'rain', group: 'protect', title: 'Антидождь на стёкла', from: 3000,
+    id: 'rain', group: 'protect', title: 'Антидождь на стёкла', price: { item: 'Антидождь передней полусферы' },
     caption: 'На скорости вода срывается со стекла сама.',
     hold: 3.4,
   },
   {
-    id: 'film', group: 'protect', title: 'Оклейка зон риска', from: 180000,
+    id: 'film', group: 'protect', title: 'Оклейка зон риска', price: { item: 'Оклейка зон риска кузова' },
     caption: 'Плёнка туда, где кузов страдает первым: капот, фары, пороги.',
     hold: 3.8,
   },
 ];
+
+// Программы мойки вложены друг в друга («каждая следующая включает предыдущую»),
+// поэтому в гараже выбирается одна: две сразу посчитали бы мойку дважды.
+export const EXCLUSIVE = [['three-phase', 'complex', 'reagents']];
+
+// Цена работы для типа кузова (индекс BODY_TYPES). Работы прайса от кузова не зависят.
+export const zonePrice = (zone, body = 0) => zone.price.program != null
+  ? PROGRAMS[zone.price.program].prices[body] ?? PROGRAMS[zone.price.program].prices[0]
+  : item(zone.price.item)[1];
+// «от» — минимальная цена работы (для программ — по всем кузовам).
+for (const zone of ZONES) zone.from = zone.price.program != null ? Math.min(...PROGRAMS[zone.price.program].prices) : zonePrice(zone);
 
 // Готовые наборы — как ступени тюнинга: собраны из зон выше.
 export const ZONE_PRESETS = [

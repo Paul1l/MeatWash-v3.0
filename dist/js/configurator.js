@@ -4,10 +4,17 @@
 // кадр; у полировки, сколов и фар кадра два, до и после, и между ними ездит
 // ползунок. Показ проигрывает выбранное по очереди, ролик — все работы подряд.
 
-import { ZONES, ZONE_GROUPS, ZONE_PRESETS, ZONE_SHOTS, SHOT_BASE, FILM_OPEN } from './config.js';
+import { ZONES, ZONE_GROUPS, ZONE_PRESETS, ZONE_SHOTS, SHOT_BASE, FILM_OPEN, EXCLUSIVE, zonePrice } from './config.js';
+import { BODY_TYPES } from './data.js';
+import { getBody, setBody, bodyName } from './body.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
 const byId = (id) => ZONES.find((z) => z.id === id);
+// Цены программ мойки зависят от кузова (выбор общий с каталогом, body.js).
+const isProgram = (id) => byId(id)?.price.program != null;
+// Сумма «от» по выбранным работам для кузова body. Программы мойки взаимоисключающие
+// (EXCLUSIVE), поэтому мойка в сумме не может оказаться дважды.
+export const garageSum = (ids, body = 0) => ids.reduce((s, id) => s + zonePrice(byId(id), body), 0);
 const HOLD = 3400;        // сколько кадр держится на одной работе
 const CROSS = 700;         // перекрёстное затухание между кадрами
 const FILM_LEAD = 900;     // чистая пауза в начале ролика под запись экрана
@@ -45,6 +52,12 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       </div>
       <p class="cfg__3dmsg" data-cfg-3dmsg hidden>Не удалось загрузить 3D. Нажмите ещё раз.</p>
 
+      <!-- Три зоны: шапка и низ (итог, запись) закреплены, прокручивается только середина. -->
+      <div class="cfg__body">
+      <label class="cfg__bodytype"><span>Тип кузова</span>
+        <select data-cfg-body>${BODY_TYPES.map((type, i) => `<option value="${i}">${type}</option>`).join('')}</select>
+      </label>
+
       <div class="cfg__presets">
         ${ZONE_PRESETS.map((p) => `
           <button class="cfg__preset" type="button" data-preset="${p.id}">
@@ -69,7 +82,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
                     <span class="cfg__box" aria-hidden="true"></span>
                     <span class="cfg__text">
                       <b>${z.title}</b>
-                      <i>от ${money(z.from)}</i>
+                      <i data-zone-price>от ${money(zonePrice(z, getBody()))}</i>
                     </span>
                   </label>
                 </li>`).join('')}
@@ -78,8 +91,11 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       </div>
 
       <p class="cfg__pairhint">Потяните шторку на кадре — увидите, что меняет работа.</p>
+      <p class="cfg__note">Цены минимальные по каждой работе, мойка — для выбранного кузова. Программа мойки выбирается одна: каждая следующая включает предыдущую. Точную стоимость называет мастер после осмотра.</p>
+      </div>
 
-      <p class="cfg__total"><span>Итого</span><b data-total>—</b></p>
+      <div class="cfg__foot">
+      <p class="cfg__total"><span>Итого</span><b data-total></b></p>
 
       <div class="cfg__act">
         <button class="btn btn--fill" type="button" data-book>Записаться</button>
@@ -88,7 +104,8 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
         <button class="btn btn--ghost" type="button" data-cfg-reset>Сбросить</button>
       </div>
 
-      <p class="cfg__note">Цены минимальные по каждой работе. Точную стоимость называет мастер после осмотра.</p>
+
+      </div>
     </div>
 
     <div class="cfg-stage" hidden aria-live="polite">
@@ -113,6 +130,8 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
   const showBtn = mount.querySelector('[data-show]');
   const filmBtn = mount.querySelector('[data-film]');
   const bookBtn = mount.querySelector('.cfg [data-book]');
+  const bodySelect = mount.querySelector('[data-cfg-body]');
+  bodySelect.value = String(getBody());
 
   const OVERLAYS = '.hero, .hero-bar, .chapter, .finale, .scene__skip';
   const freezeOverlays = (on) => {
@@ -152,13 +171,27 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
   }
 
   function refreshTotal() {
-    const sum = [...picked].reduce((s, id) => s + byId(id).from, 0);
-    total.textContent = picked.size ? 'от ' + money(sum) : '—';
+    const body = getBody();
+    const sum = garageSum([...picked], body);
+    total.textContent = picked.size ? 'от ' + money(sum) : 'Выберите работы';
+    total.classList.toggle('is-empty', !picked.size);
     showBtn.disabled = picked.size < 1;
     // Состав уходит в окно записи через data-book-context — так же, как у всех
-    // кнопок записи на странице; окно само пишет «Вы выбрали: …».
-    if (picked.size) bookBtn.dataset.bookContext = [...picked].map((id) => byId(id).title).join(', ') + ' · ориентир от ' + money(sum);
+    // кнопок записи на странице; окно само пишет «Вы выбрали: …». Кузов — если
+    // в составе есть мойка (только её цена от него зависит).
+    const withBody = [...picked].some(isProgram) ? ' · ' + bodyName(body) : '';
+    if (picked.size) bookBtn.dataset.bookContext = [...picked].map((id) => byId(id).title).join(', ') + withBody + ' · ориентир от ' + money(sum);
     else delete bookBtn.dataset.bookContext;
+  }
+
+  // Кузов сменили здесь или в каталоге: цены моек в списке и итог — для него.
+  function renderBody() {
+    const body = getBody();
+    bodySelect.value = String(body);
+    panel.querySelectorAll('.cfg__item').forEach((item) => {
+      item.querySelector('[data-zone-price]').textContent = 'от ' + money(zonePrice(byId(item.dataset.zone), body));
+    });
+    refreshTotal();
   }
 
   function syncInputs() {
@@ -209,7 +242,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
 
     stageTitle.textContent = zone.title;
     stageCaption.textContent = zone.caption;
-    stagePrice.textContent = 'от ' + money(zone.from);
+    stagePrice.textContent = 'от ' + money(zonePrice(zone, getBody()));
     stage.hidden = false;
 
     const spec = retarget(zone.id, true);
@@ -240,7 +273,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     const order = ZONES.filter((z) => picked.has(z.id)).map((z) => z.id);
     show = {
       order, index: 0, timer: 0, beat: 0, raf: 0, film: false,
-      sum: order.reduce((s, id) => s + byId(id).from, 0),
+      sum: garageSum(order, getBody()),
     };
     showBtn.textContent = 'Стоп';
     panel.classList.add('is-playing');
@@ -264,7 +297,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
     const order = ZONES.map((z) => z.id);
     show = {
       order, index: 0, timer: 0, beat: 0, raf: 0, film: true,
-      sum: order.reduce((s, id) => s + byId(id).from, 0),
+      sum: garageSum(order, getBody()),
     };
     stage.classList.add('is-film');
     stage.hidden = false;
@@ -302,8 +335,14 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
 
   panel.addEventListener('change', (e) => {
     const input = e.target;
+    if (input === bodySelect) { setBody(Number(bodySelect.value)); return; }
     if (input.type !== 'checkbox') return;
-    if (input.checked) { picked.add(input.value); lastTouched = input.value; }
+    if (input.checked) {
+      picked.add(input.value); lastTouched = input.value;
+      // Вторая программа мойки заменяет первую (они вложены друг в друга).
+      for (const group of EXCLUSIVE) if (group.includes(input.value)) group.forEach((id) => { if (id !== input.value) picked.delete(id); });
+      syncInputs();
+    }
     else { picked.delete(input.value); if (lastTouched === input.value) lastTouched = null; }
     input.closest('.cfg__item').classList.toggle('is-on', input.checked);
     refreshTotal();
@@ -350,6 +389,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
   }, options);
 
   cinemaBtn.addEventListener('click', () => setCinema(!cinema), options);
+  addEventListener('mw:body', renderBody, options);
 
 
 
@@ -378,7 +418,7 @@ export function setupConfigurator({ mount, getScene, onOpen, onClose }) {
       document.body.classList.add('cfg-open');
       document.addEventListener('keydown', onKey);
       freezeOverlays(true);
-      refreshTotal();
+      renderBody();
       live3d?.garage.open();
       retarget(null);
       onOpen?.();
