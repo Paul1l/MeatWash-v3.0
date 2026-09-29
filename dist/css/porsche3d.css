@@ -178,7 +178,8 @@ body.cfg-open #scene[data-p3d="on"] .scene__sticky::after{ opacity:0; }
 .cfg__headrow{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin:0 0 6px; }
 .cfg__headrow .cfg__eyebrow{ margin:0; }
 .cfg__head{ padding-right:50px; }
-.cfg__close{ top:-4px; }
+/* Положение крестика гаража — только в configurator.css: панель без внутренних полей,
+   прежние отрицательные отступы выносили его за край (обрезался). */
 .cfg__3d{
   position:relative; overflow:hidden; flex:0 0 auto;
   display:inline-flex; align-items:center; gap:8px; min-height:36px; padding:0 10px;
@@ -198,13 +199,11 @@ body.cfg-open #scene[data-p3d="on"] .scene__sticky::after{ opacity:0; }
 .cfg__3dmsg{ margin:0 0 14px; padding-left:10px; border-left:2px solid var(--burgundy-2); font-size:12px; line-height:1.4; color:rgb(var(--ivory-rgb) / .86); }
 @media (max-width:720px){
   .cfg__head{ padding-right:50px; }
-  .cfg__close{ top:-4px; right:-6px; }
   .cfg__headrow{ margin-bottom:10px; }
   .cfg__3d-long{ position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 }
 @media (pointer:coarse){
   .cfg__3d{ min-height:44px; }
-  .cfg__close{ top:0; }
 }
 
 /* Без движения (системная настройка, ?motion=reduce, статичный режим) показа нет. */

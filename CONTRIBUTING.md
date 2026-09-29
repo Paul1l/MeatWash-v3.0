@@ -67,9 +67,12 @@ npm run check          # ресурсы, ссылки, якоря, цены, к�
 После правки данных:
 
 ```
-npm run catalog        # перегенерирует каталог в dist/index.html
+npm run build          # каталог в services.html, превью на главной, js/data.js и общие части страниц
 npm run check
 ```
+
+Общие части страниц (шапка, меню, подвал, окна, карточки локаций) правятся в `src/partials/*.html`,
+не в страницах: `npm run pages` вставит их во все три, `npm run check` не пропустит расхождение.
 
 ## Pull request
 

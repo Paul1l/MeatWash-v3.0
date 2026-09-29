@@ -1,8 +1,17 @@
 /* Cinematic layer. Reference typography/grid remain in style.css. */
 html { scroll-behavior:auto; }
 .header,.header.is-solid, body.menu-open .header { background:var(--black); backdrop-filter:none; }
-/* Длина трека — как в версии Vercel: доли глав в config.js считаются от неё. */
-.scene { height:780svh; }
+/* Длина закреплённой сцены — одна переменная. Доли глав (STOPS, LADDER_AT в config.js,
+   окна глав в main.js, путь 3D в src/porsche3d/views.js) считаются от высоты трека,
+   поэтому меняется только скорость: пикселей прокрутки на главу = 0.2 · (длина − 1 экран).
+   Компьютер — 780svh, как в версии Vercel (≈1 220 px на главу при 900 px высоты);
+   телефон и планшет в портрете — 400svh (≈500 px на главу при 844: один обычный свайп);
+   низкий альбом — 540svh. svh не меняется от панели адреса, поэтому трек не прыгает
+   при прокрутке; поворот и смену раскладки держит keepSceneProgress() в main.js. */
+:root { --scene-len:780svh; }
+@media (max-width:900px) and (orientation:portrait) { :root { --scene-len:400svh; } }
+@media (orientation:landscape) and (max-height:500px) { :root { --scene-len:540svh; } }
+.scene { height:var(--scene-len); }
 .scene__sticky { height:100svh; isolation:isolate; }
 .scene__poster { position:absolute; inset:0; width:100%; height:100%; }
 .scene__poster { display:none; z-index:1; pointer-events:none; overflow:hidden; }
@@ -69,7 +78,6 @@ body.menu-open { overflow:hidden; }
 }
 @media(max-width:800px) and (orientation:portrait) {
   :root { --gutter:16px; }
-  .scene { height:690svh; }
   .header { background:var(--black); border-bottom:1px solid var(--line); }
   .scene__poster img { object-position:55% 35%; }
   .hero { bottom:116px; }
@@ -107,7 +115,7 @@ body.menu-open { overflow:hidden; }
   .chapter__lead { font-size:15px; margin-top:12px; }
   .chapter__text { font-size:12px; }
   .chapter .btn { margin-top:12px; }
-  .scene__skip { bottom:0; }
+  .scene__skip { bottom:env(safe-area-inset-bottom, 0px); }
   /* Номера глав — справа над «Все услуги»: слева на низком экране они касались «Подробнее». */
   .chapter-nav { left:auto; right:var(--gutter); bottom:44px; }
 }
@@ -147,7 +155,7 @@ body.menu-open { overflow:hidden; }
   .static-experience .chapter[data-chapter=ceramic] { --static-image:url('../assets/shots/cf-bead-macro-s.webp'); }
 }
 /* Статичные главы на телефоне — на общем поле страницы, а не на 11.5vw. */
-@media(max-width:800px) and (orientation:portrait) { .static-experience .chapter { padding:16svh var(--gutter) 10svh; } }
+@media(max-width:800px) and (orientation:portrait) { .static-experience .chapter { min-height:64svh; padding:12svh var(--gutter) 8svh; } }
 @media(prefers-reduced-motion:reduce) { *,*::before,*::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
 
 @media (max-width: 640px) {
@@ -177,3 +185,12 @@ body.menu-open { overflow:hidden; }
 @media (orientation:landscape) and (max-height:500px) {
   .p3d-capable.static-experience .hero { padding-top:max(var(--header-h), 22svh); }
 }
+
+/* v3.0 к показу. Финал: кнопка записи в портрете — внизу экрана (.mobile-cta),
+   поэтому в финале остаётся переход к услугам. */
+.finale .hero__actions { margin-top:0; }
+.finale p.finale__title + p { margin-bottom:20px; }
+/* Мелкие подписи на светлых участках фото (320 px, альбом) — лёгкая тень. */
+.hero__eyebrow, .chapter__kicker, .chapter__index, .scene__skip { text-shadow:0 1px 12px rgb(var(--black-rgb) / .75); }
+/* 320–374 px: номера глав заходили под «К услугам ↓» — без линии прогресса они короче. */
+@media (max-width:374px) { .chapter-nav__line { display:none; } }
