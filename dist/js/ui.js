@@ -69,6 +69,21 @@ export function setupUI() {
      noteEl.hidden=!unmatched.length;
    }
  };
+ // Клик по филиалу открывает форму записи в окне на сайте. Модуль грузится
+ // по требованию; не поднялся — ссылка работает как обычно, новой вкладкой.
+ let bookFrame=null, bookFrameLoad=null;
+ const loadBookFrame=()=>{
+   if(bookFrame)return Promise.resolve(bookFrame);
+   if(!bookFrameLoad)bookFrameLoad=import('./bookframe.js').then(m=>(bookFrame=m.setup(document))).catch(()=>null);
+   return bookFrameLoad;
+ };
+ const openBranch=(link)=>{
+   const url=link.href, title=link.querySelector('strong')?.textContent||'Онлайн-запись';
+   loadBookFrame().then(frame=>{
+     if(frame){ booking?.close(); frame.open(url,title); }
+     else window.open(url,'_blank','noopener');   // модуль не загрузился — как раньше, вкладкой
+   });
+ };
  const openBooking=(note='',spec=null)=>{
    if(!booking)return;
    closeMenu(); mapDialog?.close();
@@ -134,6 +149,12 @@ export function setupUI() {
 
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
+  // Филиал в окне записи: открываем форму рамкой, не уводя человека с сайта.
+  if(control.matches('.dialog__branch[data-branch]')&&!e.metaKey&&!e.ctrlKey&&!e.shiftKey&&e.button===0){
+   e.preventDefault();
+   openBranch(control);
+   return;
+  }
   if(control.hasAttribute('data-book')){
    const d=control.dataset;
    const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);

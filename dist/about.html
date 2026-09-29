@@ -291,6 +291,26 @@
     </div>
   </div>
 </dialog>
+
+<!-- Онлайн-запись прямо на сайте: форма yclients в окне. Ссылки филиалов
+     остаются рабочими — если окно не поднялось, клик уходит в новую вкладку. -->
+<dialog class="dialog book-frame" id="book-frame" aria-labelledby="book-frame-title">
+  <div class="book-frame__bar">
+    <div>
+      <span class="eyebrow" lang="en">MEATWASH / ONLINE</span>
+      <h2 id="book-frame-title" tabindex="-1">Онлайн-запись</h2>
+    </div>
+    <a class="book-frame__out" data-bookframe-out href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer">Открыть отдельно <span aria-hidden="true">↗</span></a>
+    <form method="dialog"><button class="dialog__close" aria-label="Закрыть онлайн-запись">×</button></form>
+  </div>
+  <div class="book-frame__body" data-bookframe-box data-state="idle">
+    <p class="book-frame__status" role="status" data-bookframe-status></p>
+    <div class="book-frame__fail" data-bookframe-fail hidden>
+      <p>Форма записи не открылась в окне.</p>
+      <a class="btn btn--fill" data-bookframe-out href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer">Открыть отдельной страницей <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
+</dialog>
 <!-- SHARED:dialogs:END -->
 <script type="module" src="js/page.js"></script>
 </body>
