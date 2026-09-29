@@ -359,6 +359,34 @@ export function setupGarage() {
     bookBtn.dataset.ycPrograms = programs.join(',');
     bookBtn.dataset.ycItems = items.join('|');
   }
+  // Часть работ прайса в yclients не заведена — записаться на них онлайн нельзя.
+  // Помечаем это сразу в списке, чтобы человек видел до нажатия «Записаться»,
+  // а не удивлялся, что в запись ушла половина выбранного.
+  function markOffline() {
+    import('./yclients.js').then((yc) => yc.loadMap().then(() => {
+      let offline = 0;
+      for (const label of dialog.querySelectorAll('.garage__item')) {
+        const zone = byId(label.dataset.zone);
+        if (!zone) continue;
+        const spec = zone.price.program != null
+          ? { programs: [zone.price.program], items: [] }
+          : { programs: [], items: [zone.price.item] };
+        // Работа доступна онлайн, если её удалось сопоставить хотя бы в одном филиале.
+        const ok = ['myasnitskaya', 'technopark'].some((b) => yc.resolve(b, spec, 0).ids.length);
+        label.classList.toggle('is-offline', !ok);
+        if (!ok) {
+          offline += 1;
+          const note = label.querySelector('[data-zone-note]');
+          if (note && !note.dataset.offline) {
+            note.dataset.offline = '1';
+            note.textContent = 'Только по телефону — в онлайн-записи этой работы нет. ' + note.textContent;
+          }
+        }
+      }
+      if (offline) say(`${offline} работ доступны только по телефону.`);
+    })).catch(() => {});
+  }
+
   function setPicked(ids, touched) {
     picked.splice(0, picked.length, ...ids);
     lastTouched = touched ?? null;
@@ -416,6 +444,7 @@ export function setupGarage() {
     hinted = false; hint.hidden = true;
     picked.splice(0, picked.length, ...readPicked());
     renderSelection();
+    markOffline();
     // Открываем на категории последней выбранной работы.
     const last = byId(current(null));
     selectTab(last ? last.group : ZONE_GROUPS[0].id, false);

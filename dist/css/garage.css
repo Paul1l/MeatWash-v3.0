@@ -333,3 +333,18 @@
   .garage__act { margin-top: 8px; }
   .garage__book { height: 44px; }
 }
+
+/* Работы, которых нет в онлайн-записи yclients: видно до нажатия «Записаться». */
+.garage__item.is-offline .garage__text b::after {
+  content: 'по телефону';
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 400 10px/1.4 var(--font-sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: middle;
+  white-space: nowrap;
+}
