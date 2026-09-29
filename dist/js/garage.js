@@ -352,6 +352,12 @@ export function setupGarage() {
     const withBody = picked.some(isProgram) ? ' · ' + bodyName(body) : '';
     if (picked.length) bookBtn.dataset.bookContext = picked.map((id) => byId(id).title).join(', ') + withBody + ' · предварительно от ' + money(sum);
     else delete bookBtn.dataset.bookContext;
+    // Состав для онлайн-записи: программы — индексом, работы прайса — названием.
+    // ui.js переведёт их в идентификаторы YCLIENTS выбранного филиала.
+    const programs = picked.map((id) => byId(id).price.program).filter((i) => i != null);
+    const items = picked.map((id) => byId(id).price.item).filter(Boolean);
+    bookBtn.dataset.ycPrograms = programs.join(',');
+    bookBtn.dataset.ycItems = items.join('|');
   }
   function setPicked(ids, touched) {
     picked.splice(0, picked.length, ...ids);

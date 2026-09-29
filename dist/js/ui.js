@@ -1,6 +1,8 @@
 // Общее для всех страниц: меню, окна записи и карты, переходы по якорям,
 // появление блоков. «Следующий раздел» — первый блок страницы ниже текущего места.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
+import { getBody } from './body.js';
+
 export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
@@ -43,11 +45,37 @@ export function setupUI() {
  // Что именно выбрал человек — только текстом, без разметки.
  const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
  // Запись: филиал выбирается здесь, потому что у площадок разные компании в yclients.
- const openBooking=(note='')=>{
+ // Ссылки филиалов ведут в YCLIENTS с уже набранными услугами. Карта
+ // соответствий подгружается один раз; пока её нет, ссылки остаются такими,
+ // как в разметке — обычный выбор услуги, запись всё равно работает.
+ const noteEl=$('#booking-yc-note');
+ let yc=null;
+ const loadYc=()=>yc?Promise.resolve(yc):import('./yclients.js').then(m=>m.loadMap().then(()=>(yc=m)));
+ const applyLinks=spec=>{
+   if(!yc||!branches)return;
+   const body=getBody();
+   let unmatched=[];
+   branches.querySelectorAll('[data-branch]').forEach(link=>{
+     const branch=link.dataset.branch;
+     const {ids,missing}=yc.resolve(branch,spec,body);
+     const url=yc.bookingUrl(branch,ids);
+     if(url)link.href=url;
+     if(missing.length>unmatched.length)unmatched=missing;
+   });
+   if(noteEl){
+     noteEl.textContent=unmatched.length
+       ? 'В онлайн-записи пока нет: '+unmatched.join(', ')+'. Эти работы согласуйте с администратором — телефоны ниже.'
+       : '';
+     noteEl.hidden=!unmatched.length;
+   }
+ };
+ const openBooking=(note='',spec=null)=>{
    if(!booking)return;
    closeMenu(); mapDialog?.close();
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
+   if(noteEl){noteEl.textContent='';noteEl.hidden=true;}
+   if(spec&&(spec.programs.length||spec.items.length))loadYc().then(()=>applyLinks(spec));
    show(booking);
    // Фокус на заголовке, а не на Мясницкой: иначе она выглядела выбранной по умолчанию.
    $('#booking-title').focus({preventScroll:true});
@@ -106,7 +134,12 @@ export function setupUI() {
 
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
-  if(control.hasAttribute('data-book')) return openBooking(control.dataset.bookContext||'');
+  if(control.hasAttribute('data-book')){
+   const d=control.dataset;
+   const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);
+   const items=(d.ycItems||'').split('|').filter(Boolean);
+   return openBooking(d.bookContext||'',{programs,items});
+  }
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
   if(control.dataset.map){
    // Ctrl/Cmd/Shift-клик и средняя кнопка — как у обычной ссылки: карточка в новой вкладке.
