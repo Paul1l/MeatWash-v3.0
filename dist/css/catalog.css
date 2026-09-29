@@ -127,3 +127,18 @@
  .body-types label,.body-types span{width:100%}
  .body-types span{justify-content:center;padding:0 8px}
 }
+
+/* Работа продаётся только на месте — онлайн-записи на неё нет. */
+.catalog__onsite {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 400 10px/1.4 var(--font-sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+  vertical-align: middle;
+}

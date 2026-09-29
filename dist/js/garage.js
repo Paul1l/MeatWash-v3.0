@@ -359,7 +359,7 @@ export function setupGarage() {
     bookBtn.dataset.ycPrograms = programs.join(',');
     bookBtn.dataset.ycItems = items.join('|');
   }
-  // Часть работ прайса в yclients не заведена — записаться на них онлайн нельзя.
+  // Часть работ в онлайн-записи не продаётся: их добавляет мастер при приёмке.
   // Помечаем это сразу в списке, чтобы человек видел до нажатия «Записаться»,
   // а не удивлялся, что в запись ушла половина выбранного.
   function markOffline() {
@@ -379,11 +379,11 @@ export function setupGarage() {
           const note = label.querySelector('[data-zone-note]');
           if (note && !note.dataset.offline) {
             note.dataset.offline = '1';
-            note.textContent = 'Только по телефону — в онлайн-записи этой работы нет. ' + note.textContent;
+            note.textContent = 'Приобретается на месте — мастер добавит при приёмке. ' + note.textContent;
           }
         }
       }
-      if (offline) say(`${offline} работ доступны только по телефону.`);
+      if (offline) say(`${offline} работ приобретаются на месте.`);
     })).catch(() => {});
   }
 

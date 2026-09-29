@@ -6,7 +6,30 @@ import { getBody, setBody, bodyName } from './body.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
 
+// Работы, которые не продаются в онлайн-записи, помечаются прямо в прайсе:
+// человек видит это там же, где смотрит цену, а не после нажатия «Записаться».
+function markOnSite() {
+  const rows = [...document.querySelectorAll('[data-price-item]')];
+  if (!rows.length) return;
+  import('./yclients.js').then((yc) => yc.loadMap().then(() => {
+    for (const row of rows) {
+      const name = row.querySelector('dt')?.firstChild?.textContent?.trim();
+      if (!name) continue;
+      const online = ['myasnitskaya', 'technopark']
+        .some((b) => yc.resolve(b, { programs: [], items: [name] }, 0).ids.length);
+      if (online || row.dataset.onsite) continue;
+      row.dataset.onsite = '1';
+      const tag = document.createElement('span');
+      tag.className = 'catalog__onsite';
+      tag.textContent = 'на месте';
+      tag.title = 'Приобретается на месте: мастер добавит работу при приёмке автомобиля';
+      row.querySelector('dt').append(' ', tag);
+    }
+  })).catch(() => {});
+}
+
 export function setupCatalog() {
+  markOnSite();
   const types = document.querySelector('.body-types');
   if (!types) return () => {};
   const abort = new AbortController();

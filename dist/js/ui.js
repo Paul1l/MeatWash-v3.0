@@ -64,7 +64,7 @@ export function setupUI() {
    });
    if(noteEl){
      noteEl.textContent=unmatched.length
-       ? 'В онлайн-записи пока нет: '+unmatched.join(', ')+'. Эти работы согласуйте с администратором — телефоны ниже.'
+       ? 'На месте добавите: '+unmatched.join(', ')+'. Эти работы мастер примет при приёмке — в онлайн-записи они не продаются. Остальное уже в заказе.'
        : '';
      noteEl.hidden=!unmatched.length;
    }

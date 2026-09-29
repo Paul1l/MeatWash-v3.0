@@ -334,9 +334,9 @@
   .garage__book { height: 44px; }
 }
 
-/* Работы, которых нет в онлайн-записи yclients: видно до нажатия «Записаться». */
+/* Работы, которые не продаются онлайн: видно до нажатия «Записаться». */
 .garage__item.is-offline .garage__text b::after {
-  content: 'по телефону';
+  content: 'на месте';
   margin-left: 8px;
   padding: 2px 7px;
   border: 1px solid var(--line);
