@@ -225,37 +225,4 @@ a.card { display: block; }
   color: var(--muted);
 }
 
-/* ── Онлайн-запись в окне ───────────────────────────────────────────────── */
-.book-frame {
-  width: min(96vw, 560px);
-  max-width: none;
-  height: min(92svh, 900px);
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-.book-frame__bar {
-  display: flex; align-items: center; gap: 14px;
-  padding: 16px clamp(16px, 2.4vw, 24px);
-  border-bottom: 1px solid var(--line);
-  flex: 0 0 auto;
-}
-.book-frame__bar h2 { font-size: clamp(17px, 1.6vw, 21px); margin-top: 4px; }
-.book-frame__out { margin-left: auto; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line); }
-.book-frame__out:hover { color: var(--text); }
-.book-frame__bar .dialog__close { position: static; }
-.book-frame__body { position: relative; flex: 1 1 auto; background: #0c0c0c; }
-.book-frame__frame { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-.book-frame__status {
-  position: absolute; inset: 0; display: grid; place-content: center;
-  margin: 0; font-size: 13px; color: var(--muted);
-}
-.book-frame__body[data-state="ready"] .book-frame__status { display: none; }
-.book-frame__fail {
-  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center;
-  gap: 16px; padding: 24px; text-align: center; background: var(--black);
-}
-@media (max-width: 720px) {
-  .book-frame { width: 100vw; height: 100svh; border-radius: 0; }
-}
+
