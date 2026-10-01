@@ -474,14 +474,14 @@
     "_comment": "Настройки сайта. analytics.metrika — номер счётчика Яндекс Метрики (цифры), analytics.webmaster — код подтверждения Яндекс Вебмастера (content мета-тега yandex-verification). Пусто — Метрика, уведомление о cookie и мета-тег на страницы не попадают; параметры счётчика (в том числе Вебвизор) — в js/analytics.js. operator — реквизиты оператора персональных данных для Политики и Согласия (152-ФЗ). После правки: npm run build.",
     "analytics": {
       "metrika": "113253931",
-      "webmaster": null
+      "webmaster": "58e9b738e3e02ac7"
     },
     "operator": {
-      "name": null,
-      "inn": null,
-      "ogrn": null,
-      "address": null,
-      "email": null
+      "name": "ИП Антонович Роман Сергеевич",
+      "inn": "773015394283",
+      "ogrn": "321774600628716",
+      "address": "101000, г. Москва",
+      "email": "MeatWash.detailing@gmail.com"
     },
     "documentsDate": "2026-10-01"
   }

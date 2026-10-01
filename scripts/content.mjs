@@ -4,14 +4,14 @@
 // из dist/assets/meatwash-content.json; общие части (шапка, подвал, окна, запись,
 // аналитика) вставляет scripts/pages.mjs.
 // Запуск: npm run content (входит в npm run build). npm run check сверяет результат.
-import {readFile,writeFile} from 'node:fs/promises';
+import {readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content as d,escape,money} from './catalog.mjs';
 import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
 import {renderPartial,renderPage} from './pages.mjs';
 
 const root=new URL('../',import.meta.url);
-export const SITE='https://paul1l.github.io/MeatWash-v3.0/';
+export const SITE='https://meatwash.ru/';
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 export const humanDate=iso=>{const [y,m,day]=iso.split('-').map(Number);return `${day} ${MONTHS[m-1]} ${y} г.`;};
 
@@ -38,7 +38,14 @@ function substitute(text){
    case 'op':{
     if(!(arg in OPERATOR_HINT))throw new Error(`Нет поля оператора: ${token}`);
     const value=d.site?.operator?.[arg];
-    return value?escape(value):`<span class="doc-todo">[${OPERATOR_HINT[arg]}]</span>`;
+    if(!value)return `<span class="doc-todo">[${OPERATOR_HINT[arg]}]</span>`;
+    if(arg==='ogrn'){
+     // ОГРН юрлица — 13 цифр, ОГРНИП предпринимателя — 15.
+     if(!/^(\d{13}|\d{15})$/.test(value))throw new Error(`site.operator.ogrn: нужно 13 (ОГРН) или 15 (ОГРНИП) цифр — ${value}`);
+     return `${value.length===15?'ОГРНИП':'ОГРН'} ${value}`;
+    }
+    if(arg==='email')return `<a href="mailto:${escape(value)}">${escape(value)}</a>`;
+    return escape(value);
    }
    case 'site':{
     if(arg==='url')return SITE;
@@ -170,6 +177,20 @@ ${body.trim()}
  });
 }
 
+// Подтверждение прав в Яндекс Вебмастере способом «HTML-файл»: тот же код, что в мета-теге
+// yandex-verification (site.analytics.webmaster), файл — в корне сайта, текст — как выдаёт Вебмастер.
+export function renderYandexVerification(){
+ const code=d.site?.analytics?.webmaster;
+ if(!code)return null;
+ return {file:`yandex_${code}.html`,text:`<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>Verification: ${code}</body>
+</html>
+`};
+}
+
 export function renderSitemap(){
  const today=d.site.documentsDate;
  const entries=[...SITEMAP,...CONTENT.map(p=>({file:p.file,lastmod:p.date||today,...p.sitemap}))];
@@ -192,6 +213,9 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
  }
  await writeFile(new URL('dist/sitemap.xml',root),renderSitemap());
  console.log('sitemap.xml');
+ const verification=renderYandexVerification();
+ for(const name of await readdir(new URL('dist/',root)))if(/^yandex_\w+\.html$/.test(name)&&name!==verification?.file)await rm(new URL(`dist/${name}`,root));
+ if(verification){await writeFile(new URL(`dist/${verification.file}`,root),verification.text);console.log(verification.file);}
  const missing=missingOperator();
  if(missing.length)console.warn(`ВНИМАНИЕ: в Политике и Согласии не заполнены реквизиты оператора (site.operator в meatwash-content.json): ${missing.join(', ')}.`);
 }
