@@ -95,50 +95,76 @@ if(sitemap!==renderSitemap())fail('sitemap.xml отстал от src/content/pag
 const content=JSON.parse(await readFile(resolve(dist,'assets/meatwash-content.json')));
 assert.equal(content.programs.length,5);
 assert.equal(content.bodyTypes.length,4);
-assert.equal(content.groups.flatMap(group=>group.items).length,39);
 assert.deepEqual(content.programPrices,[[2150,2250,2450,2650],[2850,3150,3450,4250],[4950,5450,5950,6450],[6450,7450,8450,9450],[13950,14950,15950,16950]]);
+// Восемь равноправных категорий; мойка — одна из них и единственная с записью в YCLIENTS.
+assert.equal(content.groups.length,8,'Категорий услуг должно быть восемь');
+assert.deepEqual(content.groups.filter(g=>g.booking==='yclients').map(g=>g.id),['wash'],'Запись в YCLIENTS — только у мойки, остальное — заявка с фото');
+for(const group of content.groups)assert(group.id&&group.title&&group.short&&['yclients','request'].includes(group.booking),'Категория без id, названия или сценария записи: '+JSON.stringify(group.id));
+assert.deepEqual(content.groups.filter(g=>g.featured).map(g=>g.id),['film','glass'],'Заметные карточки — оклейка и стёкла');
+const itemPrice=Object.fromEntries(content.groups.flatMap(g=>g.items.map(([name,price])=>[name,price])));
+const itemCount=content.groups.flatMap(group=>group.items).length;
+assert(!('Чернение шин' in itemPrice),'Чернение шин — не отдельная платная позиция (оно в составе программы)');
+assert(content.programIncludes[2].includes('Чернение шин'),'Чернение шин должно остаться в составе «Детейлинг-мойки от реагентов»');
+for(const name of ['Оклейка зон риска','Полная оклейка','Ремонт автомобильных стёкол','Детейлинг-химчистка салона'])assert(name in itemPrice,'Нет позиции каталога: '+name);
+for(const [name,price,note] of content.groups.flatMap(g=>g.items))assert(price==null?Boolean(note):Number.isInteger(price)&&price>0,`«${name}»: цена — целое число, а «после осмотра» (null) — с пояснением`);
+// Состав программ и пакетов позициями каталога: по нему гараж не берёт работу второй раз.
+assert.equal(content.programItems.length,content.programs.length,'programItems — по одному списку на программу');
+for(const name of content.programItems.flat())assert(name in itemPrice,'programItems: нет позиции каталога «'+name+'»');
 const escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const services=html['services.html'];
 for(const group of content.groups){
- assert(ids['services.html'].has('price-'+group.id),'Нет группы прайса '+group.id);
- for(const [name,price] of group.items)assert(services.includes(`<dt>${escape(name)}</dt><dd>${price.toLocaleString('ru-RU')} ₽</dd>`),'Нет или устарела услуга '+name);
+ assert(ids['services.html'].has('price-'+group.id),'Нет категории прайса '+group.id);
+ for(const [name,price,note] of group.items)assert(services.includes(`<div data-price-item><dt>${escape(name)}${note?`<small>${escape(note)}</small>`:''}</dt><dd${price==null?' class="catalog__on-request"':''}>${price==null?'после осмотра':price.toLocaleString('ru-RU')+' ₽'}</dd></div>`),'Нет или устарела услуга '+name);
+ // Сценарий записи в категории: мойка — окно филиалов (data-book), остальное — заявка (data-request).
+ const block=services.slice(services.indexOf(`id="price-${group.id}"`),services.indexOf('</details>',services.indexOf(`id="price-${group.id}"`)+1));
+ if(group.booking==='yclients')assert(/data-book/.test(block)&&!/data-request/.test(block),`Категория ${group.id}: нужна запись в YCLIENTS, без заявки`);
+ else assert(block.includes(`data-request data-request-category="${group.id}"`)&&!/data-book/.test(block),`Категория ${group.id}: нужна заявка с фото, без записи в YCLIENTS`);
 }
+for(const group of content.groups.filter(g=>g.featured))assert(new RegExp(`<article class="featured__card"[\\s\\S]*?data-request data-request-category="${group.id}"`).test(services),`Нет заметной карточки «${group.title}» с заявкой`);
 for(const prices of content.programPrices)assert(services.includes(`data-prices="${prices.join(',')}"`),'Устарели цены по кузову');
-assert.equal([...services.matchAll(/data-price-item/g)].length,39);
+assert.equal([...services.matchAll(/data-price-item/g)].length,itemCount);
 
 const config=await importDist(resolve(dist,'js/config.js'));
-// Гараж: каждая работа ссылается на цену каталога; название — как в каталоге
-// services.html; сумма по каждому кузову = JSON.
+// Гараж: вкладки — те же категории; каждая работа ссылается на цену каталога;
+// название — как в каталоге services.html; сумма по каждому кузову = JSON.
 const {garageSum}=config;
-const itemPrice=Object.fromEntries(content.groups.flatMap(g=>g.items));
+assert.deepEqual(config.ZONE_GROUPS.map(g=>g.id),content.groups.map(g=>g.id),'Гараж: вкладки не совпадают с категориями каталога');
 const expected=(zone,body)=>zone.price.program!=null?content.programPrices[zone.price.program][body]:itemPrice[zone.price.item];
 for(const zone of config.ZONES){
  assert(zone.price&&(zone.price.program!=null?content.programPrices[zone.price.program]:zone.price.item in itemPrice),`Гараж: у работы ${zone.id} нет цены в каталоге`);
  assert.equal(zone.title,zone.price.program!=null?content.programs[zone.price.program][0]:zone.price.item,`Гараж: название ${zone.id} не совпадает с каталогом`);
  assert(services.includes(escape(zone.title)),`Гараж: «${zone.title}» нет в каталоге services.html`);
- assert.equal(zone.from,Math.min(...content.bodyTypes.map((_,b)=>expected(zone,b))),`Гараж: «от» у ${zone.id} не минимальная цена каталога`);
+ const group=content.groups.find(g=>g.id===zone.group);
+ assert(group&&(zone.price.program!=null?group.booking==='yclients':group.items.some(([name])=>name===zone.price.item)),`Гараж: «${zone.title}» не в своей категории ${zone.group}`);
+ const prices=content.bodyTypes.map((_,b)=>expected(zone,b));
+ assert.equal(zone.from,prices.includes(null)?null:Math.min(...prices),`Гараж: «от» у ${zone.id} не минимальная цена каталога`);
  for(let body=0;body<content.bodyTypes.length;body++)assert.equal(config.zonePrice(zone,body),expected(zone,body),`Гараж: цена ${zone.id} для кузова ${content.bodyTypes[body]}`);
 }
-// Программы мойки вложены друг в друга: в гараже они взаимоисключающие, и ни один набор не берёт две.
-const programZones=config.ZONES.filter(z=>z.price.program!=null).map(z=>z.id);
-assert(config.EXCLUSIVE.some(group=>programZones.every(id=>group.includes(id))),'Гараж: программы мойки должны быть в одной группе EXCLUSIVE');
-// Работа, уже входящая в программу мойки (programIncludes в JSON, с составом
-// предыдущих программ), при выборе вместе с программой в сумму не попадает.
-const includes=i=>content.programIncludes.slice(0,i+1).flat();
+assert(!config.ZONES.some(z=>z.price.item==='Чернение шин'),'Гараж: чернение шин — не отдельная работа');
+assert.equal(config.ZONES.find(z=>z.group==='interior')?.price.item,'Детейлинг-химчистка салона','Гараж: химчистка — салон целиком');
+assert(['Оклейка зон риска','Полная оклейка'].every(name=>config.ZONES.some(z=>z.price.item===name)),'Гараж: оклейка — зоны риска и полная');
+// Все программы и пакеты мойки — в гараже и взаимоисключающие (каждая следующая включает предыдущую).
+const programZones=config.ZONES.filter(z=>z.price.program!=null);
+assert.deepEqual(programZones.map(z=>z.price.program).sort(),content.programs.map((_,i)=>i),'Гараж: нужны все программы и пакеты мойки из каталога');
+assert(config.EXCLUSIVE.some(group=>programZones.every(z=>group.includes(z.id))),'Гараж: программы и пакеты мойки должны быть в одной группе EXCLUSIVE');
+for(const group of config.EXCLUSIVE)for(const id of group)assert(config.ZONES.some(z=>z.id===id),'EXCLUSIVE: нет работы '+id);
+// Работа, уже входящая в программу или пакет (programItems с составом предыдущих),
+// при выборе вместе с ним в сумму не попадает — по каждому кузову.
+const includes=i=>content.programItems.slice(0,i+1).flat();
 let insideChecked=0;
-for(const program of config.ZONES.filter(z=>z.price.program!=null))for(const zone of config.ZONES.filter(z=>includes(program.price.program).includes(z.price.item))){
+for(const program of programZones)for(const zone of config.ZONES.filter(z=>includes(program.price.program).includes(z.price.item))){
  insideChecked++;
  for(let body=0;body<content.bodyTypes.length;body++)assert.equal(garageSum([program.id,zone.id],body),expected(program,body),`Гараж: «${zone.title}» входит в «${program.title}», но считается второй раз`);
 }
-assert(insideChecked>0,'Гараж: не найдено ни одной работы, входящей в программу мойки (проверка состава не работает)');
-for(const preset of config.ZONE_PRESETS){
- for(const group of config.EXCLUSIVE)assert(preset.zones.filter(id=>group.includes(id)).length<=1,`Набор «${preset.title}» берёт две программы мойки`);
- for(const id of preset.zones)assert(!config.includedIn(config.ZONES.find(z=>z.id===id),preset.zones),`Набор «${preset.title}»: работа ${id} уже входит в его программу мойки`);
- for(let body=0;body<content.bodyTypes.length;body++){
-  const sum=preset.zones.reduce((s,id)=>s+expected(config.ZONES.find(z=>z.id===id),body),0);
-  assert.equal(garageSum(preset.zones,body),sum,`Набор «${preset.title}»: сумма для кузова ${content.bodyTypes[body]}`);
- }
+assert(insideChecked>0,'Гараж: не найдено ни одной работы, входящей в программу или пакет (проверка состава не работает)');
+// Пакет со всем, что в него входит: сумма — ровно цена пакета для кузова.
+for(const program of programZones.filter(z=>z.package)){
+ const inside=config.ZONES.filter(z=>includes(program.price.program).includes(z.price.item)).map(z=>z.id);
+ for(let body=0;body<content.bodyTypes.length;body++)assert.equal(garageSum([program.id,...inside],body),expected(program,body),`Пакет «${program.title}»: сумма для кузова ${content.bodyTypes[body]}`);
 }
+assert.equal(typeof config.garageOpen,'function','Гараж: нет garageOpen — работы с ценой после осмотра');
+// Мойка и заявка разделены: мойка — только программы и пакеты.
+assert.deepEqual(config.ZONES.filter(z=>config.isWash(z)).map(z=>z.id),programZones.map(z=>z.id),'Гараж: в запись YCLIENTS уходит только мойка');
 
 // Первый экран — статичная фотография: закреплённой сцены, глав и ScrollTrigger нет.
 assert(!/class="scene\b|data-chapter|chapter-nav|ScrollTrigger|vendor\/gsap/.test(html['index.html']),'index.html: остатки закреплённой сцены или GSAP');
@@ -196,6 +222,10 @@ for(const page of MAIN_PAGES){
  assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
  assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
 }
+// Клубная карта — ссылка на страницу оформления (wahelp), адрес — от владельца.
+const CLUB_CARD='https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e';
+for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('membership')))
+ assert(new RegExp(`<a class="membership__link" href="${CLUB_CARD.replace(/[.?]/g,'\\$&')}" target="_blank" rel="noopener noreferrer"`).test(html[page]),`${page}: клубная карта не ведёт на ${CLUB_CARD}`);
 // Файл подтверждения Вебмастера — для кода из JSON и только он (старые коды не остаются).
 {
  const verification=renderYandexVerification(),files=(await readdir(dist)).filter(name=>/^yandex_\w+\.html$/.test(name));
@@ -234,10 +264,23 @@ assert.equal(bookings.size,content.locations.length,'У филиалов дол�
 // Любая другая ссылка на yclients (например, общая n975571.yclients.com) — ошибка.
 for(const page of MAIN_PAGES)for(const [url] of pageCode[page].matchAll(/https?:\/\/[\w.-]*yclients\.com[^"'\s<)\\]*/g))assert(bookings.has(url),`${page}: неожиданная ссылка yclients ${url}`);
 
+// ── Заявка с фото ───────────────────────────────────────────────────────────
+// Окно на всех страницах с общими окнами; согласие обязательно и со ссылкой на
+// отдельный документ; ни адресов ботов, ни токенов в коде страницы.
+for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('dialogs'))){
+ assert(ids[page].has('request'),`${page}: нет окна заявки #request`);
+ assert(/<input type="checkbox" name="consent" required/.test(html[page])&&html[page].includes('href="consent-request.html"'),`${page}: в заявке нет обязательного согласия со ссылкой на consent-request.html`);
+ assert(!/api\.telegram\.org|bot\d{6,}:|[?&](token|apikey|api_key)=|Bearer\s/i.test(pageCode[page]),`${page}: в клиентском коде адрес бота или токен`);
+}
+const requestCode=await readFile(resolve(dist,'js/request.js'),'utf8');
+assert(/result\?\.ok !== true/.test(requestCode)&&/!response\.ok/.test(requestCode),'js/request.js: «отправлено» — только после ответа сервера {ok:true}');
+const endpoint=content.site?.requests?.endpoint;
+assert(endpoint==null||/^(https:\/\/|\/)[^\s]+$/.test(endpoint),'site.requests.endpoint: https-адрес или путь на этом сайте');
+
 assert.equal(failures.length,0,failures.join('\n'));
 const notes=[];
 if(missingOperator().length)notes.push(`реквизиты оператора в Политике и Согласии: ${missingOperator().join(', ')}`);
 if(!site.metrika)notes.push('номер счётчика Яндекс Метрики (Метрика и уведомление о cookie выключены)');
 if(!site.webmaster)notes.push('код подтверждения Яндекс Вебмастера');
 if(notes.length)console.warn('ВНИМАНИЕ: не заполнено в site (meatwash-content.json) — '+notes.join('; ')+'.');
-console.log(`PASS: ${ALL_PAGES.length} страницы — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${config.ZONE_PRESETS.length} набора, ${insideChecked} работ из программ мойки без повторного начисления); первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и карта обоих филиалов, iframe карты не в разметке.`);
+console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категорий (${itemCount} позиций, мойка — запись в YCLIENTS, остальное — заявка с фото); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и карта обоих филиалов, iframe карты не в разметке.`);

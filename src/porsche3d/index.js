@@ -17,7 +17,7 @@ import {
 } from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
-import {buildEnvironment, buildRoom} from './room.js';
+import {buildEnvironment, buildRoom, loadLogo, LOGO} from './room.js';
 import {buildInterior} from './interior.js';
 import {VIEWS, SERVICE_VIEWS, SERVICE_FX, REF_ASPECT} from './views.js';
 import {MODELS} from './models.js';
@@ -314,6 +314,8 @@ export async function mount({
 
     const entry = MODELS[level];
     const url = model || new URL(entry.file, baseUrl).href;
+    // Логотип для стены грузится вместе с моделью; это файл шапки сайта — обычно из кэша.
+    const logo = loadLogo(new URL(LOGO.file, baseUrl).href);
     onPhase?.('download');
     const buffer = await fetchModel(url, model ? 0 : entry.bytes, loading.signal, onProgress, stallTimeout);
     mark('model');
@@ -325,6 +327,10 @@ export async function mount({
     environment = buildEnvironment(scene, renderer, {low});
     await pause(); if (disposed) bail();
     room = buildRoom(scene, {low});
+    // Не дольше 1,5 с: без логотипа гараж открывается всё равно.
+    const logoImage = await Promise.race([logo, cancelled, new Promise(resolve => setTimeout(resolve, 1500, null))]);
+    if (disposed) bail();
+    room.addLogo(logoImage);
     await pause(); if (disposed) bail();
     // Распаковка Meshopt — в фоновых потоках; после разбора потоки закрываются.
     const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);

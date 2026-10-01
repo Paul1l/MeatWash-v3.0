@@ -56,6 +56,16 @@ export const CONTENT = [
   },
 ];
 
+// Согласие для заявки с фото — отдельный документ: другие данные и цель, чем у cookie.
+CONTENT.push({
+  file: 'consent-request.html', id: 'consent-request', kind: 'doc', body: 'consent-request.html',
+  title: 'Согласие на обработку персональных данных при отправке заявки — MEATWASH',
+  description: 'Согласие на обработку персональных данных при отправке заявки с фото на сайте MEATWASH: какие данные, цель, срок и как отозвать.',
+  headline: 'Согласие на обработку персональных данных при отправке заявки',
+  shared: ['analytics', 'header', 'footer', 'dialogs'],
+  sitemap: { changefreq: 'yearly', priority: '0.2' },
+});
+
 // Карта сайта: страницы ручной вёрстки и собранные здесь.
 export const SITEMAP = [
   { file: 'index.html', lastmod: '2026-10-01', changefreq: 'monthly', priority: '1.0' },
