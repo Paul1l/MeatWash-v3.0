@@ -1,5 +1,5 @@
 // Готовит модели Porsche для 3D-режима «Оживить Porsche» из исходника
-// source/3d/porsche-930.glb (Karol Miklas, CC BY 4.0 — см. credits.html).
+// source/3d/porsche-930.glb (Karol Miklas, CC BY 4.0 — автор указан в окне гаража, js/garage.js).
 //
 // Выход: dist/assets/3d/porsche-930-desktop.glb и porsche-930-mobile.glb,
 // отчёт — source/3d/optimize-report.json.

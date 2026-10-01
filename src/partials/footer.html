@@ -3,7 +3,7 @@
   <div class="footer__row">
     <a class="brand" href="{{top}}" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html"{{current:services}}>Услуги</a><a href="about.html"{{current:about}}>О нас</a><a href="{{home}}#locations">Локации</a><a href="{{home}}#contacts">Контакты</a>
+      <a href="services.html"{{current:services}}>Услуги</a><a href="about.html"{{current:about}}>О нас</a><a href="articles.html"{{current:articles}}>Статьи</a><a href="{{home}}#locations">Локации</a><a href="{{home}}#contacts">Контакты</a>
     </nav>
     <div class="footer__social">
       <button type="button" data-book aria-label="Онлайн-запись">
@@ -37,6 +37,12 @@
   <div class="footer__base">
     <span>© 2026 Meatwash. Все права защищены.</span>
     <span>Moscow, Russia</span>
-    <span>Чистота. Стиль. Характер. <a class="credits-link" href="credits.html" aria-label="Авторы визуальных материалов">→</a></span>
+    <span>Чистота. Стиль. Характер.</span>
+  </div>
+  <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
+  <div class="footer__legal">
+    <a href="privacy.html"{{current:privacy}}>Политика обработки персональных данных</a>
+    <a href="consent.html"{{current:consent}}>Согласие на обработку данных</a>
+    <button type="button" data-consent-open hidden>Настройки cookie</button>
   </div>
 </footer>

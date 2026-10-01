@@ -17,7 +17,7 @@ if (!version) { console.error('Нужна версия: node scripts/stamp-asset
 let count = 0;
 const stamp = (text, re) => text.replace(re, (m, pre, path, post) => { count++; return `${pre}${path}?v=${version}${post}`; });
 
-// Страницы: все *.html в dist (index, services, about, credits) — локальные таблицы
+// Страницы: все *.html в dist — локальные таблицы
 // стилей и скрипты. Общие файлы получают одну версию на всех страницах.
 const pages = (await readdir(dist)).filter((name) => name.endsWith('.html'));
 for (const page of pages) {

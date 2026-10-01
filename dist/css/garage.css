@@ -263,6 +263,9 @@
   text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .45);
 }
 .garage__clear:disabled { opacity: .45; cursor: default; }
+.garage__credit { margin-top: 8px; font-size: 11px; line-height: 1.4; color: var(--muted); }
+.garage__credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
+.garage__credit a:hover { color: var(--ivory); }
 
 /* ---------- Телефон и планшет в портрете: окно на весь экран ---------- */
 @media (max-width: 900px), (max-height: 560px) {

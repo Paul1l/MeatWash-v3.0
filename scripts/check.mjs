@@ -12,6 +12,9 @@ import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {PAGES,renderPartial,readPartial,sharedBlock,wrap} from './pages.mjs';
 import {renderCatalog,renderPreview,renderData,between} from './catalog.mjs';
+import {renderContent,renderSitemap,missingOperator} from './content.mjs';
+import {CONTENT} from '../src/content/pages.mjs';
+import {renderPage} from './pages.mjs';
 import {importDist} from './dist-module.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dist=resolve(root,'dist');
@@ -22,7 +25,7 @@ const exists=async path=>{try{return (await stat(path)).isFile();}catch{return f
 
 // ── Страницы ─────────────────────────────────────────────────────────────────
 const MAIN_PAGES=Object.keys(PAGES);                      // index, services, about
-const ALL_PAGES=[...MAIN_PAGES,'credits.html'];
+const ALL_PAGES=[...MAIN_PAGES];
 const html={},ids={};
 for(const page of ALL_PAGES){
  html[page]=await readFile(resolve(dist,page),'utf8');
@@ -84,6 +87,9 @@ for(const page of MAIN_PAGES)for(const name of PAGES[page].shared){
 if(between(html['services.html'],'CATALOG')!==renderCatalog())fail('services.html: каталог отстал от meatwash-content.json — выполните npm run catalog');
 if(between(html['index.html'],'PREVIEW')!==renderPreview())fail('index.html: превью услуг отстало от meatwash-content.json — выполните npm run catalog');
 if(await readFile(resolve(dist,'js/data.js'),'utf8')!==renderData())fail('js/data.js отстал от meatwash-content.json — выполните npm run catalog');
+// Статьи, Политика, Согласие и карта сайта собираются из src/content и JSON.
+for(const page of CONTENT)if(html[page.file]!==await renderPage(page.file,await renderContent(page)))fail(`${page.file} отстал от src/content или meatwash-content.json — выполните npm run build`);
+if(sitemap!==renderSitemap())fail('sitemap.xml отстал от src/content/pages.mjs — выполните npm run content');
 
 // ── Данные и цены ────────────────────────────────────────────────────────────
 const content=JSON.parse(await readFile(resolve(dist,'assets/meatwash-content.json')));
@@ -143,6 +149,13 @@ assert(entries.length>=2&&entries.every(t=>t==='Открыть 3D-гараж'),'
 const cinematic=await readFile(resolve(dist,'css/cinematic.css'),'utf8'),style=await readFile(resolve(dist,'css/style.css'),'utf8');
 for(const [name,css] of [['style.css',style],['cinematic.css',cinematic]])assert(!/\.scene\b|--scene-len|\.chapter\b|\.static-experience/.test(css),`${name}: правила удалённой сцены`);
 
+// Цены в статьях — только подстановки из каталога ({{price:…}}): каждая «от N ₽» есть в JSON.
+const catalogPrices=new Set([...content.programPrices.flat(),...content.groups.flatMap(g=>g.items.map(x=>x[1]))]);
+for(const page of CONTENT.filter(p=>p.kind==='article'))for(const [,num] of html[page.file].matchAll(/от ([\d\s\u00a0\u202f]+) ₽/g)){
+ const value=Number(num.replace(/\D/g,''));
+ if(!catalogPrices.has(value))fail(`${page.file}: цена ${value} ₽ не из каталога`);
+}
+
 // ── Скрипты: синтаксис и граф модулей каждой страницы ────────────────────────
 for(const filename of await readdir(resolve(dist,'js'))){
  if(!filename.endsWith('.js'))continue;
@@ -172,6 +185,25 @@ for(const page of MAIN_PAGES){
  assert(!/<iframe\b/i.test(text)&&!/map-widget/.test(text),`${page}: iframe карты в разметке — он должен создаваться только при открытии окна`);
 }
 for(const entry of lazy3d)assert(/→ porsche3d\.bundle\.js$/.test(entry),'Лениво можно грузить только porsche3d.bundle.js: '+entry);
+// Яндекс Метрика — только после согласия (js/analytics.js): кода счётчика и пикселя в разметке нет,
+// номер счётчика и код Вебмастера — из JSON, на всех страницах одинаковые.
+const site=content.site?.analytics||{};
+for(const page of MAIN_PAGES){
+ assert(graphs[page].has('analytics.js'),`${page}: нет js/analytics.js (уведомление о cookie и цели)`);
+ assert(!/mc\.yandex\.ru|metrika\/tag\.js/.test(html[page]),`${page}: код Метрики в разметке — он должен грузиться только после согласия`);
+ assert(html[page].includes('<!-- SHARED:analytics:START -->'),`${page}: нет блока аналитики в <head>`);
+ assert(!site.metrika===!html[page].includes(`<meta name="mw-metrika" content="${site.metrika}">`),`${page}: номер счётчика Метрики не совпадает с JSON`);
+ assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
+ assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
+}
+// Вебвизор записывает действия на странице: включён — значит назван в уведомлении, Политике и Согласии.
+{
+ const code=await readFile(resolve(dist,'js/analytics.js'),'utf8');
+ const webvisor=/\bwebvisor:\s*true\b/.test(code);
+ assert(webvisor||/\bwebvisor:\s*false\b/.test(code),'js/analytics.js: webvisor в init счётчика должен быть явно true или false');
+ for(const [name,text] of [['уведомление о cookie (js/analytics.js)',code.match(/consent__text">([^<]*)/)?.[1]||''],...await Promise.all(['privacy.html','consent.html'].map(async file=>[file,await readFile(resolve(dist,file),'utf8')])) ])
+  assert(webvisor===text.includes('Вебвизор'),`${name}: ${webvisor?'не назван Вебвизор, а он включён':'упомянут Вебвизор, а он выключен'}`);
+}
 // Главная — гараж (оболочка сразу, 3D по кнопке); внутренние страницы без гаража, GSAP и 3D.
 assert(graphs['index.html'].has('garage.js'),'Главная должна подключать гараж (garage.js)');
 assert([...lazy3d].some(entry=>entry==='garage.js → porsche3d.bundle.js'),'3D грузит только garage.js по нажатию: '+[...lazy3d].join(', '));
@@ -197,4 +229,9 @@ assert.equal(bookings.size,content.locations.length,'У филиалов дол�
 for(const page of MAIN_PAGES)for(const [url] of pageCode[page].matchAll(/https?:\/\/[\w.-]*yclients\.com[^"'\s<)\\]*/g))assert(bookings.has(url),`${page}: неожиданная ссылка yclients ${url}`);
 
 assert.equal(failures.length,0,failures.join('\n'));
+const notes=[];
+if(missingOperator().length)notes.push(`реквизиты оператора в Политике и Согласии: ${missingOperator().join(', ')}`);
+if(!site.metrika)notes.push('номер счётчика Яндекс Метрики (Метрика и уведомление о cookie выключены)');
+if(!site.webmaster)notes.push('код подтверждения Яндекс Вебмастера');
+if(notes.length)console.warn('ВНИМАНИЕ: не заполнено в site (meatwash-content.json) — '+notes.join('; ')+'.');
 console.log(`PASS: ${ALL_PAGES.length} страницы — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${config.ZONE_PRESETS.length} набора, ${insideChecked} работ из программ мойки без повторного начисления); первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и карта обоих филиалов, iframe карты не в разметке.`);

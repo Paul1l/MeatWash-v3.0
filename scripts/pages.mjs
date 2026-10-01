@@ -1,5 +1,6 @@
 // Общие части страниц (шапка с меню, подвал, окна записи и карты, карточки локаций,
-// блок записи, клубный блок «Больше, чем сервис») живут в src/partials/*.html и вставляются во все страницы между
+// блок записи, клубный блок «Больше, чем сервис», аналитика в <head>) живут
+// в src/partials/*.html и вставляются во все страницы между
 // маркерами <!-- SHARED:<имя>:START --> и <!-- SHARED:<имя>:END -->.
 // Руками внутри маркеров не править: npm run pages перезапишет, npm run check
 // сверяет каждую страницу с результатом этого скрипта.
@@ -11,17 +12,30 @@
 //   {{header-class}}     ' is-solid' на внутренних страницах
 //   {{nav-next}}         стрелка «следующий раздел» — только на главной
 //   {{loc:<id>:<поле>}}  данные филиала из meatwash-content.json (экранируются)
+//   {{analytics:<webmaster|metrika>}}  мета-теги Яндекс Вебмастера и номер счётчика
+//                        Метрики из site.analytics в JSON; пусто — ничего (Метрику
+//                        загружает js/analytics.js только после согласия посетителя)
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content,escape} from './catalog.mjs';
+import {CONTENT} from '../src/content/pages.mjs';
 
 const root=new URL('../',import.meta.url);
 // Какие общие части есть на какой странице.
+// Страницы из src/content (статьи, Политика, Согласие) собирает scripts/content.mjs.
 export const PAGES={
- 'index.html':{id:'home',shared:['header','locations','membership','footer','dialogs']},
- 'services.html':{id:'services',shared:['header','book','footer','dialogs']},
- 'about.html':{id:'about',shared:['header','membership','locations','book','footer','dialogs']},
+ 'index.html':{id:'home',shared:['analytics','header','locations','membership','footer','dialogs']},
+ 'services.html':{id:'services',shared:['analytics','header','book','footer','dialogs']},
+ 'about.html':{id:'about',shared:['analytics','header','membership','locations','book','footer','dialogs']},
+ ...Object.fromEntries(CONTENT.map(page=>[page.file,{id:page.id,shared:page.shared}])),
 };
+// Код Вебмастера — латиница и цифры, счётчик Метрики — только цифры: иначе в разметку не пишем.
+const analytics=content.site?.analytics||{};
+const ANALYTICS={
+ webmaster:()=>analytics.webmaster?(/^[\w-]+$/.test(analytics.webmaster)?`<meta name="yandex-verification" content="${escape(analytics.webmaster)}">`:fail('site.analytics.webmaster')):'',
+ metrika:()=>analytics.metrika?(/^\d+$/.test(String(analytics.metrika))?`<meta name="mw-metrika" content="${escape(analytics.metrika)}">`:fail('site.analytics.metrika')):'',
+};
+function fail(field){throw new Error(`Неверное значение ${field} в meatwash-content.json`);}
 const NAV_NEXT='\n    <button class="nav__next" type="button" data-scroll-next aria-label="Следующий раздел"><span class="nav__line"></span><span aria-hidden="true">→</span></button>';
 
 const LOC_FIELDS={
@@ -45,6 +59,10 @@ export function renderPartial(template,page){
    case 'current':return a===id?' aria-current="page"':'';
    case 'header-class':return home?'':' is-solid';
    case 'nav-next':return home?NAV_NEXT:'';
+   case 'analytics':{
+    if(!ANALYTICS[a])throw new Error(`Нет поля аналитики ${a} (${token})`);
+    return ANALYTICS[a]();
+   }
    case 'loc':{
     const location=content.locations.find(l=>l.id===a);
     if(!location)throw new Error(`Нет филиала ${a} (${token})`);
