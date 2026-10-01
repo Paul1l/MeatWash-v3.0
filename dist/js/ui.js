@@ -1,6 +1,10 @@
 // Общее для всех страниц: меню, окна записи и карты, переходы по якорям,
 // появление блоков. «Следующий раздел» — первый блок страницы ниже текущего места.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
+// Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
+import { setupAnalytics, goal } from './analytics.js';
+import { LOCATIONS } from './data.js';
+
 export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
@@ -49,6 +53,7 @@ export function setupUI() {
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
    show(booking);
+   goal('booking_open',{context:note||'—'});
    // Фокус на заголовке, а не на Мясницкой: иначе она выглядела выбранной по умолчанию.
    $('#booking-title').focus({preventScroll:true});
  };
@@ -106,6 +111,10 @@ export function setupUI() {
 
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
+  // Цели Метрики: звонок и переход в онлайн-запись филиала (yclients) — ссылки уходят сами.
+  const href=control.getAttribute('href')||'';
+  if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
+  else{const branch=LOCATIONS.find(l=>href&&href===l.booking);if(branch)goal('booking_branch',{branch:branch.id});}
   if(control.hasAttribute('data-book')) return openBooking(control.dataset.bookContext||'');
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
   if(control.dataset.map){
@@ -113,6 +122,7 @@ export function setupUI() {
    if(!maps||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
    e.preventDefault(); closeMenu(); booking?.close();
    maps.openMap(control.dataset.map,control);
+   goal('map_open',{branch:control.dataset.map});
    return;
   }
   if(control.hasAttribute('data-scroll-next')){ nextBlock(); return; }
@@ -156,5 +166,6 @@ export function setupUI() {
 
  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('is-in');observer.unobserve(entry.target);}},{threshold:.1});
  document.querySelectorAll('[data-reveal]').forEach(el=>observer.observe(el));
+ setupAnalytics();
  return ()=>{abort.abort();observer.disconnect();};
 }

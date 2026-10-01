@@ -469,5 +469,20 @@
       "location": "Технопарк",
       "price": null
     }
-  ]
+  ],
+  "site": {
+    "_comment": "Настройки сайта. analytics.metrika — номер счётчика Яндекс Метрики (цифры), analytics.webmaster — код подтверждения Яндекс Вебмастера (content мета-тега yandex-verification). Пока пусто — Метрика, баннер cookie и мета-тег на страницы не попадают. operator — реквизиты оператора персональных данных для Политики и Согласия (152-ФЗ). После правки: npm run build.",
+    "analytics": {
+      "metrika": null,
+      "webmaster": null
+    },
+    "operator": {
+      "name": null,
+      "inn": null,
+      "ogrn": null,
+      "address": null,
+      "email": null
+    },
+    "documentsDate": "2026-10-01"
+  }
 }

@@ -19,6 +19,7 @@
 import { ZONES, ZONE_GROUPS, ZONE_PRESETS, EXCLUSIVE, zonePrice, garageSum, includedIn } from './config.js';
 import { BODY_TYPES, PROGRAMS } from './data.js';
 import { getBody, setBody, bodyName } from './body.js';
+import { goal } from './analytics.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
 const byId = (id) => ZONES.find((z) => z.id === id);
@@ -150,6 +151,8 @@ export function setupGarage() {
             <button class="btn btn--fill garage__book" type="button" data-book data-garage-book>Записаться</button>
             <button class="garage__clear" type="button" data-garage-clear>Сбросить выбор</button>
           </div>
+          <!-- Лицензия модели CC BY 4.0 требует указать автора и что модель изменена — рядом с ней. -->
+          <p class="garage__credit">3D-модель: <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener noreferrer">Karol Miklas</a>, <a href="https://creativecommons.org/licenses/by/4.0/deed.ru" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>, изменена</p>
         </div>
       </section>
     </div>`;
@@ -262,6 +265,7 @@ export function setupGarage() {
       target(null);
       frameSafe();
       say('3D-гараж готов. Выберите услуги — камера покажет деталь автомобиля.');
+      goal('garage_ready', { quality: handle.quality });
     } catch (error) {
       if (job !== mine) return;
       job = null;
@@ -417,6 +421,7 @@ export function setupGarage() {
     dialog.showModal();
     lock(true);
     title.focus({ preventScroll: true });
+    goal('garage_open', { from: button?.closest('#garage-promo') ? 'promo' : button?.closest('.hero') ? 'hero' : 'link' });
     load();
   }
   function teardown() {
@@ -479,7 +484,7 @@ export function setupGarage() {
     }
     // «Записаться»: гараж закрывается, затем общий обработчик ui.js (data-book)
     // открывает выбор филиала с составом в «Вы выбрали: …» — окна не накладываются.
-    if (control.matches('[data-garage-book]')) { close(); }
+    if (control.matches('[data-garage-book]')) { goal('garage_book', { works: picked.length, sum: garageSum(picked, getBody()) }); close(); }
   }, options);
 
   dialog.addEventListener('change', (e) => {

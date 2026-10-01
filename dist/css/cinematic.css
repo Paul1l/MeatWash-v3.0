@@ -9,8 +9,6 @@ html { scroll-behavior:auto; }
 .membership__card img { opacity:1; transform:none; }
 body:has(dialog[open]) { overflow:hidden; }
 body.menu-open { overflow:hidden; }
-/* Цель 44px; отрицательные поля не дают ссылке раздвинуть строку подвала. */
-.credits-link { display:inline-flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; margin-block:-12px; }
 .dialog::backdrop { backdrop-filter:none; }
 
 /* Портрет до 900px: запись — только в нижней кнопке (.mobile-cta), в hero её нет.
