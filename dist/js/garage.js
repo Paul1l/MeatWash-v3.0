@@ -356,7 +356,41 @@ export function setupGarage() {
     const withBody = picked.some(isProgram) ? ' · ' + bodyName(body) : '';
     if (picked.length) bookBtn.dataset.bookContext = picked.map((id) => byId(id).title).join(', ') + withBody + ' · предварительно от ' + money(sum);
     else delete bookBtn.dataset.bookContext;
+    // Состав для онлайн-записи: программы — индексом, работы прайса — названием.
+    // ui.js переведёт их в идентификаторы YCLIENTS выбранного филиала.
+    const programs = picked.map((id) => byId(id).price.program).filter((i) => i != null);
+    const items = picked.map((id) => byId(id).price.item).filter(Boolean);
+    bookBtn.dataset.ycPrograms = programs.join(',');
+    bookBtn.dataset.ycItems = items.join('|');
   }
+  // Часть работ в онлайн-записи не продаётся: их добавляет мастер при приёмке.
+  // Помечаем это сразу в списке, чтобы человек видел до нажатия «Записаться»,
+  // а не удивлялся, что в запись ушла половина выбранного.
+  function markOffline() {
+    import('./yclients.js').then((yc) => yc.loadMap().then(() => {
+      let offline = 0;
+      for (const label of dialog.querySelectorAll('.garage__item')) {
+        const zone = byId(label.dataset.zone);
+        if (!zone) continue;
+        const spec = zone.price.program != null
+          ? { programs: [zone.price.program], items: [] }
+          : { programs: [], items: [zone.price.item] };
+        // Работа доступна онлайн, если её удалось сопоставить хотя бы в одном филиале.
+        const ok = ['myasnitskaya', 'technopark'].some((b) => yc.resolve(b, spec, 0).ids.length);
+        label.classList.toggle('is-offline', !ok);
+        if (!ok) {
+          offline += 1;
+          const note = label.querySelector('[data-zone-note]');
+          if (note && !note.dataset.offline) {
+            note.dataset.offline = '1';
+            note.textContent = 'Приобретается на месте — мастер добавит при приёмке. ' + note.textContent;
+          }
+        }
+      }
+      if (offline) say(`${offline} работ приобретаются на месте.`);
+    })).catch(() => {});
+  }
+
   function setPicked(ids, touched) {
     picked.splice(0, picked.length, ...ids);
     lastTouched = touched ?? null;
@@ -414,6 +448,7 @@ export function setupGarage() {
     hinted = false; hint.hidden = true;
     picked.splice(0, picked.length, ...readPicked());
     renderSelection();
+    markOffline();
     // Открываем на категории последней выбранной работы.
     const last = byId(current(null));
     selectTab(last ? last.group : ZONE_GROUPS[0].id, false);

@@ -304,3 +304,15 @@ a.card { display: block; }
   .consent { left: 12px; right: 12px; width: auto; bottom: calc(var(--cta-zone, 78px) - 4px); }
 }
 @media print { .consent { display: none; } }
+
+/* Записка в окне записи: какие выбранные работы нельзя набрать онлайн. */
+.dialog__note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: rgba(233, 223, 208, .05);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted);
+}

@@ -4,6 +4,7 @@
 // Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
 import { setupAnalytics, goal } from './analytics.js';
 import { LOCATIONS } from './data.js';
+import { getBody } from './body.js';
 
 export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
@@ -47,11 +48,44 @@ export function setupUI() {
  // Что именно выбрал человек — только текстом, без разметки.
  const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
  // Запись: филиал выбирается здесь, потому что у площадок разные компании в yclients.
- const openBooking=(note='')=>{
+ // Ссылки филиалов ведут в YCLIENTS с уже набранными услугами. Карта
+ // соответствий подгружается один раз; пока её нет, ссылки остаются такими,
+ // как в разметке — обычный выбор услуги, запись всё равно работает.
+ const noteEl=$('#booking-yc-note');
+ let yc=null, bookingJob=0;
+ const loadYc=()=>yc?Promise.resolve(yc):import('./yclients.js').then(m=>m.loadMap().then(()=>(yc=m)));
+ // Каждое открытие окна начинает с ссылок из разметки: иначе общая «Записаться»
+ // унесла бы в yclients корзину прошлого выбора.
+ branches?.querySelectorAll('[data-branch]').forEach(link=>{link.dataset.href=link.getAttribute('href');});
+ const resetLinks=()=>branches?.querySelectorAll('[data-branch]').forEach(link=>{if(link.dataset.href)link.setAttribute('href',link.dataset.href);});
+ const applyLinks=spec=>{
+   if(!yc||!branches)return;
+   const body=getBody();
+   let unmatched=[];
+   branches.querySelectorAll('[data-branch]').forEach(link=>{
+     const branch=link.dataset.branch;
+     const {ids,missing}=yc.resolve(branch,spec,body);
+     const url=yc.bookingUrl(branch,ids);
+     if(url)link.href=url;
+     if(missing.length>unmatched.length)unmatched=missing;
+   });
+   if(noteEl){
+     noteEl.textContent=unmatched.length
+       ? 'На месте добавите: '+unmatched.join(', ')+'. Эти работы мастер примет при приёмке — в онлайн-записи они не продаются. Остальное уже в заказе.'
+       : '';
+     noteEl.hidden=!unmatched.length;
+   }
+ };
+ const openBooking=(note='',spec=null)=>{
    if(!booking)return;
    closeMenu(); mapDialog?.close();
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
+   if(noteEl){noteEl.textContent='';noteEl.hidden=true;}
+   resetLinks();
+   // Ответ карты yclients может прийти после следующего открытия окна — тогда он уже не нужен.
+   const job=++bookingJob;
+   if(spec&&(spec.programs.length||spec.items.length))loadYc().then(()=>{if(job===bookingJob&&booking.open)applyLinks(spec);});
    show(booking);
    goal('booking_open',{context:note||'—'});
    // Фокус на заголовке, а не на Мясницкой: иначе она выглядела выбранной по умолчанию.
@@ -60,6 +94,7 @@ export function setupUI() {
  // Разговор с администратором: телефоны без онлайн-записи.
  const openMembership=(title='')=>{
    if(!booking)return;
+   bookingJob++;
    closeMenu(); mapDialog?.close();
    $('#booking-title').textContent=title||'Meatwash Car Care Club';
    setContext(''); lead.hidden=false; hint.hidden=true; branches.hidden=true;
@@ -112,10 +147,17 @@ export function setupUI() {
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
   // Цели Метрики: звонок и переход в онлайн-запись филиала (yclients) — ссылки уходят сами.
+  // Ссылка филиала бывает с уже набранными услугами (yclients.js), поэтому сверяем
+  // по компании в yclients, а не по ссылке целиком.
   const href=control.getAttribute('href')||'';
   if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
-  else{const branch=LOCATIONS.find(l=>href&&href===l.booking);if(branch)goal('booking_branch',{branch:branch.id});}
-  if(control.hasAttribute('data-book')) return openBooking(control.dataset.bookContext||'');
+  else{const branch=LOCATIONS.find(l=>href&&l.booking&&href.startsWith(l.booking.replace(/\/personal\/.*$/,'/')));if(branch)goal('booking_branch',{branch:branch.id,preset:/[?&]o=m-1s/.test(href)});}
+  if(control.hasAttribute('data-book')){
+   const d=control.dataset;
+   const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);
+   const items=(d.ycItems||'').split('|').filter(Boolean);
+   return openBooking(d.bookContext||'',{programs,items});
+  }
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
   if(control.dataset.map){
    // Ctrl/Cmd/Shift-клик и средняя кнопка — как у обычной ссылки: карточка в новой вкладке.
