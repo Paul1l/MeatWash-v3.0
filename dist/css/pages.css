@@ -316,3 +316,76 @@ a.card { display: block; }
   line-height: 1.45;
   color: var(--muted);
 }
+
+/* ---------- Окно записи: напоминание о заявке (смешанный выбор) и подсказка ---------- */
+.dialog__note--request { color: var(--ivory); }
+.dialog__note .link-arrow, .dialog__aside .link-arrow { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; vertical-align: middle; }
+.dialog p.dialog__aside { margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.dialog__note[hidden], .dialog__aside[hidden] { display: none; }
+
+/* ---------- Заявка с фото (js/request.js) ---------- */
+.request-dialog { width: min(94vw, 620px); }
+/* Форма заявки — тоже прямой потомок окна, но не строка с крестиком. */
+.request-dialog > form.request { position: static; display: grid; margin: 24px 0 0; padding: 0; background: none; }
+.request { display: grid; gap: 18px; }
+.request[hidden], .request-dialog > form.request[hidden] { display: none; }
+.request fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+.request legend, .request__label, .request__field > span { display: block; margin-bottom: 8px; font-size: 12px; letter-spacing: .04em; color: var(--ivory); }
+.request legend b, .request__field b { font-weight: 400; color: var(--muted); }
+.request__chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; }
+.request__chips[hidden] { display: none; }
+.request__chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 10px; border: 1px solid rgb(var(--ivory-rgb) / .35); border-radius: 999px; font-size: 12px; line-height: 1.3; text-align: left; color: var(--ivory); }
+.request__chip:hover { border-color: var(--ivory); }
+.request__chip span:last-child { font-size: 15px; color: var(--muted); }
+.request select, .request input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .request textarea {
+  width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--black); color: var(--ivory); font: inherit; font-size: 15px;
+}
+.request textarea { min-height: 88px; resize: vertical; }
+.request select:focus-visible, .request input:focus-visible, .request textarea:focus-visible { outline: 2px solid var(--ivory); outline-offset: 2px; }
+.request [aria-invalid="true"] { border-color: #e08a7c; }
+.request__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+.request__field { display: block; min-width: 0; }
+.request__field--wide { grid-column: 1 / -1; }
+.request__field small { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
+.request__branch { display: flex; flex-wrap: wrap; gap: 6px; }
+.request__branch legend { width: 100%; }
+.request__branch label { position: relative; cursor: pointer; }
+.request__branch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.request__branch span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); font-size: 13px; }
+.request__branch input:checked + span { background: var(--burgundy); border-color: var(--beige); }
+.request__branch input:focus-visible + span { outline: 2px solid var(--ivory); outline-offset: 3px; }
+.request p.request__rules { margin-top: 0; font-size: 12px; }
+.request__previews { display: grid; gap: 8px; margin: 10px 0; padding: 0; list-style: none; }
+.request__previews[hidden] { display: none; }
+.request__photo { display: grid; grid-template-columns: 96px minmax(0, 1fr) 44px; align-items: center; gap: 12px; padding: 6px; border: 1px solid var(--line); }
+.request__photo img, .request__tile { width: 96px; height: 72px; object-fit: cover; }
+.request__tile { display: grid; place-items: center; background: rgb(var(--ivory-rgb) / .06); font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.request__photometa { font-size: 12px; line-height: 1.4; color: var(--muted); overflow-wrap: anywhere; }
+.request__remove { width: 44px; height: 44px; font-size: 22px; color: var(--muted); }
+.request__remove:hover { color: var(--ivory); }
+.request__pick { position: relative; display: inline-flex; margin-top: 4px !important; height: 44px; cursor: pointer; }
+.request__pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.request__pick:focus-within { outline: 2px solid var(--ivory); outline-offset: 3px; }
+.request__pick.is-disabled { opacity: .45; cursor: default; }
+.request__consent { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 10px; align-items: start; font-size: 13px; line-height: 1.55; color: rgb(var(--ivory-rgb) / .85); cursor: pointer; }
+.request__consent input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--burgundy); }
+.request__consent a { text-decoration: underline; text-underline-offset: 3px; }
+.request .request__error, .request p.request__error { margin: 6px 0 0; font-size: 12px; color: #f0a596; }
+.request .request__error:empty { display: none; }
+.request p.request__error--form { padding: 10px 12px; border: 1px solid #e08a7c; font-size: 13px; }
+.request p.request__error--form[hidden] { display: none; }
+.request__actions .btn { width: 100%; height: 50px; margin-top: 0; }
+.request__actions[hidden], .request__offline[hidden], .request__done[hidden] { display: none; }
+.request__offline { padding: 14px 16px; border: 1px solid rgb(var(--ivory-rgb) / .35); background: rgb(var(--ivory-rgb) / .04); }
+.request__offline p { margin-top: 0; color: var(--ivory); }
+.request__offline .dialog__phones { margin-top: 10px; padding-top: 8px; }
+.request__done { margin-top: 18px; }
+.request__done:focus { outline: none; }
+.request__done .request__donetitle { font-family: var(--font-display); font-weight: 700; font-size: 24px; color: var(--ivory); }
+.request__done form { position: static; display: block; margin: 0; padding: 0; background: none; }
+@media (max-width: 560px) {
+  .request__grid { grid-template-columns: 1fr; }
+  .request__photo { grid-template-columns: 72px minmax(0, 1fr) 44px; }
+  .request__photo img, .request__tile { width: 72px; height: 54px; }
+}

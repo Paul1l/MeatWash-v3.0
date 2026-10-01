@@ -6,10 +6,11 @@ import { getBody, setBody, bodyName } from './body.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
 
-// Работы, которые не продаются в онлайн-записи, помечаются прямо в прайсе:
+// Работы мойки, которые не продаются в онлайн-записи, помечаются прямо в прайсе:
 // человек видит это там же, где смотрит цену, а не после нажатия «Записаться».
+// Остальные категории идут по заявке с фото — там YCLIENTS не участвует.
 function markOnSite() {
-  const rows = [...document.querySelectorAll('[data-price-item]')];
+  const rows = [...document.querySelectorAll('#price-wash [data-price-item]')];
   if (!rows.length) return;
   import('./yclients.js').then((yc) => yc.loadMap().then(() => {
     for (const row of rows) {

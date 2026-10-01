@@ -16,19 +16,20 @@
 // Выбор работ живёт в sessionStorage отдельно от сцены: повторное открытие его
 // не сбрасывает, для этого есть «Сбросить выбор».
 
-import { ZONES, ZONE_GROUPS, ZONE_PRESETS, EXCLUSIVE, zonePrice, garageSum, includedIn } from './config.js';
+import { ZONES, ZONE_GROUPS, EXCLUSIVE, zonePrice, garageSum, garageOpen, includedIn, isWash } from './config.js';
 import { BODY_TYPES, PROGRAMS } from './data.js';
 import { getBody, setBody, bodyName } from './body.js';
 import { goal } from './analytics.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
 const byId = (id) => ZONES.find((z) => z.id === id);
-const isProgram = (id) => byId(id)?.price.program != null;
 const PICKED_KEY = 'mw:garage';
 const WEBGL_KEY = 'mw:webgl2';
 const GUARD_MS = 400;   // второй щелчок двойного клика по кнопке входа не закрывает окно
-const CATALOG = 'services.html#programs';
-const TABS = [...ZONE_GROUPS, { id: 'presets', title: 'Наборы' }];
+const CATALOG = 'services.html#price-list';
+// Вкладки — восемь категорий каталога; готовых «наборов» нет: пакеты мойки —
+// настоящие позиции каталога, они во вкладке «Мойка».
+const TABS = ZONE_GROUPS;
 
 // Выбор на время визита: только известные работы, одна программа мойки,
 // без работ, уже входящих в выбранную программу.
@@ -131,24 +132,20 @@ export function setupGarage() {
               <li><label class="garage__item" data-zone="${z.id}">
                 <input type="checkbox" value="${z.id}">
                 <span class="garage__box" aria-hidden="true"></span>
-                <span class="garage__text"><b>${z.title}</b><i data-zone-note>${z.price.program != null ? `Программа мойки · ${PROGRAMS[z.price.program].time}. ` : ''}${z.caption}</i></span>
+                <span class="garage__text"><b>${z.title}${z.package ? ' <span class="garage__tag">пакет</span>' : ''}</b><i data-zone-note>${z.price.program != null ? `${z.package ? 'Пакет мойки' : 'Программа мойки'} · ${PROGRAMS[z.price.program].time}. ` : ''}${z.caption}</i>${z.price.program != null ? `<span class="garage__includes" data-zone-includes><span>Состав:</span> ${PROGRAMS[z.price.program].includes.join(' · ')}</span>` : ''}</span>
                 <span class="garage__price" data-zone-price></span>
               </label></li>`).join('')}
             </ul>
           </div>`).join('')}
-          <div class="garage__group" role="tabpanel" id="garage-group-presets" aria-labelledby="garage-tab-presets" data-group="presets" hidden>
-            <p class="garage__groupnote">Набор заменяет текущий выбор.</p>
-            <ul class="garage__items">
-              ${ZONE_PRESETS.map((p) => `<li><button class="garage__preset" type="button" data-preset="${p.id}"><b>${p.title}</b><i>${p.note}</i><span class="garage__price" data-preset-price></span></button></li>`).join('')}
-            </ul>
-          </div>
         </div>
         <div class="garage__foot">
           <div class="garage__picked" data-garage-picked aria-label="Выбранные услуги" role="group"></div>
           <p class="garage__total"><span>Предварительно</span><b data-garage-total></b></p>
           <p class="garage__note">Минимальные цены каталога, мойка — для выбранного кузова. Точную стоимость назовёт мастер после осмотра.</p>
+          <p class="garage__split" data-garage-split hidden>Мойку запишем онлайн в выбранную студию, по остальным работам отправьте заявку с фото — выбор сохранится.</p>
           <div class="garage__act">
             <button class="btn btn--fill garage__book" type="button" data-book data-garage-book>Записаться</button>
+            <button class="btn btn--ghost garage__request" type="button" data-request data-garage-request hidden>Заявка с фото</button>
             <button class="garage__clear" type="button" data-garage-clear>Сбросить выбор</button>
           </div>
           <!-- Лицензия модели CC BY 4.0 требует указать автора и что модель изменена — рядом с ней. -->
@@ -164,6 +161,7 @@ export function setupGarage() {
   const failTitle = $('[data-garage-failtitle]'), failText = $('[data-garage-failtext]'), retryBtn = $('[data-garage-retry]');
   const hint = $('[data-garage-hint]'), caption = $('[data-garage-caption]');
   const totalEl = $('[data-garage-total]'), pickedEl = $('[data-garage-picked]'), bookBtn = $('[data-garage-book]'), clearBtn = $('[data-garage-clear]');
+  const requestBtn = $('[data-garage-request]'), splitEl = $('[data-garage-split]');
   const bodySelect = $('[data-garage-body]'), foldBtn = $('[data-garage-fold]'), title = $('#garage-title');
   const tabs = [...dialog.querySelectorAll('[role="tab"]')];
 
@@ -329,16 +327,14 @@ export function setupGarage() {
       input.disabled = Boolean(inside);
       label.classList.toggle('is-on', input.checked);
       label.classList.toggle('is-included', Boolean(inside));
-      label.querySelector('[data-zone-price]').textContent = inside ? 'входит в программу' : 'от ' + money(zonePrice(zone, body));
-      label.title = inside ? `Входит в мойку «${inside.title}»` : '';
+      const price = zonePrice(zone, body);
+      label.querySelector('[data-zone-price]').textContent = inside ? (inside.package ? 'входит в пакет' : 'входит в программу') : price == null ? 'после осмотра' : 'от ' + money(price);
+      label.title = inside ? `Входит в «${inside.title}»` : '';
     }
-    for (const button of dialog.querySelectorAll('[data-preset]')) {
-      const preset = ZONE_PRESETS.find((p) => p.id === button.dataset.preset);
-      button.querySelector('[data-preset-price]').textContent = 'от ' + money(garageSum(preset.zones, body));
-      button.setAttribute('aria-pressed', String(preset.zones.length === picked.length && preset.zones.every((id) => picked.includes(id))));
-    }
-    const sum = garageSum(picked, body);
-    totalEl.textContent = picked.length ? 'от ' + money(sum) : 'Выберите работы';
+    const sum = garageSum(picked, body), open = garageOpen(picked);
+    // Работы с ценой после осмотра в сумму не входят — итог так и говорит.
+    totalEl.textContent = !picked.length ? 'Выберите работы' : sum ? 'от ' + money(sum) : 'после осмотра';
+    if (sum && open.length) { const more = document.createElement('small'); more.textContent = ' + по осмотру'; totalEl.append(more); }
     totalEl.classList.toggle('is-empty', !picked.length);
     clearBtn.disabled = !picked.length;
     pickedEl.replaceChildren(...picked.map((id) => {
@@ -350,18 +346,26 @@ export function setupGarage() {
       return chip;
     }));
     pickedEl.hidden = !picked.length;
-    // Состав уходит в окно записи через data-book-context — так же, как у всех
-    // кнопок записи на странице; окно пишет «Вы выбрали: …». Кузов — если в
-    // составе есть мойка (только её цена от него зависит).
-    const withBody = picked.some(isProgram) ? ' · ' + bodyName(body) : '';
-    if (picked.length) bookBtn.dataset.bookContext = picked.map((id) => byId(id).title).join(', ') + withBody + ' · предварительно от ' + money(sum);
+    // Два сценария: мойка — запись в YCLIENTS с выбором филиала, остальные
+    // работы — заявка с фото. Смешанный выбор не уходит в YCLIENTS целиком:
+    // видны обе кнопки, и каждое окно напоминает о второй части.
+    const wash = picked.filter((id) => isWash(byId(id))), other = picked.filter((id) => !isWash(byId(id)));
+    const titles = (ids) => ids.map((id) => byId(id).title);
+    bookBtn.hidden = Boolean(other.length && !wash.length);
+    bookBtn.textContent = wash.length ? 'Записаться на мойку' : 'Записаться';
+    // Состав мойки — в «Вы выбрали: …» окна записи, с кузовом (цена от него зависит).
+    if (wash.length) bookBtn.dataset.bookContext = titles(wash).join(', ') + ' · ' + bodyName(body) + ' · предварительно от ' + money(garageSum(wash, body));
     else delete bookBtn.dataset.bookContext;
-    // Состав для онлайн-записи: программы — индексом, работы прайса — названием.
-    // ui.js переведёт их в идентификаторы YCLIENTS выбранного филиала.
-    const programs = picked.map((id) => byId(id).price.program).filter((i) => i != null);
-    const items = picked.map((id) => byId(id).price.item).filter(Boolean);
-    bookBtn.dataset.ycPrograms = programs.join(',');
-    bookBtn.dataset.ycItems = items.join('|');
+    // Для онлайн-записи — индексы программ; ui.js переведёт их в услуги YCLIENTS филиала.
+    bookBtn.dataset.ycPrograms = wash.map((id) => byId(id).price.program).join(',');
+    bookBtn.dataset.ycItems = '';
+    bookBtn.dataset.requestServices = titles(other).join('|');
+    requestBtn.hidden = !other.length;
+    requestBtn.textContent = wash.length ? 'Заявка с фото' : 'Отправить заявку с фото';
+    requestBtn.dataset.requestServices = titles(other).join('|');
+    if (wash.length) { requestBtn.dataset.washContext = bookBtn.dataset.bookContext; requestBtn.dataset.washPrograms = bookBtn.dataset.ycPrograms; }
+    else { delete requestBtn.dataset.washContext; delete requestBtn.dataset.washPrograms; }
+    splitEl.hidden = !(wash.length && other.length);
   }
   // Часть работ в онлайн-записи не продаётся: их добавляет мастер при приёмке.
   // Помечаем это сразу в списке, чтобы человек видел до нажатия «Записаться»,
@@ -369,9 +373,10 @@ export function setupGarage() {
   function markOffline() {
     import('./yclients.js').then((yc) => yc.loadMap().then(() => {
       let offline = 0;
+      // Только мойка: остальные работы идут по заявке, YCLIENTS там не участвует.
       for (const label of dialog.querySelectorAll('.garage__item')) {
         const zone = byId(label.dataset.zone);
-        if (!zone) continue;
+        if (!zone || !isWash(zone)) continue;
         const spec = zone.price.program != null
           ? { programs: [zone.price.program], items: [] }
           : { programs: [], items: [zone.price.item] };
@@ -511,15 +516,11 @@ export function setupGarage() {
       (pickedEl.querySelector(`[data-unpick="${next?.dataset.unpick}"]`) || bookBtn).focus({ preventScroll: true });
       return;
     }
-    if (control.matches('[data-preset]')) {
-      const preset = ZONE_PRESETS.find((p) => p.id === control.dataset.preset);
-      setPicked([...preset.zones], preset.zones.at(-1));
-      say(`Набор «${preset.title}» выбран. Предварительно ${totalEl.textContent}.`);
-      return;
-    }
-    // «Записаться»: гараж закрывается, затем общий обработчик ui.js (data-book)
-    // открывает выбор филиала с составом в «Вы выбрали: …» — окна не накладываются.
-    if (control.matches('[data-garage-book]')) { goal('garage_book', { works: picked.length, sum: garageSum(picked, getBody()) }); close(); }
+    // «Записаться на мойку» и «Заявка с фото»: гараж закрывается, затем общий
+    // обработчик ui.js (data-book / data-request) открывает своё окно — окна не
+    // накладываются, выбор остаётся в sessionStorage.
+    if (control.matches('[data-garage-book]')) { goal('garage_book', { works: picked.filter((id) => isWash(byId(id))).length, sum: garageSum(picked.filter((id) => isWash(byId(id))), getBody()) }); close(); }
+    if (control.matches('[data-garage-request]')) { goal('garage_request', { works: picked.filter((id) => !isWash(byId(id))).length }); close(); }
   }, options);
 
   dialog.addEventListener('change', (e) => {

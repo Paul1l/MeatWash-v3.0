@@ -26,7 +26,7 @@ function substitute(text){
   switch(kind){
    case 'price':{
     if(!(arg in itemPrice))throw new Error(`Нет работы в каталоге: ${token}`);
-    return 'от '+money(itemPrice[arg]);
+    return itemPrice[arg]==null?'стоимость после осмотра':'от '+money(itemPrice[arg]);
    }
    case 'program':case 'program-from':case 'program-includes':{
     const i=Number(arg),program=d.programs[i];

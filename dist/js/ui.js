@@ -10,7 +10,7 @@ export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
  const root=document.documentElement;
- const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), mapDialog=$('#map-dialog');
+ const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), mapDialog=$('#map-dialog'), requestDialog=$('#request');
  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  // Прокрутка фона выключена, пока открыто меню или окно. Класс на <html>: iOS
  // не считается с overflow у одного body. Место полосы прокрутки держит
@@ -43,7 +43,7 @@ export function setupUI() {
   dialog.showModal(); openedAt=performance.now(); syncLock();
  };
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
- const closeDialogs=()=>{ booking?.close(); mapDialog?.close(); };
+ const closeDialogs=()=>{ booking?.close(); mapDialog?.close(); requestDialog?.close(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
  // Что именно выбрал человек — только текстом, без разметки.
  const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
@@ -76,9 +76,21 @@ export function setupUI() {
      noteEl.hidden=!unmatched.length;
    }
  };
- const openBooking=(note='',spec=null)=>{
+ // Мойка и другие работы выбраны вместе (гараж): запись — только мойка, а окно
+ // напоминает про заявку с фото по остальным; общая подсказка тогда не нужна.
+ const requestNote=$('#booking-request'), otherNote=$('#booking-other');
+ const setRequestNote=list=>{
+   if(!requestNote)return;
+   requestNote.hidden=!list.length;
+   if(otherNote)otherNote.hidden=Boolean(list.length);
+   if(!list.length)return;
+   requestNote.querySelector('[data-booking-request-text]').textContent=`По остальным работам — заявка с фото: ${list.join(', ')}.`;
+   requestNote.querySelector('[data-booking-request]').dataset.requestServices=list.join('|');
+ };
+ const openBooking=(note='',spec=null,requestList=[])=>{
    if(!booking)return;
-   closeMenu(); mapDialog?.close();
+   closeMenu(); mapDialog?.close(); requestDialog?.close();
+   setRequestNote(requestList);
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
    if(noteEl){noteEl.textContent='';noteEl.hidden=true;}
@@ -95,11 +107,23 @@ export function setupUI() {
  const openMembership=(title='')=>{
    if(!booking)return;
    bookingJob++;
-   closeMenu(); mapDialog?.close();
+   closeMenu(); mapDialog?.close(); requestDialog?.close();
+   if(requestNote)requestNote.hidden=true;
+   if(otherNote)otherNote.hidden=true;
    $('#booking-title').textContent=title||'Meatwash Car Care Club';
    setContext(''); lead.hidden=false; hint.hidden=true; branches.hidden=true;
    show(booking);
  };
+
+ // Окно заявки (js/request.js): модуль — по первому нажатию «Оставить заявку».
+ let requestLoading=null;
+ const loadRequest=()=>{
+  if(!requestDialog)return null;
+  requestLoading??=import('./request.js').then(module=>module.setupRequest(requestDialog,{show}))
+   .catch(error=>{requestLoading=null;console.warn('Окно заявки не подключилось.',error);return null;});
+  return requestLoading;
+ };
+ document.querySelectorAll('[data-request]').forEach(button=>button.setAttribute('aria-haspopup','dialog'));
 
  // Окно карты: модуль грузится в простое после загрузки страницы (или при наведении
  // на «На карте»). Пока он не готов, «На карте» — обычная ссылка на карточку
@@ -157,7 +181,14 @@ export function setupUI() {
    const d=control.dataset;
    const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);
    const items=(d.ycItems||'').split('|').filter(Boolean);
-   return openBooking(d.bookContext||'',{programs,items});
+   return openBooking(d.bookContext||'',{programs,items},(d.requestServices||'').split('|').filter(Boolean));
+  }
+  // Заявка с фото — всё, кроме мойки: модуль окна грузится по первому нажатию.
+  if(control.hasAttribute('data-request')){
+   const d=control.dataset;
+   closeMenu(); booking?.close(); mapDialog?.close();
+   loadRequest()?.then(open=>open?.({services:(d.requestServices||'').split('|').filter(Boolean),category:d.requestCategory||'',washContext:d.washContext||'',washPrograms:d.washPrograms||''}));
+   return;
   }
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
   if(control.dataset.map){
@@ -186,13 +217,15 @@ export function setupUI() {
   dialog.addEventListener('close',syncLock,options);
  }
 
- // Прямой заход по адресу с якорем (services.html#price-polish): раскрыть
- // <details> и встать к нему под шапкой. Браузер сам прокрутил к закрытому
- // блоку до раскрытия; повторяем после шрифтов — они меняют высоту строк.
+ // Прямой заход по адресу с якорем (services.html#price-polish, #programs внутри
+ // «Мойки»): раскрыть <details> цели и все, в которые она вложена, и встать к ней
+ // под шапкой. Браузер сам прокрутил к закрытому блоку до раскрытия; повторяем
+ // после шрифтов — они меняют высоту строк.
  const hashTarget=()=>{try{return location.hash.length>1?document.getElementById(decodeURIComponent(location.hash.slice(1))):null;}catch{return null;}};
+ const reveal=target=>{let opened=false;for(let box=target.tagName==='DETAILS'?target:target.parentElement?.closest('details');box;box=box.parentElement?.closest('details'))if(!box.open){box.open=true;opened=true;}return opened;};
  const arrival=hashTarget();
- if(arrival&&arrival.tagName==='DETAILS'){
-  arrival.open=true;
+ if(arrival&&(arrival.tagName==='DETAILS'||arrival.closest('details'))){
+  reveal(arrival);
   // Второе выравнивание — только если человек ещё не прокрутил страницу сам.
   let placed=-1;
   const settle=()=>{if(placed>=0&&Math.abs(scrollY-placed)>2)return;arrival.scrollIntoView({behavior:'instant'});placed=scrollY;};
@@ -202,9 +235,15 @@ export function setupUI() {
  // Хеш сменили на открытой странице (адресная строка, «назад»): тоже раскрыть группу.
  addEventListener('hashchange',()=>{
   const target=hashTarget();
-  if(target?.tagName!=='DETAILS')return;
-  target.open=true;
+  if(!target||!(target.tagName==='DETAILS'||target.closest('details')))return;
+  reveal(target);
   requestAnimationFrame(()=>target.scrollIntoView({behavior:'instant'}));
+ },options);
+ // Ссылка на тот же якорь второй раз hashchange не даёт: раскрываем по клику.
+ document.addEventListener('click',e=>{
+  const link=e.target.closest('a[href^="#"]');if(!link||link.getAttribute('href').length<2)return;
+  let target=null;try{target=document.getElementById(decodeURIComponent(link.getAttribute('href').slice(1)));}catch{}
+  if(target&&reveal(target)&&location.hash===link.getAttribute('href')){e.preventDefault();target.scrollIntoView({behavior:'instant'});}
  },options);
 
  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('is-in');observer.unobserve(entry.target);}},{threshold:.1});

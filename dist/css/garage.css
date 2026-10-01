@@ -230,18 +230,6 @@
 .garage__text i { display: block; margin-top: 3px; font-style: normal; font-size: 13px; line-height: 1.45; color: var(--muted); }
 .garage__price { padding-top: 1px; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .garage__item.is-included .garage__price { max-width: 88px; font-size: 12px; line-height: 1.3; white-space: normal; text-align: right; color: var(--muted); }
-.garage__groupnote { padding: 10px 0 8px; font-size: 13px; color: var(--muted); }
-.garage__items li:has(.garage__preset) + li { border-top: 0; }
-.garage__preset {
-  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 12px; margin-bottom: 8px; padding: 12px 14px;
-  text-align: left; color: var(--ivory); border: 1px solid rgb(var(--ivory-rgb) / .2); border-radius: var(--radius);
-}
-.garage__preset:hover { border-color: rgb(var(--ivory-rgb) / .45); }
-.garage__preset[aria-pressed="true"] { border-color: var(--ivory); background: rgb(var(--ivory-rgb) / .07); }
-.garage__preset b { font-size: 15px; }
-.garage__preset i { grid-column: 1; font-style: normal; font-size: 13px; line-height: 1.4; color: var(--muted); }
-.garage__preset .garage__price { grid-column: 2; grid-row: 1 / 3; align-self: center; }
-
 .garage__foot { padding: 12px var(--g-pad) 16px; border-top: 1px solid var(--line); background: var(--g-panel); }
 .garage__picked { display: flex; flex-wrap: wrap; gap: 6px; max-height: 76px; margin-bottom: 10px; overflow-y: auto; scrollbar-width: none; }
 .garage__picked[hidden] { display: none; }
@@ -256,8 +244,18 @@
 .garage__total b { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .garage__total b.is-empty { font-family: var(--font-sans); font-weight: 400; font-size: 15px; color: var(--muted); }
 .garage__note { margin-top: 6px; font-size: 12px; line-height: 1.45; color: var(--muted); }
-.garage__act { display: flex; align-items: center; gap: 14px; margin-top: 12px; }
-.garage__book { flex: 1; height: 48px; }
+.garage__act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; }
+.garage__book, .garage__request { flex: 1 1 150px; height: 48px; }
+.garage__book[hidden], .garage__request[hidden] { display: none; }
+/* Мойка и работы по заявке выбраны вместе: два действия и подсказка над ними. */
+.garage__total b small { font: 400 13px/1.3 var(--font-sans); letter-spacing: 0; text-transform: none; color: var(--muted); }
+.garage__split { margin-top: 8px; font-size: 12px; line-height: 1.45; color: var(--ivory); }
+.garage__split[hidden] { display: none; }
+/* Пакет мойки — метка у названия; состав программы или пакета виден, когда он выбран. */
+.garage__tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid rgb(var(--ivory-rgb) / .4); border-radius: 999px; font: 400 10px/1.5 var(--font-sans); letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
+.garage__includes { display: none; margin-top: 6px; font-size: 12px; line-height: 1.5; color: rgb(var(--ivory-rgb) / .82); }
+.garage__includes > span { color: var(--muted); }
+.garage__item.is-on .garage__includes { display: block; }
 .garage__clear {
   min-height: 44px; padding: 0 4px; font-size: 14px; color: var(--ivory);
   text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .45);
@@ -334,7 +332,7 @@
   .garage__foot { padding-top: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
   .garage__total b { font-size: 20px; }
   .garage__act { margin-top: 8px; }
-  .garage__book { height: 44px; }
+  .garage__book, .garage__request { height: 44px; }
 }
 
 /* Работы, которые не продаются онлайн: видно до нажатия «Записаться». */

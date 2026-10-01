@@ -38,8 +38,9 @@
 .catalog__time,.catalog__count{font-size:11px;color:var(--muted);white-space:nowrap}
 .catalog__price{font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .catalog__toggle{font-size:20px;line-height:1;color:var(--beige);text-align:center;transition:transform .2s}
-.catalog__entry[open] .catalog__toggle{transform:rotate(45deg)}
-.catalog__entry[open] .catalog__name{color:var(--ivory-3)}
+/* Только своя строка: внутри открытой «Мойки» вложенные программы закрыты. */
+.catalog__entry[open]>summary .catalog__toggle{transform:rotate(45deg)}
+.catalog__entry[open]>summary .catalog__name{color:var(--ivory-3)}
 .catalog__expanded{padding:0 0 30px 39px}
 .program-includes{padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:12px 22px;margin:22px 0 26px}
 .program-includes li{font-size:12px;color:var(--ivory);line-height:1.7;position:relative;padding-left:14px}
@@ -141,4 +142,50 @@
   color: var(--muted);
   white-space: nowrap;
   vertical-align: middle;
+}
+
+/* ---------- Восемь категорий (scripts/catalog.mjs) ---------- */
+/* Оклейка и стёкла — заметные карточки над прайсом: фото, состав с ценами, заявка. */
+.featured{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2vw,28px)}
+.featured__card{display:grid;grid-template-rows:auto 1fr;border:1px solid var(--line);background:var(--black);min-width:0}
+.featured__img{width:100%;aspect-ratio:16/7;object-fit:cover;filter:saturate(.85)}
+.featured__card:first-child .featured__img{object-position:30% 55%}
+.featured__body{display:flex;flex-direction:column;gap:14px;padding:clamp(20px,2.4vw,34px)}
+.featured__body .eyebrow{font-size:10px}
+.featured__body h2{margin-top:0;font-size:clamp(30px,3vw,46px)}
+.featured__body>p{font-size:14px;line-height:1.75;color:rgb(var(--ivory-rgb)/.82);max-width:52ch}
+.featured__list{list-style:none;margin:4px 0 0;padding:0;border-top:1px solid var(--line)}
+.featured__list li{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:11px 0;border-bottom:1px solid rgb(var(--ivory-rgb)/.08);font-size:13px;line-height:1.5}
+.featured__list b{flex:none;font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap}
+.featured__actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px 24px;margin-top:auto;padding-top:10px}
+.featured__actions .btn{height:48px;font-size:13px}
+.featured__actions .link-arrow{font-size:12px}
+/* Навигация по категориям: на компьютере — строка, на телефоне — сетка 2 колонки. */
+.categories,.preview-categories{display:flex;flex-wrap:wrap;gap:8px}
+.categories{margin-top:clamp(28px,4vw,48px)}
+.categories a,.preview-categories a{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid var(--line);font-size:13px;color:var(--ivory);text-decoration:none;transition:border-color .2s,background .2s}
+.categories a span,.preview-categories a span{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+.categories a:hover,.preview-categories a:hover{border-color:rgb(var(--ivory-rgb)/.6)}
+.categories a:focus-visible,.preview-categories a:focus-visible{outline:2px solid var(--ivory);outline-offset:3px}
+.categories a[href="#price-film"],.categories a[href="#price-glass"],.preview-categories a[href$="#price-film"],.preview-categories a[href$="#price-glass"]{border-color:rgb(var(--ivory-rgb)/.45)}
+.preview-categories{margin:clamp(16px,2vw,24px) var(--gutter) 0}
+.strip--4 .card--film>img{object-position:30% 55%}
+.strip--4 .card--glass>img{object-position:55% 40%}
+/* Внутри «Мойки»: подзаголовки блоков, метка пакета. */
+.catalog__programs{margin-top:20px}
+.catalog__subhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:28px 0 4px;font-family:var(--font-sans);font-weight:700;font-size:13px;letter-spacing:.04em;color:var(--ivory)}
+.catalog__subhead small{font-weight:400;font-size:11px;letter-spacing:0;color:var(--muted)}
+.catalog__programs .catalog__subhead{margin-top:6px}
+.catalog__tag{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid rgb(var(--ivory-rgb)/.4);border-radius:999px;font:400 10px/1.5 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ivory);vertical-align:middle}
+.catalog__prices dt small{display:block;margin-top:2px;font-size:11px;color:var(--muted)}
+.catalog__prices dd.catalog__on-request{color:var(--muted)}
+.service-group .catalog__expanded>.btn{margin-top:4px}
+@media(max-width:900px){
+ .featured{grid-template-columns:1fr}
+ .featured__img{aspect-ratio:16/8}
+}
+@media(max-width:600px){
+ .categories,.preview-categories{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+ .categories a,.preview-categories a{padding:0 10px;font-size:12px;line-height:1.25}
+ .featured__actions .btn{width:100%}
 }
