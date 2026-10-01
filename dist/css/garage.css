@@ -349,3 +349,9 @@
   vertical-align: middle;
   white-space: nowrap;
 }
+
+/* Телефон и низкий альбом: пояснение о двух сценариях съедало список работ —
+   названия кнопок и окна записи и заявки говорят то же самое. */
+@media (max-width: 900px), (max-height: 560px) {
+  .garage__split { display: none; }
+}
