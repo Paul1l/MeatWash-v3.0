@@ -218,11 +218,15 @@
 
 <!-- ============ MEMBERSHIP ============ -->
 <!-- SHARED:membership:START -->
-<!-- Клуб: «Обсудить условия» открывает окно записи в варианте разговора с администратором
-     (data-membership, js/ui.js): заголовок из атрибута и телефоны обеих студий. -->
+<!-- Клуб: карта — ссылка на страницу оформления клубной карты (wahelp, адрес дал владелец;
+     прямой ссылки на бота нет). «Обсудить условия» открывает окно записи в варианте разговора
+     с администратором (data-membership, js/ui.js): заголовок из атрибута и телефоны обеих студий. -->
 <section class="membership" id="membership" aria-labelledby="membership-title">
   <div class="membership__card" data-reveal>
-    <img src="assets/img/club-card.webp" alt="Карта постоянного клиента MEATWASH Car Care Club" width="2100" height="1400" loading="lazy" decoding="async">
+    <a class="membership__link" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>
+      <img src="assets/img/club-card.webp" alt="" width="2100" height="1400" loading="lazy" decoding="async">
+      <span class="membership__hint">Оформить клубную карту <span aria-hidden="true">↗</span><span class="visually-hidden"> MEATWASH Car Care Club (откроется в новой вкладке)</span></span>
+    </a>
   </div>
   <div class="membership__copy">
     <h2 id="membership-title">Больше, чем сервис</h2>

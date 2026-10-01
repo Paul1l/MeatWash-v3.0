@@ -282,12 +282,18 @@ button.card { width: 100%; text-align: left; appearance: none; }
    drop-shadow идёт по контуру карты: у картинки прозрачный фон, а запечённая
    в ней мягкая тень сходит к краям файла в ноль (иначе край читался как срез). */
 .membership__card img { filter: drop-shadow(0 8px 16px rgb(0 0 0 / .3)); }
+/* Карта — ссылка на оформление клубной карты: картинка и подпись под ней. */
+.membership__link { display: grid; justify-items: center; gap: clamp(10px, 1.2vw, 16px); color: var(--ivory); text-decoration: none; border-radius: 6px; }
+.membership__hint { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-size: clamp(13px, 1vw, 15px); letter-spacing: .02em; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .5); }
+.membership__link:focus-visible { outline: 2px solid var(--ivory); outline-offset: 6px; }
+.membership__link:focus-visible .membership__hint { text-decoration-color: var(--ivory); }
 @media (hover: hover) {
   .membership__card img { transition: transform .5s var(--ease), filter .5s var(--ease), opacity 1.2s var(--ease); }
-  .membership__card img:hover { transform: scale(1.04); filter: drop-shadow(0 22px 36px rgb(0 0 0 / .48)); }
+  .membership__link:hover img, .membership__link:focus-visible img { transform: scale(1.04); filter: drop-shadow(0 22px 36px rgb(0 0 0 / .48)); }
+  .membership__link:hover .membership__hint { text-decoration-color: var(--ivory); }
 }
 @media (hover: hover) and (prefers-reduced-motion: reduce) {
-  .membership__card img:hover { transform: none; }
+  .membership__link:hover img, .membership__link:focus-visible img { transform: none; }
 }
 .membership__copy { position: relative; padding: clamp(28px, 3vw, 44px) var(--gutter) clamp(28px, 3vw, 44px) 0; }
 .membership__copy h2 { font-size: clamp(24px, 2.3vw, 34px); letter-spacing: .005em; }

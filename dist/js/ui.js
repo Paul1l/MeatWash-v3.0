@@ -151,6 +151,7 @@ export function setupUI() {
   // по компании в yclients, а не по ссылке целиком.
   const href=control.getAttribute('href')||'';
   if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
+  else if(control.hasAttribute('data-club-card'))goal('club_card');
   else{const branch=LOCATIONS.find(l=>href&&l.booking&&href.startsWith(l.booking.replace(/\/personal\/.*$/,'/')));if(branch)goal('booking_branch',{branch:branch.id,preset:/[?&]o=m-1s/.test(href)});}
   if(control.hasAttribute('data-book')){
    const d=control.dataset;

@@ -14,7 +14,7 @@
 //
 // Цели (Метрика → Цели → «JavaScript-событие», идентификаторы — как здесь):
 //   booking_open, booking_branch, phone_click, map_open,
-//   garage_open, garage_ready, garage_book.
+//   garage_open, garage_ready, garage_book, club_card.
 
 const KEY = 'mw:consent';
 const VERSION = 1;

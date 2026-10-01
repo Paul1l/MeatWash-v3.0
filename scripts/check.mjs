@@ -196,6 +196,10 @@ for(const page of MAIN_PAGES){
  assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
  assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
 }
+// Клубная карта — ссылка на страницу оформления (wahelp), адрес — от владельца.
+const CLUB_CARD='https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e';
+for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('membership')))
+ assert(new RegExp(`<a class="membership__link" href="${CLUB_CARD.replace(/[.?]/g,'\\$&')}" target="_blank" rel="noopener noreferrer"`).test(html[page]),`${page}: клубная карта не ведёт на ${CLUB_CARD}`);
 // Файл подтверждения Вебмастера — для кода из JSON и только он (старые коды не остаются).
 {
  const verification=renderYandexVerification(),files=(await readdir(dist)).filter(name=>/^yandex_\w+\.html$/.test(name));
