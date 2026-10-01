@@ -4,7 +4,7 @@
 // из dist/assets/meatwash-content.json; общие части (шапка, подвал, окна, запись,
 // аналитика) вставляет scripts/pages.mjs.
 // Запуск: npm run content (входит в npm run build). npm run check сверяет результат.
-import {readFile,writeFile} from 'node:fs/promises';
+import {readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content as d,escape,money} from './catalog.mjs';
 import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
@@ -177,6 +177,20 @@ ${body.trim()}
  });
 }
 
+// Подтверждение прав в Яндекс Вебмастере способом «HTML-файл»: тот же код, что в мета-теге
+// yandex-verification (site.analytics.webmaster), файл — в корне сайта, текст — как выдаёт Вебмастер.
+export function renderYandexVerification(){
+ const code=d.site?.analytics?.webmaster;
+ if(!code)return null;
+ return {file:`yandex_${code}.html`,text:`<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    </head>
+    <body>Verification: ${code}</body>
+</html>
+`};
+}
+
 export function renderSitemap(){
  const today=d.site.documentsDate;
  const entries=[...SITEMAP,...CONTENT.map(p=>({file:p.file,lastmod:p.date||today,...p.sitemap}))];
@@ -199,6 +213,9 @@ if(process.argv[1]===fileURLToPath(import.meta.url)){
  }
  await writeFile(new URL('dist/sitemap.xml',root),renderSitemap());
  console.log('sitemap.xml');
+ const verification=renderYandexVerification();
+ for(const name of await readdir(new URL('dist/',root)))if(/^yandex_\w+\.html$/.test(name)&&name!==verification?.file)await rm(new URL(`dist/${name}`,root));
+ if(verification){await writeFile(new URL(`dist/${verification.file}`,root),verification.text);console.log(verification.file);}
  const missing=missingOperator();
  if(missing.length)console.warn(`ВНИМАНИЕ: в Политике и Согласии не заполнены реквизиты оператора (site.operator в meatwash-content.json): ${missing.join(', ')}.`);
 }

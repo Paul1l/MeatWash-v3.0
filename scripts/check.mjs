@@ -12,7 +12,7 @@ import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
 import {PAGES,renderPartial,readPartial,sharedBlock,wrap} from './pages.mjs';
 import {renderCatalog,renderPreview,renderData,between} from './catalog.mjs';
-import {renderContent,renderSitemap,missingOperator} from './content.mjs';
+import {renderContent,renderSitemap,renderYandexVerification,missingOperator} from './content.mjs';
 import {CONTENT} from '../src/content/pages.mjs';
 import {renderPage} from './pages.mjs';
 import {importDist} from './dist-module.mjs';
@@ -195,6 +195,12 @@ for(const page of MAIN_PAGES){
  assert(!site.metrika===!html[page].includes(`<meta name="mw-metrika" content="${site.metrika}">`),`${page}: номер счётчика Метрики не совпадает с JSON`);
  assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
  assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
+}
+// Файл подтверждения Вебмастера — для кода из JSON и только он (старые коды не остаются).
+{
+ const verification=renderYandexVerification(),files=(await readdir(dist)).filter(name=>/^yandex_\w+\.html$/.test(name));
+ assert.deepEqual(files,verification?[verification.file]:[],`файлы подтверждения Вебмастера в dist (${files.join(', ')||'нет'}) не совпадают с site.analytics.webmaster — выполните npm run content`);
+ if(verification)assert.equal(await readFile(resolve(dist,verification.file),'utf8'),verification.text,`${verification.file} отстал от site.analytics.webmaster — выполните npm run content`);
 }
 // Вебвизор записывает действия на странице: включён — значит назван в уведомлении, Политике и Согласии.
 {
