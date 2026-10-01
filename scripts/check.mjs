@@ -196,6 +196,14 @@ for(const page of MAIN_PAGES){
  assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
  assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
 }
+// Вебвизор записывает действия на странице: включён — значит назван в уведомлении, Политике и Согласии.
+{
+ const code=await readFile(resolve(dist,'js/analytics.js'),'utf8');
+ const webvisor=/\bwebvisor:\s*true\b/.test(code);
+ assert(webvisor||/\bwebvisor:\s*false\b/.test(code),'js/analytics.js: webvisor в init счётчика должен быть явно true или false');
+ for(const [name,text] of [['уведомление о cookie (js/analytics.js)',code.match(/consent__text">([^<]*)/)?.[1]||''],...await Promise.all(['privacy.html','consent.html'].map(async file=>[file,await readFile(resolve(dist,file),'utf8')])) ])
+  assert(webvisor===text.includes('Вебвизор'),`${name}: ${webvisor?'не назван Вебвизор, а он включён':'упомянут Вебвизор, а он выключен'}`);
+}
 // Главная — гараж (оболочка сразу, 3D по кнопке); внутренние страницы без гаража, GSAP и 3D.
 assert(graphs['index.html'].has('garage.js'),'Главная должна подключать гараж (garage.js)');
 assert([...lazy3d].some(entry=>entry==='garage.js → porsche3d.bundle.js'),'3D грузит только garage.js по нажатию: '+[...lazy3d].join(', '));

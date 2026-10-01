@@ -8,14 +8,18 @@
 // открывают уведомление снова; отказ после согласия удаляет cookie Метрики и
 // перезагружает страницу, чтобы счётчик перестал работать сразу.
 //
+// Параметры init — как в коде счётчика из интерфейса Метрики, в том числе Вебвизор
+// (запись действий на странице). Он упомянут в уведомлении, Политике и Согласии:
+// выключая его, поправь и тексты (npm run check сверяет).
+//
 // Цели (Метрика → Цели → «JavaScript-событие», идентификаторы — как здесь):
 //   booking_open, booking_branch, phone_click, map_open,
 //   garage_open, garage_ready, garage_book.
 
 const KEY = 'mw:consent';
 const VERSION = 1;
-const SRC = 'https://mc.yandex.ru/metrika/tag.js';
 const counter = Number(document.querySelector('meta[name="mw-metrika"]')?.content) || 0;
+const SRC = `https://mc.yandex.ru/metrika/tag.js?id=${counter}`;
 let loaded = false;
 let banner = null;
 
@@ -38,7 +42,10 @@ function loadMetrika() {
     script.src = SRC;
     document.head.append(script);
   }
-  window.ym(counter, 'init', { clickmap: true, trackLinks: true, accurateTrackBounce: true, webvisor: false });
+  window.ym(counter, 'init', {
+    ssr: true, webvisor: true, clickmap: true, ecommerce: 'dataLayer',
+    referrer: document.referrer, url: location.href, accurateTrackBounce: true, trackLinks: true,
+  });
 }
 
 // Цель Метрики; без согласия или без счётчика — ничего.
@@ -72,7 +79,7 @@ function showBanner(focus) {
     banner.className = 'consent';
     banner.setAttribute('aria-label', 'Согласие на cookie');
     banner.innerHTML = `
-      <p class="consent__text">Мы используем cookie и Яндекс Метрику, чтобы считать посещения и улучшать сайт. Нажимая «Принять», вы даёте <a href="consent.html">согласие на обработку персональных данных</a>. Подробнее — в <a href="privacy.html">Политике</a>. Без согласия сайт работает полностью.</p>
+      <p class="consent__text">Мы используем cookie и Яндекс Метрику с Вебвизором, чтобы считать посещения и улучшать сайт. Нажимая «Принять», вы даёте <a href="consent.html">согласие на обработку персональных данных</a>. Подробнее — в <a href="privacy.html">Политике</a>. Без согласия сайт работает полностью.</p>
       <div class="consent__actions">
         <button class="btn btn--light consent__accept" type="button" data-consent="1">Принять</button>
         <button class="btn btn--ghost consent__decline" type="button" data-consent="0">Отказаться</button>
