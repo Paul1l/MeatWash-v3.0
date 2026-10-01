@@ -20,9 +20,6 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    # Хостинг meatwash.ru (reg.ru): пока секрет FTP_HOST не задан, шаг выкладки пропускается.
-    env:
-      FTP_HOST: ${{ secrets.FTP_HOST }}
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v4
@@ -52,14 +49,3 @@ jobs:
       - name: Publish website
         id: deployment
         uses: actions/deploy-pages@v4
-      # Тот же dist (с версиями и без лишних файлов) — на хостинг meatwash.ru.
-      # Секреты FTP_HOST, FTP_USER, FTP_PASSWORD и переменная FTP_DIR — README, «Домен meatwash.ru».
-      - name: Выложить на meatwash.ru (хостинг reg.ru)
-        if: env.FTP_HOST != ''
-        env:
-          FTP_USER: ${{ secrets.FTP_USER }}
-          LFTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_DIR: ${{ vars.FTP_DIR || 'www/meatwash.ru' }}
-        run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
-          bash scripts/deploy-hosting.sh
