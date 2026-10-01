@@ -177,140 +177,197 @@
 .garage__caption b { display: block; font-size: 15px; line-height: 1.3; }
 .garage__caption span { display: block; margin-top: 2px; font-size: 13px; line-height: 1.4; color: rgb(var(--ivory-rgb) / .8); }
 
-/* Панель услуг */
-.garage__panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-left: 1px solid var(--line); background: var(--g-panel); }
-.garage__panelhead { display: flex; align-items: flex-end; border-bottom: 1px solid var(--line); }
+/* Панель услуг: четыре категории, короткий список работ (название и цена),
+   строка «Выбрано: N» с итогом и действие. Подробности — по запросу: состав
+   программы раскрывает «Состав», список выбранного — «Выбрано: N». */
+.garage__panel {
+  display: flex; flex-direction: column; min-width: 0; min-height: 0;
+  border-left: 1px solid var(--line); background: var(--g-panel);
+  container-type: inline-size;
+}
+/* Категории — в одну строку равными колонками; не помещаются — сетка 2×2
+   (без прокрутки вбок: все четыре видны сразу). */
 .garage__tabs {
-  flex: 1; display: flex; gap: 2px; min-width: 0; padding: 6px var(--g-pad) 0;
-  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
+  flex: none; display: grid; grid-template-columns: repeat(4, minmax(max-content, 1fr));
+  padding: 0 6px; border-bottom: 1px solid var(--line);
 }
-.garage__tabs::-webkit-scrollbar { display: none; }
-/* Вкладки шире панели (телефон): край затухает — видно, что ряд листается вбок. */
-.garage__tabs.is-overflowing { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 36px), transparent); }
-.garage__tabs.is-overflowing.is-end { -webkit-mask-image: none; mask-image: none; }
+@container (max-width: 290px) {
+  .garage__tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .garage__tab {
-  flex: none; min-height: 44px; padding: 0 11px; margin-bottom: -1px;
-  font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent;
+  position: relative; min-width: 0; min-height: 46px; padding: 0 8px; margin-bottom: -1px;
+  font-size: 15px; line-height: 1.2; text-align: center; white-space: nowrap; color: var(--muted);
+  border-bottom: 2px solid transparent;
 }
-.garage__tab:first-child { margin-left: -11px; }
 .garage__tab:hover { color: var(--ivory); }
 .garage__tab[aria-selected="true"] { color: var(--ivory); border-bottom-color: var(--ivory); }
 .garage__tab:focus-visible { outline-offset: -4px; }
-.garage__fold { display: none; }
+/* В категории есть выбранные работы — точка у названия (число — для чтения с экрана). */
+.garage__tabname { position: relative; }
+.garage__tab.has-picked .garage__tabname::after {
+  content: ''; position: absolute; top: 1px; right: -8px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--ivory);
+}
+/* Список занимает свободную высоту и прокручивается сам по себе. */
 .garage__list {
-  flex: 1 1 auto; min-height: 0; padding: 6px var(--g-pad) 16px;
+  flex: 1 1 0; min-height: 0; padding: 2px var(--g-pad) 12px;
   overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--burgundy-3) transparent;
 }
 .garage__group[hidden] { display: none; }
 .garage__bodytype {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px;
-  font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--line);
+  font-size: 14px; color: var(--muted); border-bottom: 1px solid var(--line);
 }
 .garage__bodytype select {
-  min-height: 40px; padding: 0 30px 0 10px; font: inherit; font-size: 14px; color: var(--ivory);
+  min-height: 44px; padding: 0 30px 0 10px; font: inherit; font-size: 15px; color: var(--ivory);
   background: #17110f; border: 1px solid rgb(var(--ivory-rgb) / .28); border-radius: var(--radius);
 }
 .garage__items { list-style: none; margin: 0; padding: 0; }
-.garage__items li + li { border-top: 1px solid var(--line); }
+.garage__items > li + li { border-top: 1px solid var(--line); }
+/* Строка работы: флажок, название и цена — одна цель нажатия; «Состав» рядом. */
+.garage__row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center;
+  margin: 0 -10px; border-radius: var(--radius);
+}
+@media (hover: hover) { .garage__row:hover { background: rgb(var(--ivory-rgb) / .04); } }
+.garage__row.is-on { background: rgb(var(--ivory-rgb) / .07); }
+.garage__row.is-included { background: none; }
 .garage__item {
-  position: relative; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 12px; align-items: start;
-  margin: 0 -10px; padding: 13px 10px; border-radius: var(--radius); cursor: pointer;
+  position: relative; display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  min-height: 50px; padding: 9px 10px; cursor: pointer;
 }
-.garage__item:hover { background: rgb(var(--ivory-rgb) / .04); }
-.garage__item input { position: absolute; top: 14px; left: 10px; width: 20px; height: 20px; margin: 0; opacity: 0; }
-.garage__item:has(input:focus-visible) { outline: 2px solid var(--ivory); outline-offset: -2px; }
-.garage__box { display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px; border: 1px solid rgb(var(--ivory-rgb) / .55); border-radius: 2px; }
-.garage__item.is-on { background: rgb(var(--ivory-rgb) / .07); }
-.garage__item.is-on .garage__box { background: var(--ivory); border-color: var(--ivory); }
-.garage__item.is-on .garage__box::after { content: ''; width: 10px; height: 5px; margin-top: -2px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(-45deg); }
-.garage__item.is-included { cursor: default; background: none; }
-.garage__item.is-included .garage__box { background: rgb(var(--ivory-rgb) / .35); border-color: transparent; }
-.garage__text { min-width: 0; }
-.garage__text b { display: block; font-size: 15px; font-weight: 700; line-height: 1.3; }
-.garage__text i { display: block; margin-top: 3px; font-style: normal; font-size: 13px; line-height: 1.45; color: var(--muted); }
-.garage__price { padding-top: 1px; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.garage__item.is-included .garage__price { max-width: 88px; font-size: 12px; line-height: 1.3; white-space: normal; text-align: right; color: var(--muted); }
-.garage__foot { padding: 12px var(--g-pad) 16px; border-top: 1px solid var(--line); background: var(--g-panel); }
-.garage__picked { display: flex; flex-wrap: wrap; gap: 6px; max-height: 76px; margin-bottom: 10px; overflow-y: auto; scrollbar-width: none; }
-.garage__picked[hidden] { display: none; }
-.garage__chip {
-  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; max-width: 100%; padding: 0 10px;
-  font-size: 13px; color: var(--ivory); border: 1px solid rgb(var(--ivory-rgb) / .28); border-radius: 16px;
+.garage__item input { position: absolute; top: 50%; left: 10px; width: 20px; height: 20px; margin: -10px 0 0; opacity: 0; }
+.garage__item:has(input:focus-visible) { outline: 2px solid var(--ivory); outline-offset: -2px; border-radius: var(--radius); }
+.garage__box { display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid rgb(var(--ivory-rgb) / .55); border-radius: 2px; }
+.garage__row.is-on .garage__box { background: var(--ivory); border-color: var(--ivory); }
+.garage__row.is-on .garage__box::after { content: ''; width: 10px; height: 5px; margin-top: -2px; border-left: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(-45deg); }
+.garage__row.is-included .garage__item { cursor: default; }
+.garage__row.is-included .garage__box { background: rgb(var(--ivory-rgb) / .35); border-color: transparent; }
+.garage__name { min-width: 0; font-size: 15px; line-height: 1.3; }
+.garage__price { font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; color: rgb(var(--ivory-rgb) / .86); }
+.garage__row.is-included .garage__price { max-width: 88px; font-size: 13px; line-height: 1.3; white-space: normal; text-align: right; color: var(--muted); }
+.garage__chev { flex: none; transition: transform .25s var(--ease); }
+[aria-expanded="true"] > .garage__chev { transform: rotate(180deg); }
+.garage__morebtn {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-right: 2px; padding: 0 8px;
+  font-size: 14px; color: var(--muted); border-radius: var(--radius);
 }
-.garage__chip span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.garage__chip:hover { border-color: var(--ivory); }
-.garage__total { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.garage__total span { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.garage__morebtn:hover, .garage__morebtn[aria-expanded="true"] { color: var(--ivory); }
+.garage__more { grid-column: 1 / -1; padding: 0 12px 12px 42px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.garage__more[hidden] { display: none; }
+.garage__more ul { list-style: none; margin: 6px 0 0; padding: 0; color: rgb(var(--ivory-rgb) / .86); }
+.garage__more li { position: relative; padding-left: 14px; }
+.garage__more li::before { content: ''; position: absolute; left: 0; top: .72em; width: 7px; height: 1px; background: currentColor; }
+.garage__offline { margin-bottom: 6px; color: var(--ivory); }
+/* Работы, которые не продаются онлайн: видно до нажатия «Записаться». */
+.garage__row.is-offline .garage__name::after {
+  content: 'на месте'; margin-left: 8px; padding: 2px 7px;
+  border: 1px solid var(--line); border-radius: 999px;
+  font: 400 10px/1.4 var(--font-sans); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--muted); vertical-align: middle; white-space: nowrap;
+}
+
+/* Итог и действие */
+.garage__foot {
+  flex: 0 1 auto; display: flex; flex-direction: column; min-height: 0; margin-top: auto;
+  padding: 8px var(--g-pad) 14px; border-top: 1px solid var(--line); background: var(--g-panel);
+}
+.garage__foot > * { flex: none; }
+.garage__sum { display: flex; align-items: center; justify-content: space-between; gap: 4px 12px; min-height: 44px; }
+.garage__summary {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin-left: -10px; padding: 0 10px;
+  font-size: 15px; color: var(--ivory); border-radius: var(--radius);
+  text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .4);
+}
+.garage__summary:hover { background: rgb(var(--ivory-rgb) / .06); text-decoration-color: var(--ivory); }
+.garage__summary[hidden] { display: none; }
+.garage__total { flex: 1 1 auto; min-width: 0; text-align: right; }
 .garage__total b { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.1; font-variant-numeric: tabular-nums; }
-.garage__total b.is-empty { font-family: var(--font-sans); font-weight: 400; font-size: 15px; color: var(--muted); }
+.garage__total small { display: block; margin-top: 2px; font: 400 13px/1.35 var(--font-sans); color: var(--muted); }
+.garage__total.is-empty { text-align: left; font-size: 15px; color: var(--muted); }
+/* Выбранное — по нажатию на «Выбрано: N»: убрать работу, сбросить выбор. */
+.garage__picked {
+  flex: 0 1 auto; min-height: 0; max-height: min(280px, 34vh); margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--line);
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--burgundy-3) transparent;
+}
+.garage__picked[hidden] { display: none; }
+.garage__picks ul { list-style: none; margin: 0; padding: 0; }
+.garage__pickhead { margin-top: 8px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.garage__pick { display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; align-items: center; gap: 10px; min-height: 44px; }
+.garage__pick + .garage__pick { border-top: 1px solid rgb(var(--ivory-rgb) / .08); }
+.garage__pickname { font-size: 14px; line-height: 1.3; }
+.garage__pickprice { font-size: 13px; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+.garage__unpick { display: grid; place-items: center; width: 44px; height: 44px; margin-right: -10px; border-radius: var(--radius); color: var(--ivory); }
+.garage__unpick:hover { background: rgb(var(--ivory-rgb) / .08); }
 .garage__note { margin-top: 6px; font-size: 12px; line-height: 1.45; color: var(--muted); }
-.garage__act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; }
-.garage__book, .garage__request { flex: 1 1 150px; height: 48px; }
-.garage__book[hidden], .garage__request[hidden] { display: none; }
-/* Мойка и работы по заявке выбраны вместе: два действия и подсказка над ними. */
-.garage__total b small { font: 400 13px/1.3 var(--font-sans); letter-spacing: 0; text-transform: none; color: var(--muted); }
-.garage__split { margin-top: 8px; font-size: 12px; line-height: 1.45; color: var(--ivory); }
-.garage__split[hidden] { display: none; }
-/* Пакет мойки — метка у названия; состав программы или пакета виден, когда он выбран. */
-.garage__tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border: 1px solid rgb(var(--ivory-rgb) / .4); border-radius: 999px; font: 400 10px/1.5 var(--font-sans); letter-spacing: .08em; text-transform: uppercase; vertical-align: middle; }
-.garage__includes { display: none; margin-top: 6px; font-size: 12px; line-height: 1.5; color: rgb(var(--ivory-rgb) / .82); }
-.garage__includes > span { color: var(--muted); }
-.garage__item.is-on .garage__includes { display: block; }
 .garage__clear {
-  min-height: 44px; padding: 0 4px; font-size: 14px; color: var(--ivory);
+  min-height: 44px; padding: 0 4px; margin-left: -4px; font-size: 14px; color: var(--ivory);
   text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .45);
 }
-.garage__clear:disabled { opacity: .45; cursor: default; }
+.garage__act { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; }
+/* Две кнопки — поровну в один ряд, если обе помещаются целиком, иначе друг под другом. */
+.garage__book, .garage__request { flex: 1 1 0; min-width: max-content; height: 48px; padding: 0 14px; }
+.garage__book[hidden], .garage__request[hidden] { display: none; }
+/* Мойка и работы по заявке выбраны вместе: две кнопки и строка о том, куда что уходит. */
+.garage__split { margin-top: 8px; font-size: 12px; line-height: 1.45; color: rgb(var(--ivory-rgb) / .82); }
+.garage__split[hidden] { display: none; }
 .garage__credit { margin-top: 8px; font-size: 11px; line-height: 1.4; color: var(--muted); }
 .garage__credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
 .garage__credit a:hover { color: var(--ivory); }
+/* «Свернуть услуги» — в шапке окна, только на телефоне в портрете. */
+.garage__fold { display: none; }
 
 /* ---------- Телефон и планшет в портрете: окно на весь экран ---------- */
 @media (max-width: 900px), (max-height: 560px) {
   .garage {
+    --g-pad: 16px;
     width: 100%; height: 100vh; height: 100dvh; margin: 0; inset: 0;
     border: 0; border-radius: 0;
     padding: 0 env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
   }
-  .garage__bar { min-height: 52px; padding: max(4px, env(safe-area-inset-top, 0px)) 4px 4px var(--gutter, 16px); }
+  .garage__bar { gap: 8px; min-height: 52px; padding: max(4px, env(safe-area-inset-top, 0px)) 4px 4px var(--g-pad); }
   .garage__title { font-size: 21px; }
   .garage__main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(180px, 42%) minmax(0, 1fr); }
   .garage.is-folded .garage__main { grid-template-rows: minmax(0, 1fr) auto; }
   .garage__panel { border-left: 0; border-top: 1px solid var(--line); }
-  .garage__fold {
-    flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 var(--gutter, 16px) 0 10px;
-    font-size: 13px; color: var(--ivory); border-left: 1px solid var(--line);
+  .garage[data-state="ready"] .garage__fold {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px 0 10px;
+    font-size: 14px; color: var(--ivory); border: 1px solid rgb(var(--ivory-rgb) / .24); border-radius: var(--radius);
   }
   .garage__fold svg { transition: transform .25s var(--ease); }
-  .garage.is-folded .garage__foldmore { position: static; width: auto; height: auto; clip-path: none; }
-  .garage.is-folded .garage__fold { margin-left: auto; border-left: 0; }
   .garage.is-folded .garage__fold svg { transform: rotate(180deg); }
-  .garage.is-folded .garage__tabs, .garage.is-folded .garage__list, .garage.is-folded .garage__picked { display: none; }
-  .garage.is-folded .garage__panelhead { border-bottom: 0; }
+  .garage.is-folded .garage__tabs, .garage.is-folded .garage__list { display: none; }
+  .garage.is-folded .garage__foot { border-top: 0; }
+  /* Раскрытое «Выбрано» на телефоне занимает место списка (вкладка возвращает
+     список): начинается сразу под вкладками, прокручивается само, итог и кнопки
+     остаются внизу на экране. */
+  .garage.is-summary .garage__list { display: none; }
+  .garage.is-summary .garage__foot { flex: 1 1 auto; margin-top: 0; border-top: 0; }
+  .garage.is-summary .garage__picked { flex: 1 1 auto; max-height: none; }
+  /* Свёрнуто: панель по высоте содержимого — выбранное не вытесняет машину
+     (машине остаётся не меньше, чем без сворачивания). */
+  .garage.is-folded .garage__picked { max-height: min(220px, 22vh); }
   .garage__tools { top: 8px; left: 8px; right: 8px; }
   .garage__hint { top: 60px; font-size: 12px; }
   .garage__caption { left: 8px; bottom: 8px; max-width: calc(100% - 16px); padding: 7px 10px; }
   .garage__caption b { font-size: 14px; }
   .garage__caption span { font-size: 12px; }
-  .garage__note { display: none; }
-  .garage__foot { padding: 10px var(--gutter, 16px) max(12px, env(safe-area-inset-bottom, 0px)); }
-  .garage__picked { flex-wrap: nowrap; max-height: none; overflow-x: auto; overscroll-behavior-x: contain; margin-bottom: 8px; }
-  .garage__chip { flex: none; max-width: 220px; }
-  .garage__act { margin-top: 10px; }
+  .garage__foot { padding: 6px var(--g-pad) max(10px, env(safe-area-inset-bottom, 0px)); }
+  .garage__total b { font-size: 22px; }
 }
-/* Узкая панель: вкладкам нужнее место — у кнопки видно «Свернуть», слово
+/* Узкий телефон: у «Свернуть услуги» видно «Свернуть» / «Показать», слово
    «услуги» остаётся для чтения с экрана. */
-@media (max-width: 440px) {
+@media (max-width: 359px) {
   .garage__foldmore { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
-/* Невысокий портрет (320×568, панели браузера): машина и список делят
-   высоту поровну, выбранные — только числом в итоге, без ленты. */
+/* Невысокий портрет (320×568, панели браузера): машине — 38 % высоты, чтобы
+   между кнопками сверху и подписью снизу оставалось место (на 320×568 — 66 px),
+   списку — около двух строк; подсказка жестов не нужна. */
 @media (max-width: 900px) and (orientation: portrait) and (max-height: 640px) {
-  .garage__main { grid-template-rows: minmax(160px, 36%) minmax(0, 1fr); }
-  .garage__picked { display: none; }
+  .garage__main { grid-template-rows: minmax(170px, 38%) minmax(0, 1fr); }
   .garage__hint { display: none; }
-  .garage__item { padding: 10px 10px; }
-  .garage__text i { display: none; }
+  .garage__item { min-height: 46px; padding-top: 7px; padding-bottom: 7px; }
+  .garage__credit { margin-top: 4px; }
 }
 /* Альбом с достаточной шириной: машина слева, панель справа; заголовок ниже. */
 @media (orientation: landscape) and (max-height: 560px) and (min-width: 560px), (max-width: 900px) and (orientation: landscape) and (min-width: 560px) {
@@ -320,38 +377,22 @@
   .garage__main { grid-template-columns: minmax(0, 1fr) minmax(300px, 46%); grid-template-rows: minmax(0, 1fr); }
   .garage.is-folded .garage__main { grid-template-rows: minmax(0, 1fr); }
   /* Свернули в портрете и повернули: в альбоме панель рядом, сворачивать нечего. */
-  .garage.is-folded .garage__tabs { display: flex; }
-  .garage.is-folded .garage__list { display: block; }
-  .garage.is-folded .garage__panelhead { border-bottom: 1px solid var(--line); }
+  .garage.is-folded .garage__tabs { display: grid; }
+  .garage.is-folded:not(.is-summary) .garage__list { display: block; }
+  .garage.is-folded .garage__foot { border-top: 1px solid var(--line); }
   .garage__panel { border-top: 0; border-left: 1px solid var(--line); }
-  .garage__fold { display: none; }
-  .garage__picked { display: none; }
+  .garage[data-state="ready"] .garage__fold { display: none; }
   .garage__hint { display: none; }
-  .garage__text i { display: none; }
-  .garage__item { padding: 10px 10px; }
-  .garage__foot { padding-top: 8px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
+  .garage__tab { min-height: 44px; }
+  .garage__item { min-height: 44px; padding-top: 6px; padding-bottom: 6px; }
+  .garage__foot { padding-top: 4px; padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)); }
   .garage__total b { font-size: 20px; }
-  .garage__act { margin-top: 8px; }
+  .garage__act { margin-top: 4px; }
   .garage__book, .garage__request { height: 44px; }
+  .garage__credit { margin-top: 4px; }
 }
-
-/* Работы, которые не продаются онлайн: видно до нажатия «Записаться». */
-.garage__item.is-offline .garage__text b::after {
-  content: 'на месте';
-  margin-left: 8px;
-  padding: 2px 7px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  font: 400 10px/1.4 var(--font-sans);
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-/* Телефон и низкий альбом: пояснение о двух сценариях съедало список работ —
-   названия кнопок и окна записи и заявки говорят то же самое. */
-@media (max-width: 900px), (max-height: 560px) {
+/* Невысокое окно: строка о двух сценариях съедала бы список работ — названия
+   кнопок и группы в «Выбрано» говорят то же самое. */
+@media (max-height: 700px) {
   .garage__split { display: none; }
 }

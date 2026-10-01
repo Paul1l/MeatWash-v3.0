@@ -61,17 +61,19 @@ export function setupUI() {
  const applyLinks=spec=>{
    if(!yc||!branches)return;
    const body=getBody();
-   let unmatched=[];
+   // rest — сколько работ этого же филиала уже попало в корзину: если ни одной,
+   // «Остальное уже в заказе» не пишем (выбрана только работа, которую добавляют на месте).
+   let unmatched=[],rest=0;
    branches.querySelectorAll('[data-branch]').forEach(link=>{
      const branch=link.dataset.branch;
      const {ids,missing}=yc.resolve(branch,spec,body);
      const url=yc.bookingUrl(branch,ids);
      if(url)link.href=url;
-     if(missing.length>unmatched.length)unmatched=missing;
+     if(missing.length>unmatched.length){unmatched=missing;rest=ids.length;}
    });
    if(noteEl){
      noteEl.textContent=unmatched.length
-       ? 'На месте добавите: '+unmatched.join(', ')+'. Эти работы мастер примет при приёмке — в онлайн-записи они не продаются. Остальное уже в заказе.'
+       ? 'На месте добавите: '+unmatched.join(', ')+'. Эти работы мастер примет при приёмке — в онлайн-записи они не продаются.'+(rest?' Остальное уже в заказе.':'')
        : '';
      noteEl.hidden=!unmatched.length;
    }

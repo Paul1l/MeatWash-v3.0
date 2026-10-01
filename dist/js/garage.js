@@ -15,6 +15,11 @@
 // видит, что её отменили, и закрывает свою сцену — окно сама не открывает.
 // Выбор работ живёт в sessionStorage отдельно от сцены: повторное открытие его
 // не сбрасывает, для этого есть «Сбросить выбор».
+//
+// Панель услуг — только необходимое: четыре категории каталога, короткий список
+// работ выбранной категории (название и цена), строка «Выбрано: N» с итогом и
+// действие. Подробности — по запросу: состав программы — по кнопке «Состав»,
+// список выбранного (убрать работу, сбросить выбор) — по нажатию на «Выбрано».
 
 import { ZONES, ZONE_GROUPS, EXCLUSIVE, zonePrice, garageSum, garageOpen, includedIn, isWash } from './config.js';
 import { BODY_TYPES, PROGRAMS } from './data.js';
@@ -22,12 +27,14 @@ import { getBody, setBody, bodyName } from './body.js';
 import { goal } from './analytics.js';
 
 const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
+const works = (n) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'работа' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'работы' : 'работ'}`;
 const byId = (id) => ZONES.find((z) => z.id === id);
 const PICKED_KEY = 'mw:garage';
 const WEBGL_KEY = 'mw:webgl2';
 const GUARD_MS = 400;   // второй щелчок двойного клика по кнопке входа не закрывает окно
 const CATALOG = 'services.html#price-list';
-// Вкладки — восемь категорий каталога; готовых «наборов» нет: пакеты мойки —
+const LATER = 'после оценки';   // цена работы, которую назовёт мастер (null в каталоге)
+// Вкладки — четыре категории каталога; готовых «наборов» нет: пакеты мойки —
 // настоящие позиции каталога, они во вкладке «Мойка».
 const TABS = ZONE_GROUPS;
 
@@ -68,7 +75,30 @@ const icon = {
   close: '<svg viewBox="0 0 20 20" width="20" height="20" aria-hidden="true" focusable="false"><path d="M5 5l10 10M15 5 5 15" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
   reset: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
   fold: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  more: '<svg class="garage__chev" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true" focusable="false"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  remove: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l8 8M14 6l-8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
 };
+const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+// Строка работы: флажок с названием и ценой; у программ и пакетов мойки —
+// кнопка «Состав», сам состав раскрывается по нажатию.
+function zoneRow(z) {
+  const program = z.price.program != null ? PROGRAMS[z.price.program] : null;
+  return `
+              <li class="garage__row" data-row="${z.id}">
+                <label class="garage__item" data-zone="${z.id}">
+                  <input type="checkbox" value="${z.id}">
+                  <span class="garage__box" aria-hidden="true"></span>
+                  <span class="garage__name">${esc(z.title)}</span>
+                  <span class="garage__price" data-zone-price></span>
+                </label>${program ? `
+                <button class="garage__morebtn" type="button" data-zone-more="${z.id}" aria-expanded="false" aria-controls="garage-more-${z.id}">Состав<span class="visually-hidden">: ${esc(z.title)}</span>${icon.more}</button>
+                <div class="garage__more" id="garage-more-${z.id}" data-zone-details hidden>
+                  <p>${esc(program.time)} · ${esc(z.caption)}</p>
+                  <ul>${program.includes.map((line) => `<li>${esc(line)}</li>`).join('')}</ul>
+                </div>` : ''}
+              </li>`;
+}
 
 export function setupGarage() {
   const abort = new AbortController(), options = { signal: abort.signal };
@@ -85,6 +115,7 @@ export function setupGarage() {
   dialog.innerHTML = `
     <header class="garage__bar">
       <h2 class="garage__title" id="garage-title" tabindex="-1">Гараж услуг</h2>
+      <button class="garage__fold" type="button" data-garage-fold aria-expanded="true" aria-controls="garage-tabs garage-list">${icon.fold}<span><span data-fold-text>Свернуть</span><span class="garage__foldmore"> услуги</span></span></button>
       <button class="garage__close" type="button" data-garage-close aria-label="Закрыть гараж услуг">${icon.close}</button>
     </header>
     <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-garage-live></p>
@@ -117,37 +148,32 @@ export function setupGarage() {
         <p class="garage__caption" data-garage-caption><b></b><span></span></p>
       </div>
       <section class="garage__panel" aria-label="Выбор услуг">
-        <div class="garage__panelhead">
-          <div class="garage__tabs" role="tablist" aria-label="Категории услуг">
-            ${TABS.map((tab, i) => `<button class="garage__tab" type="button" role="tab" id="garage-tab-${tab.id}" aria-controls="garage-group-${tab.id}" aria-selected="${i ? 'false' : 'true'}" tabindex="${i ? -1 : 0}" data-tab="${tab.id}">${tab.title}</button>`).join('')}
-          </div>
-          <button class="garage__fold" type="button" data-garage-fold aria-expanded="true" aria-controls="garage-list">${icon.fold}<span><span data-fold-text>Свернуть</span><span class="garage__foldmore"> услуги</span></span></button>
+        <div class="garage__tabs" id="garage-tabs" role="tablist" aria-label="Категории услуг">
+          ${TABS.map((tab, i) => `<button class="garage__tab" type="button" role="tab" id="garage-tab-${tab.id}" aria-controls="garage-group-${tab.id}" aria-selected="${i ? 'false' : 'true'}" tabindex="${i ? -1 : 0}" data-tab="${tab.id}"><span class="garage__tabname">${esc(tab.title)}</span><span class="visually-hidden" data-tab-picked></span></button>`).join('')}
         </div>
         <div class="garage__list" id="garage-list">
           ${ZONE_GROUPS.map((group, i) => `
           <div class="garage__group" role="tabpanel" id="garage-group-${group.id}" aria-labelledby="garage-tab-${group.id}" data-group="${group.id}"${i ? ' hidden' : ''}>
-            ${group.id === 'wash' ? `<label class="garage__bodytype"><span>Тип кузова</span><select data-garage-body>${BODY_TYPES.map((type, b) => `<option value="${b}">${type}</option>`).join('')}</select></label>` : ''}
-            <ul class="garage__items">
-              ${ZONES.filter((z) => z.group === group.id).map((z) => `
-              <li><label class="garage__item" data-zone="${z.id}">
-                <input type="checkbox" value="${z.id}">
-                <span class="garage__box" aria-hidden="true"></span>
-                <span class="garage__text"><b>${z.title}${z.package ? ' <span class="garage__tag">пакет</span>' : ''}</b><i data-zone-note>${z.price.program != null ? `${z.package ? 'Пакет мойки' : 'Программа мойки'} · ${PROGRAMS[z.price.program].time}. ` : ''}${z.caption}</i>${z.price.program != null ? `<span class="garage__includes" data-zone-includes><span>Состав:</span> ${PROGRAMS[z.price.program].includes.join(' · ')}</span>` : ''}</span>
-                <span class="garage__price" data-zone-price></span>
-              </label></li>`).join('')}
+            ${group.booking === 'yclients' ? `<label class="garage__bodytype"><span>Тип кузова</span><select data-garage-body>${BODY_TYPES.map((type, b) => `<option value="${b}">${esc(type)}</option>`).join('')}</select></label>` : ''}
+            <ul class="garage__items">${ZONES.filter((z) => z.group === group.id).map(zoneRow).join('')}
             </ul>
           </div>`).join('')}
         </div>
         <div class="garage__foot">
-          <div class="garage__picked" data-garage-picked aria-label="Выбранные услуги" role="group"></div>
-          <p class="garage__total"><span>Предварительно</span><b data-garage-total></b></p>
-          <p class="garage__note">Минимальные цены каталога, мойка — для выбранного кузова. Точную стоимость назовёт мастер после осмотра.</p>
-          <p class="garage__split" data-garage-split hidden>Мойку запишем онлайн в выбранную студию, по остальным работам отправьте заявку с фото — выбор сохранится.</p>
+          <div class="garage__sum">
+            <button class="garage__summary" type="button" data-garage-summary aria-expanded="false" aria-controls="garage-picked" hidden><span data-garage-count></span>${icon.more}</button>
+            <p class="garage__total" data-garage-total></p>
+          </div>
+          <div class="garage__picked" id="garage-picked" data-garage-picked role="group" aria-label="Выбранные услуги" hidden>
+            <div class="garage__picks" data-garage-picks></div>
+            <p class="garage__note" data-garage-note></p>
+            <button class="garage__clear" type="button" data-garage-clear>Сбросить выбор</button>
+          </div>
           <div class="garage__act">
             <button class="btn btn--fill garage__book" type="button" data-book data-garage-book>Записаться</button>
             <button class="btn btn--ghost garage__request" type="button" data-request data-garage-request hidden>Заявка с фото</button>
-            <button class="garage__clear" type="button" data-garage-clear>Сбросить выбор</button>
           </div>
+          <p class="garage__split" data-garage-split hidden>Мойка — онлайн-запись в студию, остальные работы — заявкой с фото.</p>
           <!-- Лицензия модели CC BY 4.0 требует указать автора и что модель изменена — рядом с ней. -->
           <p class="garage__credit">3D-модель: <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener noreferrer">Karol Miklas</a>, <a href="https://creativecommons.org/licenses/by/4.0/deed.ru" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>, изменена</p>
         </div>
@@ -160,10 +186,12 @@ export function setupGarage() {
   const loadText = $('[data-garage-loadtext]'), pctEl = $('[data-garage-pct]'), progressEl = $('[data-garage-progress]');
   const failTitle = $('[data-garage-failtitle]'), failText = $('[data-garage-failtext]'), retryBtn = $('[data-garage-retry]');
   const hint = $('[data-garage-hint]'), caption = $('[data-garage-caption]');
-  const totalEl = $('[data-garage-total]'), pickedEl = $('[data-garage-picked]'), bookBtn = $('[data-garage-book]'), clearBtn = $('[data-garage-clear]');
-  const requestBtn = $('[data-garage-request]'), splitEl = $('[data-garage-split]');
+  const totalEl = $('[data-garage-total]'), pickedEl = $('[data-garage-picked]'), picksEl = $('[data-garage-picks]'), noteEl = $('[data-garage-note]');
+  const summaryBtn = $('[data-garage-summary]'), countEl = $('[data-garage-count]');
+  const bookBtn = $('[data-garage-book]'), requestBtn = $('[data-garage-request]'), splitEl = $('[data-garage-split]');
   const bodySelect = $('[data-garage-body]'), foldBtn = $('[data-garage-fold]'), title = $('#garage-title');
   const tabs = [...dialog.querySelectorAll('[role="tab"]')];
+  const rows = [...dialog.querySelectorAll('.garage__row')];
 
   let active = false;       // окно открыто (и ещё не закрыто нами)
   let opener = null;        // кнопка, открывшая гараж: на неё возвращается фокус
@@ -298,17 +326,9 @@ export function setupGarage() {
       bottom: cap.height ? Math.max(0, Math.round(view.bottom - cap.top)) : 0,
     });
   }
-  // Вкладки не помещаются — край ряда затухает, пока его не долистали.
-  const tabRow = $('.garage__tabs');
-  const tabEdges = () => {
-    tabRow.classList.toggle('is-overflowing', tabRow.scrollWidth > tabRow.clientWidth + 1);
-    tabRow.classList.toggle('is-end', tabRow.scrollLeft + tabRow.clientWidth >= tabRow.scrollWidth - 2);
-  };
-  tabRow.addEventListener('scroll', tabEdges, { ...options, passive: true });
-  const resizeWatch = new ResizeObserver(() => { frameSafe(); tabEdges(); });
+  const resizeWatch = new ResizeObserver(() => frameSafe());
   resizeWatch.observe(viewEl);
   resizeWatch.observe(caption);
-  resizeWatch.observe(tabRow);
   function showHint() {
     if (hinted) return;
     hint.textContent = coarse() ? 'Проведите пальцем — повернуть, два пальца — приблизить' : 'Потяните мышью — повернуть, колесо — приблизить';
@@ -317,39 +337,83 @@ export function setupGarage() {
   function hideHint() { hinted = true; hint.hidden = true; }
 
   // ── Выбор услуг ───────────────────────────────────────────────────────────
+  // Цена в строке и в списке выбранного: «от …», «после оценки» или «входит в пакет».
+  function priceText(zone, body, inside) {
+    if (inside) return inside.package ? 'входит в пакет' : 'входит в программу';
+    const price = zonePrice(zone, body);
+    return price == null ? LATER : 'от ' + money(price);
+  }
+  // Итог: сумма «от» без работ с ценой после оценки — они названы отдельно.
+  function renderTotal(body) {
+    const sum = garageSum(picked, body), open = garageOpen(picked);
+    totalEl.classList.toggle('is-empty', !picked.length);
+    if (!picked.length) { totalEl.textContent = 'Выберите работы'; return; }
+    const value = document.createElement('b');
+    value.textContent = sum ? 'от ' + money(sum) : LATER;
+    totalEl.replaceChildren(value);
+    // Одна такая работа — по названию, несколько — числом (названия — в «Выбрано»).
+    if (sum && open.length) {
+      const more = document.createElement('small');
+      more.textContent = `+ ${LATER}: ${open.length > 1 ? works(open.length) : open[0].title}`;
+      totalEl.append(' ', more);
+    }
+  }
+  // Список выбранного (раскрывается по «Выбрано: N»): мойка и работы по заявке —
+  // отдельными группами, если выбраны вместе: в YCLIENTS уходит только мойка.
+  function renderPicked(body, wash, other) {
+    const list = (ids) => {
+      const ul = document.createElement('ul');
+      for (const id of ids) {
+        const zone = byId(id), li = document.createElement('li');
+        li.className = 'garage__pick';
+        li.innerHTML = `<span class="garage__pickname"></span><span class="garage__pickprice"></span><button class="garage__unpick" type="button" data-unpick="${id}">${icon.remove}</button>`;
+        li.children[0].textContent = zone.title;
+        li.children[1].textContent = priceText(zone, body, null);
+        li.children[2].setAttribute('aria-label', `Убрать: ${zone.title}`);
+        ul.append(li);
+      }
+      return ul;
+    };
+    const head = (text) => { const p = document.createElement('p'); p.className = 'garage__pickhead'; p.textContent = text; return p; };
+    picksEl.replaceChildren(...(wash.length && other.length
+      ? [head('Мойка — онлайн-запись'), list(wash), head('По заявке с фото'), list(other)]
+      : [list(picked)]));
+    noteEl.textContent = `Минимальные цены каталога${wash.length ? `, мойка — для кузова «${bodyName(body)}»` : ''}. Точную стоимость назовёт мастер.`;
+  }
+  function setSummary(on) {
+    const show = on && picked.length > 0;
+    pickedEl.hidden = !show;
+    summaryBtn.setAttribute('aria-expanded', String(show));
+    dialog.classList.toggle('is-summary', show);
+  }
   function renderSelection() {
     const body = getBody();
     bodySelect.value = String(body);
-    for (const label of dialog.querySelectorAll('.garage__item')) {
-      const zone = byId(label.dataset.zone), input = label.querySelector('input');
+    for (const row of rows) {
+      const zone = byId(row.dataset.row), input = row.querySelector('input');
       const inside = includedIn(zone, picked);
       input.checked = picked.includes(zone.id) || Boolean(inside);
       input.disabled = Boolean(inside);
-      label.classList.toggle('is-on', input.checked);
-      label.classList.toggle('is-included', Boolean(inside));
-      const price = zonePrice(zone, body);
-      label.querySelector('[data-zone-price]').textContent = inside ? (inside.package ? 'входит в пакет' : 'входит в программу') : price == null ? 'после осмотра' : 'от ' + money(price);
-      label.title = inside ? `Входит в «${inside.title}»` : '';
+      row.classList.toggle('is-on', input.checked);
+      row.classList.toggle('is-included', Boolean(inside));
+      row.querySelector('[data-zone-price]').textContent = priceText(zone, body, inside);
+      row.querySelector('.garage__item').title = inside ? `Входит в «${inside.title}»` : '';
     }
-    const sum = garageSum(picked, body), open = garageOpen(picked);
-    // Работы с ценой после осмотра в сумму не входят — итог так и говорит.
-    totalEl.textContent = !picked.length ? 'Выберите работы' : sum ? 'от ' + money(sum) : 'после осмотра';
-    if (sum && open.length) { const more = document.createElement('small'); more.textContent = ' + по осмотру'; totalEl.append(more); }
-    totalEl.classList.toggle('is-empty', !picked.length);
-    clearBtn.disabled = !picked.length;
-    pickedEl.replaceChildren(...picked.map((id) => {
-      const chip = document.createElement('button');
-      chip.type = 'button'; chip.className = 'garage__chip'; chip.dataset.unpick = id;
-      chip.setAttribute('aria-label', `Убрать: ${byId(id).title}`);
-      chip.innerHTML = '<span></span><span aria-hidden="true">×</span>';
-      chip.firstChild.textContent = byId(id).title;
-      return chip;
-    }));
-    pickedEl.hidden = !picked.length;
+    // Выбор сохраняется между вкладками: у категории с выбранными работами — метка.
+    for (const tab of tabs) {
+      const n = picked.filter((id) => byId(id).group === tab.dataset.tab).length;
+      tab.classList.toggle('has-picked', n > 0);
+      tab.querySelector('[data-tab-picked]').textContent = n ? `, выбрано: ${n}` : '';
+    }
+    renderTotal(body);
+    countEl.textContent = `Выбрано: ${picked.length}`;
+    summaryBtn.hidden = !picked.length;
+    if (!picked.length) setSummary(false);
     // Два сценария: мойка — запись в YCLIENTS с выбором филиала, остальные
     // работы — заявка с фото. Смешанный выбор не уходит в YCLIENTS целиком:
     // видны обе кнопки, и каждое окно напоминает о второй части.
     const wash = picked.filter((id) => isWash(byId(id))), other = picked.filter((id) => !isWash(byId(id)));
+    renderPicked(body, wash, other);
     const titles = (ids) => ids.map((id) => byId(id).title);
     bookBtn.hidden = Boolean(other.length && !wash.length);
     bookBtn.textContent = wash.length ? 'Записаться на мойку' : 'Записаться';
@@ -368,31 +432,34 @@ export function setupGarage() {
     splitEl.hidden = !(wash.length && other.length);
   }
   // Часть работ в онлайн-записи не продаётся: их добавляет мастер при приёмке.
-  // Помечаем это сразу в списке, чтобы человек видел до нажатия «Записаться»,
-  // а не удивлялся, что в запись ушла половина выбранного.
+  // Помечаем это сразу в списке («на месте» у названия, пояснение — в «Составе»),
+  // чтобы человек видел до нажатия «Записаться», а не удивлялся, что в запись
+  // ушла половина выбранного.
   function markOffline() {
     import('./yclients.js').then((yc) => yc.loadMap().then(() => {
       let offline = 0;
       // Только мойка: остальные работы идут по заявке, YCLIENTS там не участвует.
-      for (const label of dialog.querySelectorAll('.garage__item')) {
-        const zone = byId(label.dataset.zone);
+      for (const row of rows) {
+        const zone = byId(row.dataset.row);
         if (!zone || !isWash(zone)) continue;
         const spec = zone.price.program != null
           ? { programs: [zone.price.program], items: [] }
           : { programs: [], items: [zone.price.item] };
         // Работа доступна онлайн, если её удалось сопоставить хотя бы в одном филиале.
         const ok = ['myasnitskaya', 'technopark'].some((b) => yc.resolve(b, spec, 0).ids.length);
-        label.classList.toggle('is-offline', !ok);
+        row.classList.toggle('is-offline', !ok);
         if (!ok) {
           offline += 1;
-          const note = label.querySelector('[data-zone-note]');
-          if (note && !note.dataset.offline) {
-            note.dataset.offline = '1';
-            note.textContent = 'Приобретается на месте — мастер добавит при приёмке. ' + note.textContent;
+          const details = row.querySelector('[data-zone-details]');
+          if (details && !details.querySelector('.garage__offline')) {
+            const note = document.createElement('p');
+            note.className = 'garage__offline';
+            note.textContent = 'Приобретается на месте — мастер добавит при приёмке.';
+            details.prepend(note);
           }
         }
       }
-      if (offline) say(`${offline} работ приобретаются на месте.`);
+      if (offline) say(`${works(offline)} — на месте, мастер добавит при приёмке.`);
     })).catch(() => {});
   }
 
@@ -403,6 +470,7 @@ export function setupGarage() {
     renderSelection();
     target(touched);
   }
+  const totalPhrase = () => (picked.length ? `Выбрано работ: ${picked.length}, ${totalEl.textContent}` : 'Ничего не выбрано');
   function toggle(id, on) {
     let next = picked.filter((x) => x !== id);
     if (on) {
@@ -414,7 +482,23 @@ export function setupGarage() {
     }
     setPicked(next, on ? id : null);
     const zone = byId(id);
-    say(on ? `${zone.title}: выбрано. Предварительно ${totalEl.textContent}.` : `${zone.title}: убрано. ${picked.length ? 'Предварительно ' + totalEl.textContent : 'Ничего не выбрано'}.`);
+    say(`${zone.title}: ${on ? 'выбрано' : 'убрано'}. ${totalPhrase()}.`);
+  }
+  // Состав программы — по кнопке «Состав»; открыт один за раз, чтобы список
+  // оставался коротким.
+  function setMore(id) {
+    let opened = null;
+    for (const btn of dialog.querySelectorAll('[data-zone-more]')) {
+      const on = btn.dataset.zoneMore === id && btn.getAttribute('aria-expanded') !== 'true';
+      btn.setAttribute('aria-expanded', String(on));
+      btn.closest('.garage__row').classList.toggle('is-open', on);
+      document.getElementById(btn.getAttribute('aria-controls')).hidden = !on;
+      if (on) opened = btn.closest('.garage__row');
+    }
+    // Раскрытый состав ниже края списка — докручиваем список (только его, не страницу).
+    if (!opened) return;
+    const list = $('.garage__list'), row = opened.getBoundingClientRect(), box = list.getBoundingClientRect();
+    if (row.bottom > box.bottom) list.scrollTop += Math.min(row.bottom - box.bottom + 8, row.top - box.top);
   }
   function selectTab(id, focus) {
     for (const tab of tabs) {
@@ -422,9 +506,12 @@ export function setupGarage() {
       tab.setAttribute('aria-selected', String(on));
       tab.tabIndex = on ? 0 : -1;
       if (on && focus) tab.focus();
-      if (on) tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     }
     for (const group of dialog.querySelectorAll('.garage__group')) group.hidden = group.dataset.group !== id;
+    // Другая категория — список выбранного сворачивается: на телефоне он занимает
+    // место списка работ.
+    setSummary(false);
+    setMore(null);
     $('.garage__list').scrollTop = 0;
   }
   function setFolded(on) {
@@ -508,12 +595,22 @@ export function setupGarage() {
     if (control.matches('[data-garage-zoom]')) { scene?.zoomBy(control.dataset.garageZoom === 'in' ? 0.87 : 1.15); hideHint(); return; }
     if (control.matches('[data-garage-fold]')) { setFolded(!dialog.classList.contains('is-folded')); return; }
     if (control.matches('[role="tab"]')) { selectTab(control.dataset.tab, false); return; }
-    if (control.matches('[data-garage-clear]')) { setPicked([], null); say('Выбор сброшен.'); return; }
+    if (control.matches('[data-zone-more]')) { setMore(control.dataset.zoneMore); return; }
+    if (control.matches('[data-garage-summary]')) { setSummary(pickedEl.hidden); return; }
+    if (control.matches('[data-garage-clear]')) {
+      setPicked([], null);
+      say('Выбор сброшен.');
+      tabs.find((tab) => tab.tabIndex === 0)?.focus({ preventScroll: true });
+      return;
+    }
     if (control.matches('[data-unpick]')) {
+      // Фокус — на соседнюю «Убрать», иначе на «Выбрано: N», иначе на главное действие.
       const id = control.dataset.unpick;
-      const next = pickedEl.querySelector(`[data-unpick="${id}"]`)?.nextElementSibling || pickedEl.querySelector(`[data-unpick="${id}"]`)?.previousElementSibling;
+      const all = [...pickedEl.querySelectorAll('[data-unpick]')].map((b) => b.dataset.unpick), at = all.indexOf(id);
+      const near = all[at + 1] ?? all[at - 1];
       toggle(id, false);
-      (pickedEl.querySelector(`[data-unpick="${next?.dataset.unpick}"]`) || bookBtn).focus({ preventScroll: true });
+      const nextBtn = pickedEl.hidden ? null : pickedEl.querySelector(`[data-unpick="${near}"]`);
+      (nextBtn || (summaryBtn.hidden ? bookBtn : summaryBtn)).focus({ preventScroll: true });
       return;
     }
     // «Записаться на мойку» и «Заявка с фото»: гараж закрывается, затем общий

@@ -27,6 +27,9 @@ body.page-inner .header__cta { opacity: 1; visibility: visible; transform: none;
 .strip--4 .card--wash > img { object-position: 45% 55%; filter: saturate(.78); }
 a.card { display: block; }
 .card__price { display: block; margin-top: 4px; font: 400 15px/1.2 var(--font-sans); color: var(--ivory); letter-spacing: 0; font-variant-numeric: tabular-nums; }
+/* Подпись карточки — короткое описание категории: обычный кегль и трекинг, с полем справа. */
+.strip--4 .card__caption { right: clamp(16px, 2.2vw, 34px); max-width: 34ch; font-size: 13px; line-height: 1.4; letter-spacing: .01em; }
+.strip--4 .card__price { margin-top: 6px; }
 @media (max-width: 900px) {
   .services-preview__head { grid-template-columns: 1fr; }
   .strip--4 { grid-template-columns: 1fr 1fr; }
@@ -36,7 +39,7 @@ a.card { display: block; }
 }
 @media (max-width: 430px) {
   .strip--4 .card__label { left: 12px; top: 12px; }
-  .strip--4 .card__caption { left: 12px; right: 12px; bottom: 12px; font-size: 11px; line-height: 1.3; }
+  .strip--4 .card__caption { left: 12px; right: 12px; bottom: 12px; font-size: 12px; line-height: 1.35; }
   .card__price { font-size: 14px; }
 }
 .proof__more { margin-top: clamp(20px, 2.4vw, 32px); font-size: 13px; }
@@ -45,16 +48,11 @@ a.card { display: block; }
 .page-head { padding: calc(var(--header-h) + clamp(40px, 6vw, 96px)) var(--gutter) clamp(28px, 4vw, 56px); background: var(--black-2); }
 .page-head h1 { margin-top: 20px; font-size: clamp(40px, 5vw, 76px); line-height: 1.02; }
 .page-head__lead { margin-top: clamp(16px, 2vw, 24px); max-width: 52ch; font-size: 15px; line-height: 1.8; color: var(--muted); }
-.page-head__jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: clamp(20px, 2.4vw, 32px); }
-.page-head__jump a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--radius); font-size: 13px; transition: border-color var(--t) var(--ease); }
-.page-head__jump a:hover { border-color: var(--ivory); }
 
 /* ---------- Каталог на services.html ---------- */
 /* Роль .catalog__heading взял .page-head; разделы начинаются с h2 (h1 — выше). */
 .catalog--page { padding-top: 0; }
-.catalog--page > .catalog__section:first-child { margin-top: 0; }
-.catalog .catalog__aside h2, .catalog .catalog__concierge h2 { font-size: clamp(26px, 2.5vw, 40px); line-height: 1.2; margin: 20px 0; letter-spacing: 0; }
-@media (max-width: 800px) { .catalog .catalog__aside h2 { font-size: 30px; } .catalog__aside h2 br { display: none; } }
+.catalog .catalog__concierge h2 { font-size: clamp(26px, 2.5vw, 40px); line-height: 1.2; margin: 20px 0; letter-spacing: 0; }
 
 /* ---------- Фото-заголовок «О нас» ---------- */
 .page-hero { position: relative; display: grid; align-items: end; min-height: clamp(520px, 78svh, 820px); padding: calc(var(--header-h) + 40px) var(--gutter) clamp(40px, 6vw, 88px); overflow: hidden; background: var(--black); }
@@ -183,7 +181,6 @@ a.card { display: block; }
 }
 
 /* services.html на телефоне: три перехода в одну строку. */
-@media (max-width: 430px) { .page-head__jump a { padding: 0 12px; } }
 
 /* «О нас»: три принципа — только заголовки (текст уже сказан абзацем выше). */
 .visit-notes--approach { padding-bottom: clamp(40px, 5vw, 64px); }
