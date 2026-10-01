@@ -18,7 +18,7 @@ import {renderPage} from './pages.mjs';
 import {importDist} from './dist-module.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),dist=resolve(root,'dist');
-const SITE='https://paul1l.github.io/MeatWash-v3.0/';
+const SITE='https://meatwash.ru/';
 const failures=[];
 const fail=message=>failures.push(message);
 const exists=async path=>{try{return (await stat(path)).isFile();}catch{return false;}};

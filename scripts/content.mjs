@@ -11,7 +11,7 @@ import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
 import {renderPartial,renderPage} from './pages.mjs';
 
 const root=new URL('../',import.meta.url);
-export const SITE='https://paul1l.github.io/MeatWash-v3.0/';
+export const SITE='https://meatwash.ru/';
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 export const humanDate=iso=>{const [y,m,day]=iso.split('-').map(Number);return `${day} ${MONTHS[m-1]} ${y} г.`;};
 
@@ -38,7 +38,14 @@ function substitute(text){
    case 'op':{
     if(!(arg in OPERATOR_HINT))throw new Error(`Нет поля оператора: ${token}`);
     const value=d.site?.operator?.[arg];
-    return value?escape(value):`<span class="doc-todo">[${OPERATOR_HINT[arg]}]</span>`;
+    if(!value)return `<span class="doc-todo">[${OPERATOR_HINT[arg]}]</span>`;
+    if(arg==='ogrn'){
+     // ОГРН юрлица — 13 цифр, ОГРНИП предпринимателя — 15.
+     if(!/^(\d{13}|\d{15})$/.test(value))throw new Error(`site.operator.ogrn: нужно 13 (ОГРН) или 15 (ОГРНИП) цифр — ${value}`);
+     return `${value.length===15?'ОГРНИП':'ОГРН'} ${value}`;
+    }
+    if(arg==='email')return `<a href="mailto:${escape(value)}">${escape(value)}</a>`;
+    return escape(value);
    }
    case 'site':{
     if(arg==='url')return SITE;

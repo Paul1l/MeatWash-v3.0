@@ -477,11 +477,11 @@
       "webmaster": null
     },
     "operator": {
-      "name": null,
-      "inn": null,
-      "ogrn": null,
-      "address": null,
-      "email": null
+      "name": "ИП Антонович Роман Сергеевич",
+      "inn": "773015394283",
+      "ogrn": "321774600628716",
+      "address": "101000, г. Москва",
+      "email": "MeatWash.detailing@gmail.com"
     },
     "documentsDate": "2026-10-01"
   }
