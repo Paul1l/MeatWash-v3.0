@@ -41,12 +41,17 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
   batchInterior(cockpit);
   cockpit.rotation.y = Math.PI;
   cockpit.scale.setScalar(V1_TO_V3);
-  // В v3 торпедо на 10 см выходило сквозь лобовое стекло: салон чуть ниже и ближе к корме.
+  // Салон чуть ниже и ближе к корме: так сиденья и приборы стоят по местам кузова v3.
   cockpit.position.set(0, -0.05, 0.1);
+  // Торпедо v1 плоское во всю ширину, а лобовое стекло 930 гнутое и к стойкам ниже
+  // на 6–10 см: углы торпедо выходили сквозь стекло (до 4 см). Подгоняем кокпит
+  // под настоящее стекло модели.
+  const fitted = fitUnderGlass(cockpit, car);
   const textures = new Set(), materials = new Set();
   cockpit.traverse(o => { if (o.material) { materials.add(o.material); for (const v of Object.values(o.material)) if (v?.isTexture) textures.add(v); } });
   return {
     group: cockpit,
+    fitted,
     dispose() {
       cockpit.removeFromParent();
       cockpit.traverse(o => o.geometry?.dispose());
@@ -54,6 +59,103 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
       removed.forEach(g => g.dispose());
     },
   };
+}
+
+// Зазор между кокпитом и лобовым стеклом, м: стекло прозрачное и не пишет глубину,
+// поэтому всё, что касается его или выходит наружу, видно поверх.
+export const GLASS_CLEARANCE = 0.02;
+
+// Стёкла модели сверху в мировых координатах: материал стекла (исходный «glass»
+// или заменённый restyle «meatwash-glass»), без почти вертикальных боковых окон —
+// сверху на них ничего не опирается. Треугольники разложены по сетке 5 см в
+// плоскости XZ: высота над точкой ищется только среди своей ячейки.
+export function glassMap(car, cell = 0.05) {
+  car.updateMatrixWorld(true);
+  const tris = [], p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], n = new THREE.Vector3(), e = new THREE.Vector3();
+  car.traverse(o => {
+    if (!o.isMesh || !/^(meatwash-)?glass$/.test(o.material?.name || '')) return;
+    const position = o.geometry.attributes.position, index = o.geometry.index;
+    const count = index ? index.count : position.count;
+    for (let i = 0; i < count; i += 3) {
+      for (let k = 0; k < 3; k++) p[k].fromBufferAttribute(position, index ? index.getX(i + k) : i + k).applyMatrix4(o.matrixWorld);
+      n.subVectors(p[1], p[0]).cross(e.subVectors(p[2], p[0])).normalize();
+      if (Math.abs(n.y) > 0.25) tris.push(p.map(q => q.toArray()));
+    }
+  });
+  if (!tris.length) return null;
+  const all = tris.flat();
+  const minX = Math.min(...all.map(q => q[0])), maxX = Math.max(...all.map(q => q[0]));
+  const minZ = Math.min(...all.map(q => q[2])), maxZ = Math.max(...all.map(q => q[2]));
+  const cols = Math.ceil((maxX - minX) / cell) + 1, grid = new Map();
+  const key = (x, z) => Math.floor((z - minZ) / cell) * cols + Math.floor((x - minX) / cell);
+  for (const t of tris) {
+    const x0 = Math.min(t[0][0], t[1][0], t[2][0]), x1 = Math.max(t[0][0], t[1][0], t[2][0]);
+    const z0 = Math.min(t[0][2], t[1][2], t[2][2]), z1 = Math.max(t[0][2], t[1][2], t[2][2]);
+    for (let z = z0; z < z1 + cell; z += cell) for (let x = x0; x < x1 + cell; x += cell) {
+      const k = key(Math.min(x, x1), Math.min(z, z1));
+      if (!grid.has(k)) grid.set(k, new Set());
+      grid.get(k).add(t);
+    }
+  }
+  // Высота стекла над точкой (x, z): нижняя из поверхностей на этой вертикали
+  // (у стекла бывает внешняя и внутренняя). null — над точкой стекла нет.
+  const height = (x, z) => {
+    if (x < minX || x > maxX || z < minZ || z > maxZ) return null;
+    let best = null;
+    for (const [a, b, c] of grid.get(key(x, z)) || []) {
+      const d = (b[2] - c[2]) * (a[0] - c[0]) + (c[0] - b[0]) * (a[2] - c[2]);
+      if (Math.abs(d) < 1e-12) continue;
+      const l1 = ((b[2] - c[2]) * (x - c[0]) + (c[0] - b[0]) * (z - c[2])) / d;
+      const l2 = ((c[2] - a[2]) * (x - c[0]) + (a[0] - c[0]) * (z - c[2])) / d;
+      const l3 = 1 - l1 - l2;
+      if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+      const y = l1 * a[1] + l2 * b[1] + l3 * c[1];
+      if (best === null || y < best) best = y;
+    }
+    return best;
+  };
+  return {height, triangles: tris.length};
+}
+
+// Всё в кокпите, что под лобовым стеклом поднимается выше «стекло минус зазор»,
+// опускается по вертикали до этой высоты: торпедо у стоек повторяет изгиб стекла.
+// Остальная геометрия не меняется. Возвращает число сдвинутых вершин.
+export function fitUnderGlass(cockpit, car, clearance = GLASS_CLEARANCE) {
+  const glass = glassMap(car);
+  if (!glass) return 0;
+  cockpit.updateMatrixWorld(true);
+  const v = new THREE.Vector3(), inverse = new THREE.Matrix4(), a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+  let moved = 0;
+  cockpit.traverse(o => {
+    if (!o.isMesh && !o.isLineSegments) return;
+    const g = o.geometry, position = g.attributes.position;
+    inverse.copy(o.matrixWorld).invert();
+    const touched = new Set();
+    for (let i = 0; i < position.count; i++) {
+      v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+      const top = glass.height(v.x, v.z);
+      if (top === null || v.y <= top - clearance) continue;
+      v.y = top - clearance;
+      v.applyMatrix4(inverse);
+      position.setXYZ(i, v.x, v.y, v.z);
+      touched.add(i); moved++;
+    }
+    if (!touched.size) return;
+    position.needsUpdate = true;
+    g.computeBoundingBox(); g.computeBoundingSphere();
+    const normal = g.attributes.normal;
+    if (!normal) return;
+    if (g.index) { g.computeVertexNormals(); return; }
+    // Склеенная геометрия без индекса: нормаль сдвинутого треугольника — по его плоскости.
+    for (let i = 0; i < position.count; i += 3) {
+      if (!touched.has(i) && !touched.has(i + 1) && !touched.has(i + 2)) continue;
+      a.fromBufferAttribute(position, i); b.fromBufferAttribute(position, i + 1); c.fromBufferAttribute(position, i + 2);
+      const n = b.sub(a).cross(c.sub(a)).normalize();
+      for (let k = 0; k < 3; k++) normal.setXYZ(i + k, n.x, n.y, n.z);
+    }
+    normal.needsUpdate = true;
+  });
+  return moved;
 }
 
 async function buildCockpit(pause){

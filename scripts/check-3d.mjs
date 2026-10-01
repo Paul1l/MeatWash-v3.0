@@ -16,6 +16,7 @@ import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {MeshoptDecoder} from 'meshoptimizer';
 import sharp from 'sharp';
 import {bundle3d, root, BUNDLE} from './bundle-3d.mjs';
+import * as THREE from 'three';
 import {importDist} from './dist-module.mjs';
 
 const failures = [];
@@ -34,6 +35,48 @@ try {
 } finally {
   await rm(dir, {recursive: true, force: true});
 }
+
+// Кокпит (src/porsche3d/interior.js) собирается тем же кодом, что в браузере, поверх
+// стёкол модели: ни одна его вершина под стеклом не ближе GLASS_CLEARANCE —
+// иначе торпедо видно сквозь лобовое стекло. Холст для текстур кожи — заглушка.
+globalThis.document ??= {createElement: () => ({width: 0, height: 0, getContext: () => new Proxy({}, {get: (t, k) => k in t ? t[k] : () => {}})})};
+const interior = await import(new URL('../src/porsche3d/interior.js', import.meta.url).href);
+async function cockpitClearance(gltfDocument) {
+  const car = new THREE.Group();
+  for (const node of gltfDocument.getRoot().listNodes()) {
+    const mesh = node.getMesh(); if (!mesh) continue;
+    const matrix = new THREE.Matrix4().fromArray(node.getWorldMatrix());
+    for (const prim of mesh.listPrimitives()) {
+      if (prim.getMaterial()?.getName() !== 'glass') continue;
+      const geometry = new THREE.BufferGeometry();
+      // Позиции квантованы (KHR_mesh_quantization): getElement отдаёт их нормализованными.
+      const position = prim.getAttribute('POSITION'), xyz = new Float32Array(position.getCount() * 3), el = [];
+      for (let i = 0; i < position.getCount(); i++) xyz.set(position.getElement(i, el), i * 3);
+      geometry.setAttribute('position', new THREE.BufferAttribute(xyz, 3));
+      if (prim.getIndices()) geometry.setIndex(Array.from(prim.getIndices().getArray()));
+      const glass = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({name: 'glass'}));
+      glass.applyMatrix4(matrix); car.add(glass);
+    }
+  }
+  const built = await interior.buildInterior(car);
+  const glass = interior.glassMap(car);
+  built.group.updateMatrixWorld(true);
+  let min = Infinity, under = 0;
+  const v = new THREE.Vector3();
+  built.group.traverse(o => {
+    if (!o.geometry) return;
+    const position = o.geometry.attributes.position;
+    for (let i = 0; i < position.count; i++) {
+      v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+      const top = glass?.height(v.x, v.z);
+      if (top == null) continue;
+      under++; min = Math.min(min, top - v.y);
+    }
+  });
+  built.dispose();
+  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0};
+}
+const clearances = [];
 
 // 2. Модели.
 await MeshoptDecoder.ready;
@@ -68,6 +111,10 @@ for (const [name, variant] of Object.entries(report.variants)) {
   for (const mesh of document.getRoot().listMeshes()) for (const prim of mesh.listPrimitives()) {
     check(!prim.getAttribute('TANGENT'), `${variant.file}: остались касательные`);
   }
+  const fit = await cockpitClearance(document);
+  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted})`);
+  check(fit.triangles > 0 && fit.under > 0, `${variant.file}: не найдено стекло над кокпитом (материал glass)`);
+  check(fit.min >= interior.GLASS_CLEARANCE - 1e-4, `${variant.file}: кокпит подходит к стеклу на ${(fit.min * 100).toFixed(1)} см (нужно не меньше ${interior.GLASS_CLEARANCE * 100} см) — торпедо видно сквозь лобовое стекло`);
 }
 // В dist/assets/3d только текущие модели (имена с хешем), манифест модуля —
 // с теми же адресами и размерами.
@@ -102,5 +149,7 @@ console.log('Размеры 3D-ресурсов, байт:');
 console.log(`${'файл'.padEnd(46)}${pad('raw', 11)}${pad('gzip', 11)}${pad('brotli', 11)}`);
 for (const [label, raw, gz, br] of rows) console.log(`${label.padEnd(46)}${pad(raw, 11)}${pad(gz, 11)}${pad(br, 11)}`);
 
+console.log('Наименьший зазор кокпит — стекло: ' + clearances.join('; '));
+
 assert.equal(failures.length, 0, failures.join('\n'));
-console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели.');
+console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели, кокпит не выходит за стёкла.');

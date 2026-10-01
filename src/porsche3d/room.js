@@ -6,9 +6,12 @@ import {
   BackSide, CanvasTexture, CircleGeometry, Color, CylinderGeometry, DirectionalLight,
   HemisphereLight, Mesh, MeshBasicMaterial, MeshStandardMaterial, PlaneGeometry,
   PMREMGenerator, RepeatWrapping, Scene, SpotLight, SRGBColorSpace, Group, BoxGeometry, PointLight,
+  ClampToEdgeWrapping,
 } from 'three';
 
 const ROOM_RADIUS = 7, ROOM_HEIGHT = 5.2, PANEL_HEIGHT = 0.85;
+// Стена — многогранник: грани ближе к центру, чем ROOM_RADIUS, на r·(1 − cos(π/n)).
+const wallSegments = low => (low ? 48 : 96);
 
 function canvas(w, h) {
   const c = document.createElement('canvas');
@@ -142,6 +145,55 @@ export function buildEnvironment(scene, renderer, {low = false} = {}) {
   };
 }
 
+// Логотип клуба на стене за машиной в «Общем виде»: оригинальный файл шапки сайта
+// (его браузер уже скачал), горизонтальная версия, белая. Надпись — участок
+// цилиндра: повторяет изгиб стены и стоит на 1 см ближе к центру, чем середины её
+// граней (на телефоне грань на 1,5 см ближе радиуса — надпись уходила за стену
+// полосами), поэтому не мерцает и не пересекает стену; свет — те же настенные
+// светильники (51° и 66°).
+// angle — направление от центра комнаты, °, как у washer(); y — середина по высоте, м.
+// В «Общем виде» крыша ложится на стену около 1,3 м (под надписью), а с низкой камеры
+// «Оклейки» — на 2,0–2,1 м в секторе 55–75°: надпись левее этого сектора, иначе она
+// просвечивала бы сквозь стёкла машины. Выше — уходит под кнопки и подсказку области 3D на телефоне.
+export const LOGO = {file: 'assets/brand/Horizontal_Logo.svg', aspect: 2520 / 654, angle: 43, width: 2.4, y: 1.85};
+
+// Картинка логотипа; без неё гараж работает, просто стена без надписи.
+export function loadLogo(url) {
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = url;
+  return image.decode().then(() => image, () => null);
+}
+
+function logoMesh(image, low) {
+  // SVG рисуем в canvas нужного размера: текстура чёткая и без лишней памяти.
+  const W = low ? 1024 : 2048, H = Math.round(W / LOGO.aspect);
+  const [c, ctx] = canvas(W, H);
+  ctx.drawImage(image, 0, 0, W, H);
+  const map = new CanvasTexture(c);
+  map.colorSpace = SRGBColorSpace; map.anisotropy = 4;
+  // Цилиндр смотрит наружу, а мы внутри: развёртку зеркалим, чтобы надпись читалась.
+  map.wrapS = ClampToEdgeWrapping; map.repeat.x = -1; map.offset.x = 1;
+  const height = LOGO.width / LOGO.aspect, radius = ROOM_RADIUS * Math.cos(Math.PI / wallSegments(low)) - 0.01;
+  const arc = LOGO.width / radius;
+  // CylinderGeometry отсчитывает угол от +Z по часовой (если смотреть сверху),
+  // washer() — от +X против: переводим, чтобы середина надписи была на LOGO.angle.
+  const center = Math.PI / 2 - LOGO.angle * Math.PI / 180;
+  const geometry = new CylinderGeometry(radius, radius, height, low ? 24 : 48, 1, true, center - arc / 2, arc);
+  const material = new MeshStandardMaterial({
+    map, color: '#efe4d2', roughness: 0.5, metalness: 0.35, side: BackSide,
+    // Прозрачность смешиванием, а не alphaTest: на маленьком экране мип-уровни
+    // усредняют тонкие штрихи ниже порога, и буквы пропадали. Надпись дальше всех
+    // объектов сцены, поэтому порядок прозрачных ей не мешает.
+    transparent: true, depthWrite: false, alphaTest: 0.01, envMapIntensity: 0.6,
+    polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2,
+  });
+  const mesh = new Mesh(geometry, material);
+  mesh.name = 'club-logo';
+  mesh.position.y = LOGO.y;
+  return {mesh, own: [geometry, material, map]};
+}
+
 export function buildRoom(scene, {low}) {
   const disposables = [];
   const keep = (...items) => { disposables.push(...items); return items[0]; };
@@ -152,12 +204,12 @@ export function buildRoom(scene, {low}) {
   const wood = keep(woodTexture(low)); wood.repeat.set(Math.round(perimeter / 3.2), 1);
   const plaster = keep(plasterTexture(low)); plaster.repeat.set(Math.round(perimeter / 6), 1);
   const panels = new Mesh(
-    keep(new CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, PANEL_HEIGHT, low ? 48 : 96, 1, true)),
+    keep(new CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, PANEL_HEIGHT, wallSegments(low), 1, true)),
     keep(new MeshStandardMaterial({map: wood, roughness: 0.55, metalness: 0, side: BackSide, envMapIntensity: 0.5, dithering: true})),
   );
   panels.position.y = PANEL_HEIGHT / 2; group.add(panels);
   const wall = new Mesh(
-    keep(new CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT - PANEL_HEIGHT, low ? 48 : 96, 1, true)),
+    keep(new CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT - PANEL_HEIGHT, wallSegments(low), 1, true)),
     keep(new MeshStandardMaterial({map: plaster, roughness: 0.95, metalness: 0, side: BackSide, envMapIntensity: 0.2, dithering: true})),
   );
   wall.position.y = PANEL_HEIGHT + (ROOM_HEIGHT - PANEL_HEIGHT) / 2; group.add(wall);
@@ -212,6 +264,14 @@ export function buildRoom(scene, {low}) {
     group,
     sweep,
     top,
+    // Логотип на стене — когда картинка загружена (обычно уже из кэша страницы).
+    addLogo(image) {
+      if (!image || group.getObjectByName('club-logo')) return null;
+      const {mesh, own} = logoMesh(image, low);
+      disposables.push(...own);
+      group.add(mesh);
+      return mesh;
+    },
     dispose() {
       group.removeFromParent();
       for (const item of disposables) item.dispose();
