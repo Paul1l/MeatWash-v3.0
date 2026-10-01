@@ -147,7 +147,7 @@
   «Поделиться → Встроить» карточки организации) создаёт `maps.js` только при открытии и только
   для выбранной студии, при закрытии удаляет. В разметке iframe и адреса виджета быть не должно
   (check). Поверх углов iframe ничего не класть: там элементы управления и атрибуция Яндекса.
-- Push в `main` сразу публикует сайт на GitHub Pages (`pages.yml`), его видит клиент.
+- Push в `main` сразу публикует сайт на GitHub Pages и на meatwash.ru (`pages.yml`), его видит клиент.
   В `main` не пушить — только ветка и pull request; сливает владелец.
 - Форм сбора данных нет намеренно. Запись — ссылками в yclients, у каждого филиала своя:
   Мясницкая `n975571…/company/906067`, Технопарк `n1982508…/company/1743348`
@@ -160,8 +160,10 @@
 - Цены и факты — только из JSON (цены «от» в гараже тоже проверяются). Не выдумывать цифры,
   отзывы, клиентов, акции, программы лояльности.
 - `canonical`, `og:url`, `og:image`, JSON-LD, `robots.txt`, `sitemap.xml`, адрес в Политике и
-  Согласии указывают на `https://meatwash.ru/` (GitHub Pages со своим доменом, `SITE` в
-  `scripts/content.mjs` и `scripts/check.mjs`; настройка DNS и Pages — README, «Домен meatwash.ru»).
+  Согласии указывают на `https://meatwash.ru/` (`SITE` в `scripts/content.mjs` и `scripts/check.mjs`).
+  meatwash.ru — хостинг reg.ru: `pages.yml` после GitHub Pages выкладывает тот же `dist` по FTP/SFTP
+  (`scripts/deploy-hosting.sh`, секреты `FTP_HOST`, `FTP_USER`, `FTP_PASSWORD`, переменная `FTP_DIR`;
+  без `FTP_HOST` шаг пропускается) — README, «Домен meatwash.ru». GitHub Pages — копия.
   Ссылки внутри сайта — только относительные: сайт работает и в корне домена, и на
   `paul1l.github.io/MeatWash-v3.0/`. Если адрес сменится — менять все. Счётчик Метрики принимает
   данные только с `meatwash.ru`.
