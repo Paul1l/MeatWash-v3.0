@@ -94,8 +94,24 @@ async function cockpitClearance(gltfDocument) {
     drops[low ? 'low' : 'high'] = {count: set.count, below, off, rear};
     set.dispose();
   }
+  // Табличка клуба на торпедо: есть, целиком под лобовым стеклом и лицом к нему
+  // (наружу) — иначе логотип не виден сквозь стекло.
+  let plaque = null;
+  const n = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
+  built.group.traverse(o => {
+    if (o.name !== 'dash-logo') return;
+    const position = o.geometry.attributes.position, normal = o.geometry.attributes.normal;
+    normalMatrix.getNormalMatrix(o.matrixWorld);
+    let outside = 0, facing = 0;
+    for (let i = 0; i < position.count; i++) {
+      v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+      if (glass?.height(v.x, v.z) == null) outside++;
+      if (n.fromBufferAttribute(normal, i).applyMatrix3(normalMatrix).normalize().y > 0.3) facing++;
+    }
+    plaque = {count: position.count, outside, facing};
+  });
   built.dispose();
-  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0, drops};
+  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0, drops, plaque};
 }
 const clearances = [];
 
@@ -133,7 +149,9 @@ for (const [name, variant] of Object.entries(report.variants)) {
     check(!prim.getAttribute('TANGENT'), `${variant.file}: остались касательные`);
   }
   const fit = await cockpitClearance(document);
-  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted}); капель ${fit.drops.high.count} / телефон ${fit.drops.low.count}`);
+  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted}); капель ${fit.drops.high.count} / телефон ${fit.drops.low.count}; табличка на торпедо — ${fit.plaque?.count ?? 0} вершин`);
+  check(fit.plaque && fit.plaque.count > 0 && !fit.plaque.outside && fit.plaque.facing === fit.plaque.count,
+    `${variant.file}: табличка с логотипом на торпедо (dash-logo) не найдена, выходит из-под лобового стекла или смотрит не наружу: ${JSON.stringify(fit.plaque)}`);
   for (const [q, d] of Object.entries(fit.drops)) {
     check(d.count >= (q === 'low' ? 40 : 90), `${variant.file}: капель «Антидождя» (${q}) ${d.count} — лобовое стекло не найдено или слишком мало места`);
     check(!d.below && !d.off && !d.rear, `${variant.file}: капли «Антидождя» (${q}) не на внешней стороне лобового стекла: ниже стекла ${d.below}, вне стекла ${d.off} вершин, на заднем стекле ${d.rear}`);

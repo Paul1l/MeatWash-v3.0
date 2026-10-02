@@ -53,6 +53,8 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
   // на 6–10 см: углы торпедо выходили сквозь стекло (до 4 см). Подгоняем кокпит
   // под настоящее стекло модели.
   const fitted = fitUnderGlass(cockpit, car, GLASS_CLEARANCE, glass);
+  // Табличка клуба на торпедо — после подгонки: она сама держит зазор до стекла.
+  const plaque = glass ? dashLogo(glass, cockpit) : null;
   const textures = new Set(), materials = new Set();
   cockpit.traverse(o => { if (o.material) { materials.add(o.material); for (const v of Object.values(o.material)) if (v?.isTexture) textures.add(v); } });
   return {
@@ -60,11 +62,88 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
     fitted,
     // Карта стекла модели — по ней же капли «Антидождя» ложатся на лобовое (drops.js).
     glass,
+    // Логотип на табличку торпедо: картинка та же, что для стены (файл шапки сайта).
+    setLogo(image, options) { plaque?.setLogo(image, options); },
     dispose() {
       cockpit.removeFromParent();
       cockpit.traverse(o => o.geometry?.dispose());
       materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
       removed.forEach(g => g.dispose());
+    },
+  };
+}
+
+// Табличка MEATWASH на торпедо со стороны пассажира (+X): лежит вдоль лобового стекла
+// на gap под ним, логотип смотрит наружу и читается снаружи сквозь стекло — как
+// табличка студии под стеклом. Сетка повторяет изгиб стекла, поэтому зазор одинаковый
+// по всей табличке и больше GLASS_CLEARANCE (check:3d проверяет его вместе с торпедо;
+// полка торпедо — на 4,5 см ниже стекла, табличка над ней). Размеры, м: x — от и до,
+// z0 — нижний край (кромка стекла у пассажирской стойки — z≈−0,64…−0,70), height —
+// по стеклу.
+export const DASH_LOGO = {x: [0.12, 0.48], z0: -0.62, height: 0.11, gap: 0.03};
+
+function dashLogo(glass, cockpit) {
+  const {x: [x0, x1], z0, height, gap} = DASH_LOGO, nx = 12, nz = 4;
+  const mid = (x0 + x1) / 2, ya = glass.height(mid, z0), yb = glass.height(mid, z0 + 0.02);
+  if (ya == null || yb == null) return null;
+  // Длина по стеклу → по z: стекло 930 поднимается к корме под ~36°.
+  const dz = height / Math.hypot(1, (yb - ya) / 0.02);
+  const position = [], uv = [], index = [];
+  const local = new THREE.Vector3(), inverse = new THREE.Matrix4();
+  cockpit.updateMatrixWorld(true);
+  inverse.copy(cockpit.matrixWorld).invert();
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
+    const x = x0 + (x1 - x0) * i / nx, z = z0 + dz * j / nz, top = glass.height(x, z);
+    if (top == null) return null;
+    local.set(x, top - gap, z).applyMatrix4(inverse);
+    position.push(local.x, local.y, local.z);
+    // Снаружи спереди правый борт машины (+X) — слева: надпись идёт от +X к −X,
+    // верх картинки — к верху стекла (к корме).
+    uv.push(1 - i / nx, j / nz);
+  }
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const a = j * (nx + 1) + i, b = a + 1, c = a + nx + 1, d = c + 1;
+    // Лицевая сторона — к стеклу, наружу.
+    index.push(a, c, b, b, c, d);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  geometry.setIndex(index);
+  geometry.computeVertexNormals();
+  // Текстура с самого начала (пока — тёмная заглушка): программа шейдера та же и
+  // после того, как придёт логотип, — без компиляции при показе.
+  const blank = document.createElement('canvas');
+  blank.width = blank.height = 4;
+  const bctx = blank.getContext('2d');
+  if (bctx) { bctx.fillStyle = '#151110'; bctx.fillRect(0, 0, 4, 4); }
+  const map = new THREE.CanvasTexture(blank);
+  map.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.MeshStandardMaterial({
+    map, emissiveMap: map, emissive: '#ffffff', emissiveIntensity: 0.16, roughness: 0.62, metalness: 0,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = 'dash-logo';
+  cockpit.add(mesh);
+  return {
+    // Табличка: тёмное поле, тонкая светлая рамка, логотип шапки сайта по центру.
+    setLogo(image, {low = false} = {}) {
+      if (!image) return;
+      const aspect = (x1 - x0) / height, W = low ? 512 : 1024, H = Math.round(W / aspect);
+      const c = document.createElement('canvas');
+      c.width = W; c.height = H;
+      const ctx = c.getContext('2d');
+      if (!ctx) return;
+      ctx.fillStyle = '#151110'; ctx.fillRect(0, 0, W, H);
+      const inset = Math.round(H * 0.07);
+      ctx.strokeStyle = 'rgba(239, 228, 210, 0.55)'; ctx.lineWidth = Math.max(1, Math.round(H * 0.012));
+      ctx.strokeRect(inset, inset, W - inset * 2, H - inset * 2);
+      const ratio = (image.naturalWidth || image.width || 2520) / (image.naturalHeight || image.height || 654);
+      const lw = W * 0.8, lh = lw / ratio;
+      ctx.drawImage(image, (W - lw) / 2, (H - lh) / 2, lw, lh);
+      map.image = c;
+      map.anisotropy = low ? 2 : 4;
+      map.needsUpdate = true;
     },
   };
 }

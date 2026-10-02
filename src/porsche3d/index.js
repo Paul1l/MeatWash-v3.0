@@ -353,6 +353,8 @@ export async function mount({
     interior = await buildInterior(gltf.scene, pause);
     if (disposed) bail();
     scene.add(interior.group);
+    // Табличка на торпедо — тот же логотип, что на стене (без него — тёмная табличка).
+    interior.setLogo(logoImage, {low});
     // Капли «Антидождя» на лобовом стекле — по той же карте стекла, что торпедо
     // (расстановка — 2–20 мс, отдельным шагом).
     await pause(); if (disposed) bail();
