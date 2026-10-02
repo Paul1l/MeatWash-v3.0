@@ -1,3 +1,9 @@
+  <!-- Карточка студии: слева данные и запись, справа (на телефоне — ниже) карта филиала.
+       iframe виджета Яндекс Карт создаёт js/maps.js, когда блок подходит к экрану; в разметке
+       его нет. До этого, без скриптов и при ошибке в области карты — заглушка со ссылкой на
+       карточку в Яндекс Картах. Размер области задан в CSS: загрузка карты его не меняет.
+       Если виджет не ответил за 12 с — плашка «Карта долго грузится» поверх карты (карточка
+       не меняет высоту). Ссылки «На карте» в подвале ведут сюда (#map-<филиал>). -->
   <article class="location">
     <div class="location__card">
       <h3>{{loc:myasnitskaya:name}}</h3>
@@ -7,10 +13,18 @@
       <a class="location__phone" href="tel:{{loc:myasnitskaya:tel}}">{{loc:myasnitskaya:phone}}</a>
       <div class="location__actions">
         <a class="btn btn--fill location__book" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer">Записаться<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">↗</span></a>
-        <a class="btn btn--ink location__map" href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer" data-map="myasnitskaya"><svg class="btn__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>На карте<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span></a>
       </div>
     </div>
-    <a class="location__photo location__photo--myasnitskaya" href="{{loc:myasnitskaya:gallery}}" target="_blank" rel="noopener noreferrer" aria-label="Фотографии студии на Мясницкой — Яндекс Карты"><img src="assets/img/studio-myasnitskaya-1200.webp" srcset="assets/img/studio-myasnitskaya-640.webp 640w, assets/img/studio-myasnitskaya-1200.webp 1170w" sizes="(max-width: 800px) 100vw, (max-width: 1100px) 53vw, 27vw" alt="Range Rover у фирменной стены Meat Wash в студии на Мясницкой" width="1170" height="772" loading="lazy" decoding="async"><span>Фотографии студии ↗</span></a>
+    <div class="location__map" id="map-myasnitskaya" tabindex="-1" data-map-embed="myasnitskaya" data-state="idle">
+      <div class="location__fallback">
+        <svg class="location__pin" viewBox="0 0 20 20" width="28" height="28" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.1"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+        <noscript><p class="location__status">Встроенная карта работает с включённым JavaScript.</p></noscript>
+        <p class="location__status" data-map-status></p>
+        <button class="btn btn--ink location__retry" type="button" data-map-retry hidden>Повторить<span class="visually-hidden">: карта {{loc:myasnitskaya:name}}</span></button>
+        <a class="link-arrow location__external" href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="location__slow" data-map-slow hidden>Карта долго грузится — <a href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer">откройте в Яндекс Картах<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">↗</span></a></p>
+    </div>
   </article>
   <article class="location">
     <div class="location__card">
@@ -21,8 +35,16 @@
       <a class="location__phone" href="tel:{{loc:technopark:tel}}">{{loc:technopark:phone}}</a>
       <div class="location__actions">
         <a class="btn btn--fill location__book" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer">Записаться<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">↗</span></a>
-        <a class="btn btn--ink location__map" href="{{loc:technopark:map}}" target="_blank" rel="noopener noreferrer" data-map="technopark"><svg class="btn__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>На карте<span class="visually-hidden">: {{loc:technopark:name}}</span></a>
       </div>
     </div>
-    <a class="location__photo location__photo--technopark" href="{{loc:technopark:gallery}}" target="_blank" rel="noopener noreferrer" aria-label="Фотографии студии Технопарк — Яндекс Карты"><img src="assets/img/studio-technopark-1200.webp" srcset="assets/img/studio-technopark-640.webp 640w, assets/img/studio-technopark-1200.webp 1031w" sizes="(max-width: 800px) 100vw, (max-width: 1100px) 53vw, 27vw" alt="Красный Mercedes G-Class в студии Meat Wash Технопарк с красно-чёрным интерьером" width="1031" height="1280" loading="lazy" decoding="async"><span>Фотографии студии ↗</span></a>
+    <div class="location__map" id="map-technopark" tabindex="-1" data-map-embed="technopark" data-state="idle">
+      <div class="location__fallback">
+        <svg class="location__pin" viewBox="0 0 20 20" width="28" height="28" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.1"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+        <noscript><p class="location__status">Встроенная карта работает с включённым JavaScript.</p></noscript>
+        <p class="location__status" data-map-status></p>
+        <button class="btn btn--ink location__retry" type="button" data-map-retry hidden>Повторить<span class="visually-hidden">: карта {{loc:technopark:name}}</span></button>
+        <a class="link-arrow location__external" href="{{loc:technopark:map}}" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">↗</span></a>
+      </div>
+      <p class="location__slow" data-map-slow hidden>Карта долго грузится — <a href="{{loc:technopark:map}}" target="_blank" rel="noopener noreferrer">откройте в Яндекс Картах<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">↗</span></a></p>
+    </div>
   </article>

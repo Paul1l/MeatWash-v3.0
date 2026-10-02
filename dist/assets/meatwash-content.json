@@ -647,7 +647,7 @@
       "address": "101000, г. Москва",
       "email": "MeatWash.detailing@gmail.com"
     },
-    "documentsDate": "2026-10-01",
+    "documentsDate": "2026-10-02",
     "requests": {
       "_comment": "Заявка с фото для немоечных работ. endpoint — адрес приёма заявок (POST multipart/form-data, ответ JSON {\"ok\":true}); пока null — форма не отправляет и предлагает позвонить. Секретов и токенов здесь быть не должно.",
       "endpoint": null

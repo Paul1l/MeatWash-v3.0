@@ -108,12 +108,6 @@
 .location__detail{font-size:12px;line-height:1.8;color:var(--ink-soft);margin:16px 0}
 /* Телефон — тоже цель нажатия: 44px по высоте, кегль прежний. */
 .location__phone{display:inline-flex;align-items:center;min-height:44px;font-size:14px;margin-bottom:6px}
-.location__photo{position:relative;display:block;min-width:0}
-.location__photo img{position:absolute;inset:0;filter:saturate(.9) brightness(.96)}
-.location__photo--myasnitskaya img{object-position:48% 50%}
-.location__photo--technopark img{object-position:42% 62%}
-.location__photo>span{position:absolute;bottom:0;left:0;right:0;padding:42px 18px 18px;background:linear-gradient(transparent,rgb(var(--black-rgb)/.78));color:var(--ivory);font-size:11px;letter-spacing:.025em}
-@media(max-width:800px) and (orientation:portrait){.location__photo{height:260px}.location__photo--technopark img{object-position:50% 65%}}
 
 /* ---------- Адаптив ---------- */
 @media(max-width:1100px){.visit-notes{gap:25px}}

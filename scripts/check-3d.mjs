@@ -2,7 +2,9 @@
 // - dist/js/porsche3d.bundle.js собран из текущего src/porsche3d;
 // - модели в dist/assets/3d совпадают с отчётом optimize-3d (не правлены руками),
 //   сжаты Meshopt, текстуры WebP не больше заданных размеров, без касательных;
-// - у каждой работы «Гаража услуг» есть ракурс, эффекты — только у известных работ;
+// - у каждой работы «Гаража услуг» есть ракурс, эффекты — только у известных работ
+//   и известного вида: блик (glow) — с путём света для ракурса, капли (rain) — только
+//   в ракурсе лобового стекла и лежат на внешней стороне стекла обеих моделей;
 // - размеры укладываются в бюджет; печатается таблица raw / gzip / brotli.
 // Что страница не грузит 3D до нажатия, проверяет npm run check (check.mjs).
 import {readFile, readdir, mkdtemp, rm} from 'node:fs/promises';
@@ -41,6 +43,7 @@ try {
 // иначе торпедо видно сквозь лобовое стекло. Холст для текстур кожи — заглушка.
 globalThis.document ??= {createElement: () => ({width: 0, height: 0, getContext: () => new Proxy({}, {get: (t, k) => k in t ? t[k] : () => {}})})};
 const interior = await import(new URL('../src/porsche3d/interior.js', import.meta.url).href);
+const dropsModule = await import(new URL('../src/porsche3d/drops.js', import.meta.url).href);
 async function cockpitClearance(gltfDocument) {
   const car = new THREE.Group();
   for (const node of gltfDocument.getRoot().listNodes()) {
@@ -73,8 +76,42 @@ async function cockpitClearance(gltfDocument) {
       under++; min = Math.min(min, top - v.y);
     }
   });
+  // Капли «Антидождя» (бусины без движения): на лобовом стекле, ни одна вершина не
+  // ниже его внешней поверхности — иначе капля тонет в стекле или видна изнутри.
+  const drops = {};
+  for (const low of [false, true]) {
+    const set = dropsModule.buildDrops(glass, {low});
+    if (!set) { drops[low ? 'low' : 'high'] = {count: 0, below: 0, off: 0}; continue; }
+    set.update(0, true);
+    const position = set.mesh.geometry.attributes.position;
+    let below = 0, off = 0;
+    for (let i = 0; i < position.count; i++) {
+      const y = glass.height(position.getX(i), position.getZ(i), true);
+      if (y == null) off++; else if (position.getY(i) < y - 1e-4) below++;
+    }
+    // Только лобовое стекло: перед кабиной (заднее — за ней, z > 0).
+    const rear = set.sample().filter(d => d.z > -0.1).length;
+    drops[low ? 'low' : 'high'] = {count: set.count, below, off, rear};
+    set.dispose();
+  }
+  // Табличка клуба на торпедо: есть, целиком под лобовым стеклом и лицом к нему
+  // (наружу) — иначе логотип не виден сквозь стекло.
+  let plaque = null;
+  const n = new THREE.Vector3(), normalMatrix = new THREE.Matrix3();
+  built.group.traverse(o => {
+    if (o.name !== 'dash-logo') return;
+    const position = o.geometry.attributes.position, normal = o.geometry.attributes.normal;
+    normalMatrix.getNormalMatrix(o.matrixWorld);
+    let outside = 0, facing = 0;
+    for (let i = 0; i < position.count; i++) {
+      v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+      if (glass?.height(v.x, v.z) == null) outside++;
+      if (n.fromBufferAttribute(normal, i).applyMatrix3(normalMatrix).normalize().y > 0.3) facing++;
+    }
+    plaque = {count: position.count, outside, facing};
+  });
   built.dispose();
-  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0};
+  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0, drops, plaque};
 }
 const clearances = [];
 
@@ -112,7 +149,13 @@ for (const [name, variant] of Object.entries(report.variants)) {
     check(!prim.getAttribute('TANGENT'), `${variant.file}: остались касательные`);
   }
   const fit = await cockpitClearance(document);
-  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted})`);
+  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted}); капель ${fit.drops.high.count} / телефон ${fit.drops.low.count}; табличка на торпедо — ${fit.plaque?.count ?? 0} вершин`);
+  check(fit.plaque && fit.plaque.count > 0 && !fit.plaque.outside && fit.plaque.facing === fit.plaque.count,
+    `${variant.file}: табличка с логотипом на торпедо (dash-logo) не найдена, выходит из-под лобового стекла или смотрит не наружу: ${JSON.stringify(fit.plaque)}`);
+  for (const [q, d] of Object.entries(fit.drops)) {
+    check(d.count >= (q === 'low' ? 40 : 90), `${variant.file}: капель «Антидождя» (${q}) ${d.count} — лобовое стекло не найдено или слишком мало места`);
+    check(!d.below && !d.off && !d.rear, `${variant.file}: капли «Антидождя» (${q}) не на внешней стороне лобового стекла: ниже стекла ${d.below}, вне стекла ${d.off} вершин, на заднем стекле ${d.rear}`);
+  }
   check(fit.triangles > 0 && fit.under > 0, `${variant.file}: не найдено стекло над кокпитом (материал glass)`);
   check(fit.min >= interior.GLASS_CLEARANCE - 1e-4, `${variant.file}: кокпит подходит к стеклу на ${(fit.min * 100).toFixed(1)} см (нужно не меньше ${interior.GLASS_CLEARANCE * 100} см) — торпедо видно сквозь лобовое стекло`);
 }
@@ -142,7 +185,22 @@ for (const zone of config.ZONES) {
   check(view in views.VIEWS, `Работа гаража ${zone.id} без ракурса или с несуществующим ракурсом ${view}`);
 }
 for (const id of [...Object.keys(views.SERVICE_VIEWS), ...Object.keys(views.SERVICE_FX)]) check(config.ZONES.some(z => z.id === id), `В SERVICE_VIEWS/SERVICE_FX лишняя работа ${id}`);
-for (const fx of Object.values(views.SERVICE_FX)) check(['wash', 'gloss'].includes(fx), `Неизвестный эффект ${fx}: модель убедительно показывает только wash и gloss`);
+// Эффекты: материал лака (wash, gloss), блик по детали (glow — путь света для ракурса
+// работы), капли на лобовом стекле (rain — только в его ракурсе). Другие эффекты модель
+// убедительно не показывает.
+const FX = ['wash', 'gloss', 'glow', 'rain'];
+for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
+  check(FX.includes(fx), `Неизвестный эффект ${fx} у работы ${id}: известны ${FX.join(', ')}`);
+  const view = views.SERVICE_VIEWS[id];
+  if (fx === 'glow') {
+    const glow = views.GLOW?.[view];
+    check(glow && glow.path?.length >= 2 && glow.path.every(p => p.length === 3 && p.every(Number.isFinite) && p[1] > 0.1)
+      && glow.power > 0 && glow.power <= 20 && glow.reach > 0 && glow.reach <= 2,
+      `Работа ${id}: блик (glow) без пути света для ракурса ${view} в GLOW, свет ниже пола или сила/дальность вне пределов`);
+  }
+  if (fx === 'rain') check(view === 'windscreen', `Работа ${id}: капли (rain) видны только в ракурсе лобового стекла, а у работы ${view}`);
+}
+for (const view of Object.keys(views.GLOW || {})) check(view in views.VIEWS, `GLOW: нет ракурса ${view}`);
 
 const pad = (v, n) => String(v).padStart(n);
 console.log('Размеры 3D-ресурсов, байт:');
@@ -152,4 +210,4 @@ for (const [label, raw, gz, br] of rows) console.log(`${label.padEnd(46)}${pad(r
 console.log('Наименьший зазор кокпит — стекло: ' + clearances.join('; '));
 
 assert.equal(failures.length, 0, failures.join('\n'));
-console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели, кокпит не выходит за стёкла.');
+console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели, эффекты известны (блик — с путём света, капли — на внешней стороне лобового стекла), кокпит не выходит за стёкла.');

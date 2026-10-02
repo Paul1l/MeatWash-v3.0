@@ -256,10 +256,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .location__card .link-arrow { align-self: flex-start; padding-top: 0; color: var(--ink); }
 .location__book { margin-top: auto; }
 .location__card .link-arrow + .link-arrow { margin-top: 6px; }
-.location__photo { overflow: hidden; border: 1px solid var(--line-ink); border-left: 0; }
-/* Тонирование фото студий — одно, в catalog.css (как в версии Vercel). */
-.location__photo img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--ease); }
-.location:hover .location__photo img { transform: scale(1.04); }
+/* Справа — карта студии (на телефоне — под карточкой): правила области карты — в pages.css. */
 
 /* ---------- Membership ---------- */
 .membership {
@@ -458,7 +455,6 @@ button.card { width: 100%; text-align: left; appearance: none; }
   .locations { padding: 8px var(--gutter); }
   .location { grid-template-columns: 1fr; }
   .location__card { border-right: 1px solid var(--line-ink); border-bottom: 0; }
-  .location__photo { border-left: 1px solid var(--line-ink); border-top: 0; height: 180px; }
   .footer__contacts { grid-template-columns: 1fr; gap: 22px; }
 }
 
@@ -474,7 +470,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
 /* Motion preferences: static cinematic frames instead of camera moves */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn > span, .link-arrow span, .location__photo img, .about__photo img, .membership__card img, .card__caption { transition: none; }
+  .btn > span, .link-arrow span, .about__photo img, .membership__card img, .card__caption { transition: none; }
   .about__photo img { transform: none; }
   .membership__card img { transform: none; opacity: 1; }
 }
@@ -500,9 +496,10 @@ html.is-locked, html.is-locked body { overflow: hidden; }
 .mobile-menu { inset: var(--header-h) 0 0; max-height: none; padding-bottom: max(28px, env(safe-area-inset-bottom)); background: var(--black); }
 /* Нижняя кнопка записи уходит при любом открытом окне (запасной путь к :has). */
 body.dialog-open .mobile-cta { visibility: hidden; }
-/* Окна записи и услуги на телефоне — нижний лист: крестик и «Записаться» ближе к пальцу. */
+/* Окна записи и заявки на телефоне — нижний лист: крестик и «Записаться» ближе к пальцу.
+   dialog.dialog, а не .dialog: правило должно перебивать ширину .request-dialog из pages.css. */
 @media (max-width: 600px) and (orientation: portrait) {
-  .dialog:not(.map-dialog) {
+  dialog.dialog {
     width: 100%; max-width: none; inset: auto 0 0 0; margin: 0; max-height: calc(100svh - 24px);
     border-radius: var(--radius) var(--radius) 0 0; border-bottom: 0;
     padding-bottom: calc(var(--dialog-pad) + env(safe-area-inset-bottom));

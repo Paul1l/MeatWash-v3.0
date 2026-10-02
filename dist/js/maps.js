@@ -1,51 +1,103 @@
-// Окно «На карте»: данные филиала и виджет Яндекс Карт.
+// Карты студий в карточках локаций (главная и «О нас»): у каждого филиала своя
+// карта на месте фотографии, видна сразу, без окна.
 //
 // Виджет — официальный iframe карточки организации (Яндекс Карты → карточка →
 // «Поделиться» → «Встроить»): map-widget/v1/org/<slug>/<id>/?ll=<lon,lat>&z=16,
 // адрес лежит в meatwash-content.json (mapWidget). В нём метка организации,
 // кнопки масштаба и атрибуция Яндекса — поверх углов iframe ничего не кладём.
 //
-// iframe создаётся только при открытии окна и только для выбранной студии;
-// при переключении вкладки он заменяется, при закрытии удаляется. Ссылка
-// «Открыть в Яндекс Картах» есть всегда, даже если виджет не загрузился.
+// Модуль грузит ui.js, когда блок локаций подходит к экрану, и вызывает
+// showMap(область) для каждой подошедшей карты: iframe создаётся только тогда.
+// До этого, без скриптов и при ошибке в области лежит заглушка со ссылкой на
+// карточку в Яндекс Картах. Размер области задан в CSS — загрузка его не меняет.
+//
+// Телефон и планшет (pointer: coarse): над картой прозрачный слой-кнопка. Свайп
+// по нему листает страницу, нажатие отдаёт жесты карте; слой возвращается, когда
+// карта ушла с экрана или нажали вне её. На компьютере слоя нет (стили).
+//
+// Цель Метрики map_open (branch, source) здесь — один раз на студию за просмотр
+// страницы: source 'touch' — включили карту нажатием, 'map' — взялись за карту
+// мышью или клавиатурой (фокус ушёл в iframe). Переход по «На карте» из подвала
+// (source 'footer') считает ui.js.
 import { LOCATIONS } from './data.js';
+import { goal } from './analytics.js';
 
 const LOAD_TIMEOUT_MS = 12000;
-let dialog = null, api = null;
+const PIN = '<svg class="location__pin" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
+const maps = new Map();          // область карты → её управление
+const reported = new Set();      // студии, по которым цель уже ушла
+let offscreen = null;
 
-export function setupMaps({ dialog: element, onOpen }) {
-  if (api) return api;
-  dialog = element;
-  const $ = (s) => dialog.querySelector(s);
-  const tabs = [...dialog.querySelectorAll('[data-map-tab]')];
-  const panel = $('#map-panel');
-  const title = $('#map-title');
-  const info = $('.map-dialog__info');
-  const frameBox = $('.map-dialog__map');
-  const status = $('.map-dialog__status');
-  const fail = $('.map-dialog__fail');
-  const placeholder = $('.map-dialog__placeholder');
-  const slow = $('.map-dialog__slow');
-  let current = null, opener = null, savedY = 0, frame = null, probe = null, probeTimer = 0, slowTimer = 0;
+function report(id, source) {
+  if (reported.has(id)) return;
+  reported.add(id);
+  goal('map_open', { branch: id, source });
+}
 
-  // Состояния области карты: loading → loaded | error. Под iframe всегда лежит
-  // заглушка (сетка, подпись): пока виджет не нарисовался, видна она. Ошибка
-  // кладёт заглушку поверх iframe.
+// Общие слушатели — один раз, при первой карте.
+function listen() {
+  // Карта ушла с экрана — слой над ней возвращается.
+  offscreen = new IntersectionObserver((entries) => {
+    for (const entry of entries) if (!entry.isIntersecting) maps.get(entry.target)?.arm();
+  });
+  // Нажатие вне карты — тоже. Касания внутри iframe сюда не доходят, поэтому
+  // любое нажатие на странице вне области карты значит «карту оставили».
+  document.addEventListener('pointerdown', (e) => {
+    for (const [box, map] of maps) if (!box.contains(e.target)) map.arm();
+  }, { capture: true, passive: true });
+  // Щелчок или Tab в карту на компьютере: фокус уходит в iframe, окно страницы
+  // получает blur. Это единственный след взаимодействия с чужим iframe.
+  addEventListener('blur', () => setTimeout(() => {
+    const active = document.activeElement;
+    for (const map of maps.values()) if (map.frame && map.frame === active) report(map.id, 'map');
+  }));
+}
+
+function embed(box) {
+  const location = LOCATIONS.find((l) => l.id === box.dataset.mapEmbed);
+  if (!location) return null;
+  const fallback = box.querySelector('.location__fallback');
+  const status = box.querySelector('[data-map-status]');
+  const retry = box.querySelector('[data-map-retry]');
+  const slow = box.querySelector('[data-map-slow]');
+  let frame = null, probe = null, probeTimer = 0, slowTimer = 0;
+
+  // Слой для пальца: вся область — кнопка, подпись — плашкой под меткой организации.
+  const shield = document.createElement('button');
+  shield.type = 'button';
+  shield.className = 'location__shield';
+  shield.innerHTML = `<span class="location__hint">${PIN}Нажмите, чтобы двигать карту</span>`;
+  shield.querySelector('.location__hint').append(Object.assign(document.createElement('span'), { className: 'visually-hidden', textContent: `: ${location.name}` }));
+  box.append(shield);
+  shield.addEventListener('click', () => {
+    const focused = document.activeElement === shield;
+    shield.hidden = true;
+    // Фокус не теряется вместе со слоем: дальше — сама карта.
+    if (focused) frame?.focus({ preventScroll: true });
+    report(location.id, 'touch');
+  });
+
+  // Состояния области: idle → loading → loaded | error. Под iframe всегда лежит
+  // заглушка (сетка, метка, подпись): пока виджет не нарисовался, видна она.
+  // Ошибка кладёт заглушку поверх iframe.
   //
   // По load iframe успех не определить: страница ошибки браузера (виджет
   // заблокирован, связь оборвалась) тоже присылает load, а бывает, что load не
   // приходит и через 12 с при уже нарисованной карте. Поэтому:
-  // - нет сети при открытии или лёгкий запрос HEAD к виджету (no-cors: важно только,
-  //   дошёл ли он) отклонён — ошибка поверх iframe с «Повторить»;
-  // - 12 с без load — не ошибка (карта могла уже быть на экране), а подсказка в
-  //   колонке информации: «Карта долго грузится — откройте в Яндекс Картах».
+  // - нет сети или лёгкий запрос HEAD к виджету (no-cors: важно только, дошёл
+  //   ли он) отклонён — ошибка поверх iframe с «Повторить»;
+  // - 12 с без load — не ошибка (карта могла уже быть на экране), а плашка поверх
+  //   карты: «Карта долго грузится — откройте в Яндекс Картах». Карточка рядом
+  //   при этом не меняет высоту.
+  // Плашка «долго грузится» встаёт на место подписи слоя для пальца — подпись прячем.
+  const showSlow = (on) => { slow.hidden = !on; box.toggleAttribute('data-slow', on); };
   const setState = (state) => {
-    frameBox.dataset.state = state;
-    fail.hidden = state !== 'error';
+    box.dataset.state = state;
+    retry.hidden = state !== 'error';
     status.textContent = state === 'loading' ? 'Загружаем карту…' : state === 'error' ? 'Карта не загрузилась.' : '';
     // Заглушка под iframe не должна ловить Tab: доступна, только когда она сверху.
-    placeholder.inert = Boolean(frame) && state !== 'error';
-    if (state !== 'loading') slow.hidden = true;
+    fallback.inert = Boolean(frame) && state !== 'error';
+    if (state !== 'loading') showSlow(false);
   };
 
   function unload() {
@@ -55,40 +107,7 @@ export function setupMaps({ dialog: element, onOpen }) {
     probe = null;
     frame?.remove();
     frame = null;
-    slow.hidden = true;
     setState('idle');
-  }
-
-  function load(location) {
-    unload();
-    setState('loading');
-    if (navigator.onLine === false) { setState('error'); return; }
-    const iframe = document.createElement('iframe');
-    iframe.src = location.mapWidget;
-    iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
-    iframe.allowFullscreen = true;
-    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-    // Итог проверки: 'ok', 'fail' — запрос отклонён (блокировка, обрыв, нет сети),
-    // 'timeout' — 12 с без ответа, null — ещё идёт. Отказ — ошибка: load в этом
-    // случае приходит от страницы ошибки браузера. Таймаут ошибкой не считается.
-    let result = null, loaded = false;
-    frame = iframe;
-    const decide = () => {
-      if (frame !== iframe) return;
-      if (result === 'fail') setState('error');
-      else if (loaded) setState('loaded');
-    };
-    iframe.addEventListener('load', () => {
-      if (frame !== iframe) return;
-      loaded = true;
-      // Карта пришла после отказа (сеть ожила) — проверяем ещё раз, а не верим load.
-      if (result === 'fail') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
-      else decide();
-    });
-    verify(iframe).then((r) => { if (r) { result = r; decide(); } });   // null — окно закрыли или сменили студию
-    slowTimer = setTimeout(() => { if (frame === iframe && !loaded && frameBox.dataset.state === 'loading') slow.hidden = false; }, LOAD_TIMEOUT_MS);
-    frameBox.append(iframe);
-    setState(frameBox.dataset.state);
   }
 
   function verify(iframe) {
@@ -103,89 +122,65 @@ export function setupMaps({ dialog: element, onOpen }) {
       .finally(() => { if (probe === check) { clearTimeout(probeTimer); probe = null; } });
   }
 
-  const fields = {
-    name: (l) => l.name,
-    type: (l) => l.type,
-    address: (l) => l.address,
-    phone: (l) => l.phone,
-    'entry-label': (l) => l.entry.label,
-    'entry-text': (l) => l.entry.text,
-    'on-site': (l) => l.onSite.join(' · '),
-  };
-
-  function fill(location) {
-    for (const el of dialog.querySelectorAll('[data-map-field]')) {
-      const key = el.dataset.mapField;
-      if (key === 'hours') el.replaceChildren(...location.hours.flatMap((line, i) => i ? [document.createElement('br'), line] : [line]));
-      else if (fields[key]) el.textContent = fields[key](location);
-    }
-    dialog.querySelectorAll('[data-map-call]').forEach((a) => { a.href = 'tel:' + location.tel; });
-    dialog.querySelectorAll('[data-map-external]').forEach((a) => { a.href = location.map; });
-    dialog.querySelectorAll('[data-map-route]').forEach((a) => { a.href = location.route; });
-    dialog.querySelectorAll('[data-map-book]').forEach((a) => { a.href = location.booking; });
-    for (const tab of tabs) {
-      const on = tab.dataset.mapTab === location.id;
-      tab.setAttribute('aria-selected', String(on));
-      tab.tabIndex = on ? 0 : -1;
-      if (on) panel.setAttribute('aria-labelledby', tab.id);
-    }
-  }
-
-  function select(id, { loadMap = true } = {}) {
-    const location = LOCATIONS.find((l) => l.id === id) || LOCATIONS[0];
-    if (current === location.id && frame) return;
-    current = location.id;
-    fill(location);
-    info.scrollTop = 0;
-    if (loadMap) load(location);
-  }
-
-  // Вкладки: щелчок, стрелки, Home/End. Филиалов два — вкладка активируется сразу.
-  dialog.addEventListener('click', (e) => {
-    const tab = e.target.closest('[data-map-tab]');
-    if (tab) { select(tab.dataset.mapTab); return; }
-    if (e.target.closest('[data-map-retry]')) { const l = LOCATIONS.find((x) => x.id === current); if (l) load(l); }
-  });
-  dialog.addEventListener('keydown', (e) => {
-    const tab = e.target.closest('[data-map-tab]');
-    if (!tab) return;
-    const i = tabs.indexOf(tab);
-    const next = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    const target = tabs[(next + tabs.length) % tabs.length];
-    target.focus();
-    select(target.dataset.mapTab);
-  });
-
-  dialog.addEventListener('close', () => {
+  function load() {
     unload();
-    current = null;
-    // Страница остаётся, где была; фокус — на кнопку, которой открыли окно.
-    if (Math.abs(scrollY - savedY) > 1) scrollTo({ top: savedY, behavior: 'instant' });
-    opener?.focus({ preventScroll: true });
-    opener = null;
+    setState('loading');
+    if (navigator.onLine === false) { setState('error'); return; }
+    const iframe = document.createElement('iframe');
+    iframe.src = location.mapWidget;
+    iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
+    iframe.allowFullscreen = true;
+    iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+    // Итог проверки: 'ok', 'fail' — запрос отклонён (блокировка, обрыв, нет сети),
+    // 'timeout' — 12 с без ответа, null — проверку сменила новая загрузка.
+    // Отказ — ошибка: load в этом случае приходит от страницы ошибки браузера.
+    // Таймаут ошибкой не считается.
+    let result = null, loaded = false;
+    frame = iframe;
+    const decide = () => {
+      if (frame !== iframe) return;
+      if (result === 'fail') setState('error');
+      else if (loaded) setState('loaded');
+    };
+    iframe.addEventListener('load', () => {
+      if (frame !== iframe) return;
+      loaded = true;
+      // Карта пришла после отказа (сеть ожила) — проверяем ещё раз, а не верим load.
+      if (result === 'fail') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
+      else decide();
+    });
+    verify(iframe).then((r) => { if (r) { result = r; decide(); } });
+    slowTimer = setTimeout(() => { if (frame === iframe && !loaded && box.dataset.state === 'loading') showSlow(true); }, LOAD_TIMEOUT_MS);
+    // Слой для пальца — поверх iframe, поэтому iframe встаёт перед ним.
+    box.insertBefore(iframe, shield);
+    setState(box.dataset.state);
+    shield.hidden = false;
+  }
+
+  retry.addEventListener('click', () => {
+    load();
+    // Кнопка «Повторить» скрылась — фокус остаётся в области карты.
+    box.focus({ preventScroll: true });
   });
 
-  api = {
-    open(id, from) {
-      opener = from || null;
-      savedY = scrollY;
-      select(id, { loadMap: false });
-      if (!dialog.open) {
-        dialog.scrollTop = 0;
-        dialog.showModal();
-        onOpen?.();
-      }
-      const location = LOCATIONS.find((l) => l.id === current);
-      load(location);
-      title.focus({ preventScroll: true });
-    },
+  offscreen.observe(box);
+  return {
+    id: location.id,
+    get frame() { return frame; },
+    show() { if (!frame && box.dataset.state === 'idle') load(); },
+    arm() { if (frame) shield.hidden = false; },
   };
-  return api;
 }
 
-export function openMap(id, from) {
-  if (!api) throw new Error('setupMaps() не вызван');
-  api.open(id, from);
+// Карта студии в области [data-map-embed]: создаётся при первом вызове.
+export function showMap(box) {
+  if (!box) return;
+  if (!offscreen) listen();
+  let map = maps.get(box);
+  if (!map) {
+    map = embed(box);
+    if (!map) return;
+    maps.set(box, map);
+  }
+  map.show();
 }

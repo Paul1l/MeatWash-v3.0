@@ -104,7 +104,7 @@ ${d.groups.map((group,i)=>{
 // кузову и их состав (гараж не берёт повторно работу, уже входящую в мойку:
 // items — позиции каталога), цены работ по названию (null — после оценки),
 // позиции с пояснением, категорией и подразделом, четыре категории с подразделами,
-// настройка заявок и филиалы (окно карты).
+// настройка заявок и филиалы (карты в карточках, цель записи).
 export function renderData(){
  const prices=Object.fromEntries(d.groups.flatMap(g=>g.items.map(([name,price])=>[name,price])));
  const items=Object.fromEntries(d.groups.flatMap(g=>g.sections.filter(s=>s.items).flatMap(s=>s.items.map(name=>{
@@ -114,7 +114,8 @@ export function renderData(){
  const categories=d.groups.map(g=>({id:g.id,title:g.title,short:g.short,desc:g.desc,booking:g.booking,
   sections:g.sections.map(s=>({id:s.id,title:s.title,...(s.programs?{programs:true}:{}),...(s.accent?{accent:true}:{}),...(s.items?{items:s.items}:{})})),
   items:g.items.map(([name])=>name)}));
- const locations=d.locations.map(l=>({id:l.id,name:l.name,type:l.type,address:l.address,hours:l.hours,phone:l.phone,tel:l.tel,booking:l.booking,map:l.map,mapWidget:l.mapWidget,route:l.route,entry:l.entry,onSite:l.onSite}));
+ // Филиалы для скриптов: цель Метрики по ссылке записи (ui.js) и карты в карточках (maps.js).
+ const locations=d.locations.map(l=>({id:l.id,name:l.name,address:l.address,booking:l.booking,map:l.map,mapWidget:l.mapWidget}));
  return `// Сгенерировано scripts/catalog.mjs из assets/meatwash-content.json — руками не править:
 // после правки JSON выполните npm run catalog (npm run check сверяет этот файл).
 export const BODY_TYPES = ${JSON.stringify(d.bodyTypes)};
