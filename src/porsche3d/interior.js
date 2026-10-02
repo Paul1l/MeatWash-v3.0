@@ -58,6 +58,8 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
   return {
     group: cockpit,
     fitted,
+    // Карта стекла модели — по ней же капли «Антидождя» ложатся на лобовое (drops.js).
+    glass,
     dispose() {
       cockpit.removeFromParent();
       cockpit.traverse(o => o.geometry?.dispose());
@@ -104,8 +106,10 @@ export function glassMap(car, cell = 0.05) {
     }
   }
   // Высота стекла над точкой (x, z): нижняя из поверхностей на этой вертикали
-  // (у стекла бывает внешняя и внутренняя). null — над точкой стекла нет.
-  const height = (x, z) => {
+  // (у стекла бывает внешняя и внутренняя) — под неё подгоняется кокпит; upper —
+  // верхняя, внешняя: на ней лежат капли. У стекла 930 слой один, высоты совпадают.
+  // null — над точкой стекла нет.
+  const height = (x, z, upper = false) => {
     if (x < minX || x > maxX || z < minZ || z > maxZ) return null;
     let best = null;
     for (const [a, b, c] of grid.get(key(x, z)) || []) {
@@ -116,7 +120,7 @@ export function glassMap(car, cell = 0.05) {
       const l3 = 1 - l1 - l2;
       if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
       const y = l1 * a[1] + l2 * b[1] + l3 * c[1];
-      if (best === null || y < best) best = y;
+      if (best === null || (upper ? y > best : y < best)) best = y;
     }
     return best;
   };

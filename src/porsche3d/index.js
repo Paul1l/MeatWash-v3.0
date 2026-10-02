@@ -12,14 +12,15 @@
 // или пальцем по обеим осям, приближение — колесом, щипком или zoomBy()
 // в ограниченных пределах; ракурсы работ — программно.
 import {
-  ACESFilmicToneMapping, Color, MathUtils, MeshPhysicalMaterial,
+  ACESFilmicToneMapping, CatmullRomCurve3, Color, MathUtils, MeshPhysicalMaterial,
   PerspectiveCamera, Scene, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {buildEnvironment, buildRoom, loadLogo, LOGO} from './room.js';
 import {buildInterior} from './interior.js';
-import {VIEWS, SERVICE_VIEWS, SERVICE_FX, REF_ASPECT} from './views.js';
+import {buildDrops, DROPS} from './drops.js';
+import {VIEWS, SERVICE_VIEWS, SERVICE_FX, GLOW, REF_ASPECT} from './views.js';
 import {MODELS} from './models.js';
 
 export {VIEWS, SERVICE_VIEWS, MODELS};
@@ -242,7 +243,7 @@ export async function mount({
   // Обещание, которое выполняется при отмене: разбор и компиляцию после
   // dispose() не ждём — они могут не завершиться вовсе.
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
-  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null;
+  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
   let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0;
 
@@ -289,6 +290,7 @@ export async function mount({
     intersection?.disconnect(); resize?.disconnect();
     container.classList.remove('is-dragging');
     interior?.dispose();
+    drops?.dispose();
     release(scene, restyled?.replaced);
     room?.dispose();
     environment?.dispose();
@@ -351,6 +353,11 @@ export async function mount({
     interior = await buildInterior(gltf.scene, pause);
     if (disposed) bail();
     scene.add(interior.group);
+    // Капли «Антидождя» на лобовом стекле — по той же карте стекла, что торпедо
+    // (расстановка — 2–20 мс, отдельным шагом).
+    await pause(); if (disposed) bail();
+    drops = buildDrops(interior.glass, {low});
+    if (drops) scene.add(drops.mesh);
     container.appendChild(canvas);
   } catch (error) {
     const wasCancelled = disposed || signal?.aborted || error?.name === 'AbortError';
@@ -394,15 +401,43 @@ export async function mount({
 
   // ── Эффекты работ ─────────────────────────────────────────────────────────
   // Работа играет свой эффект после того, как камера доехала. Без выбранной
-  // работы — пыльная машина: мойка её «смывает».
+  // работы — пыльная машина: мойка её «смывает». При «уменьшить движение» —
+  // сразу итог: чистая или отполированная машина, капли бусинами без движения,
+  // без вспышек блика.
   let service = {kind: 'base', time: 0, duration: 0.01};
+  const DURATION = {wash: 2.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration};
+  // Путь блика по детали (GLOW) — гладкая кривая через точки ракурса.
+  const glowCurves = new Map();
+  const glowCurve = name => {
+    if (!glowCurves.has(name)) glowCurves.set(name, new CatmullRomCurve3(GLOW[name].path.map(p => new Vector3(...p))));
+    return glowCurves.get(name);
+  };
+  const glowAt = new Vector3();
   function serviceEffects() {
-    const e = reducedMotion ? 1 : smoothRange(service.time / service.duration, 0, 1);
-    const base = {clean: 1, finish: 1, polish: 1, sweep: 0};
-    if (service.kind === 'base') return {...base, clean: 0};
-    if (service.kind === 'wash') return {...base, clean: e};
-    if (service.kind === 'gloss') return {...base, finish: e, polish: e, sweep: Math.sin(Math.PI * Math.min(1, e * 1.05)) * 0.9 + 0.1};
-    return base;
+    const u = service.time / service.duration;
+    const e = reducedMotion ? 1 : smoothRange(u, 0, 1);
+    const f = {clean: 1, finish: 1, polish: 1, light: 0, rain: null};
+    switch (service.kind) {
+      case 'base': f.clean = 0; break;
+      case 'wash': f.clean = e; break;
+      case 'gloss':
+        f.finish = f.polish = e;
+        f.light = (Math.sin(Math.PI * Math.min(1, e * 1.05)) * 0.9 + 0.1) * 7;
+        glowAt.set(-2.3, 1.45, MathUtils.lerp(1.9, -1.9, e));
+        f.reach = 6;
+        break;
+      case 'glow': {
+        // Блик мягко загорается, проходит по детали и гаснет; без движения — не нужен.
+        if (reducedMotion || u >= 1) break;
+        const glow = GLOW[service.glow];
+        glowCurve(service.glow).getPoint(easeInOut(u), glowAt);
+        f.light = glow.power * Math.pow(Math.sin(Math.PI * u), 2);
+        f.reach = glow.reach;
+        break;
+      }
+      case 'rain': f.rain = reducedMotion ? 'still' : service.time; break;
+    }
+    return f;
   }
   function applyEffects() {
     if (!restyled) return;
@@ -411,13 +446,23 @@ export async function mount({
     restyled.fx.finish.value = f.finish;
     restyled.paint.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
     restyled.paint.clearcoatRoughness = MathUtils.lerp(0.035, 0.018, f.polish);
+    // Один подвижный свет на все работы (room.sweep): шейдеры собраны с ним заранее,
+    // яркость 0 — его нет; новый источник пересобрал бы программы и удорожил кадр.
     if (room?.sweep) {
-      room.sweep.intensity = f.sweep * 7;
-      room.sweep.position.z = MathUtils.lerp(1.9, -1.9, f.polish);
+      room.sweep.intensity = f.light;
+      if (f.light > 0) { room.sweep.position.copy(glowAt); room.sweep.distance = f.reach; }
+    }
+    // До первого кадра капли (нулевого размера) остаются в сцене: шейдер собирается
+    // и прогревается вместе со всеми, после первого кадра они скрыты.
+    if (drops && mounted) {
+      if (f.rain === null) { if (drops.mesh.visible) drops.hide(); }
+      else drops.update(f.rain === 'still' ? 0 : f.rain, f.rain === 'still');
     }
   }
   function stepService(dt) {
     if (move || service.time >= service.duration) return false;
+    // Без движения итог показан сразу — кадры ради эффекта не нужны.
+    if (reducedMotion) { service.time = service.duration; return false; }
     service.time = Math.min(service.duration, service.time + dt);
     return true;
   }
@@ -437,11 +482,21 @@ export async function mount({
     let da = b.a - a.a; if (da > Math.PI) da -= 2 * Math.PI; if (da < -Math.PI) da += 2 * Math.PI;
     move = {from, to, a, b, da, time: 0, duration};
   }
+  // Камера уже стоит в ракурсе (у двух работ он общий): перелёт не нужен —
+  // эффект новой работы начинается сразу, а не после 1,25 с пустого перехода.
+  const probe = new Vector3();
+  const atView = name => {
+    const v = VIEWS[name];
+    return !move && Math.abs(state.fov - v.fov) < 1e-3
+      && state.p.distanceToSquared(probe.fromArray(v.p)) < 1e-6 && state.t.distanceToSquared(probe.fromArray(v.t)) < 1e-6;
+  };
   function goTo(name, {instant = reducedMotion, duration = 1.25} = {}) {
     if (!VIEWS[name]) throw new Porsche3DError('view', `Нет ракурса ${name}`);
-    drift = null; driftNext = null; spin = null; viewName = name;
+    drift = null; driftNext = null; spin = null;
+    const here = viewName === name && atView(name);
+    viewName = name;
     zoomTo(1, instant);
-    if (instant) { move = null; Object.assign(state, viewState(name)); }
+    if (instant || here) { move = null; Object.assign(state, viewState(name)); }
     else startMove(name, duration);
     onViewChange?.(name);
     invalidate();
@@ -705,6 +760,8 @@ export async function mount({
   scene.traverse(o => { if ((o.isMesh || o.isLineSegments) && o.frustumCulled) { o.frustumCulled = false; culled.push(o); } });
   await new Promise(resolve => { firstFrame = resolve; last = 0; invalidate(); });
   for (const o of culled) o.frustumCulled = true;
+  // Капли нарисованы нулевыми (программа прогрета) — до «Антидождя» их нет.
+  drops?.hide();
   if (disposed) throw lost || abortError();
   mark('firstFrame');
   if (fadeIn) canvas.style.opacity = '1';
@@ -714,15 +771,17 @@ export async function mount({
     canvas,
     quality: level,
     views: Object.keys(VIEWS),
-    get currentView() { return viewName; },
-    get zoom() { return zoomTarget; },
     view(name, options) { if (!disposed) goTo(name, options); },
     // Работа гаража → ракурс и её эффект (SERVICE_FX). false — нет такой работы.
     showService(id) {
       const name = SERVICE_VIEWS[id];
       if (disposed || !name) return false;
       goTo(name);
-      service = {kind: SERVICE_FX[id] || 'clean', time: 0, duration: 2.6};
+      // Прежний эффект останавливается сразу: свет гаснет, капли убираются (applyEffects).
+      let kind = SERVICE_FX[id] || 'clean';
+      if ((kind === 'glow' && !GLOW[name]) || (kind === 'rain' && !drops)) kind = 'clean';
+      service = {kind, glow: name, time: 0, duration: DURATION[kind] || 0.01};
+      applyEffects();
       // Полировка: доехав до борта, камера медленно ведёт вдоль него —
       // отражения скользят по лаку.
       if (id === 'polish' && !reducedMotion) {
@@ -738,6 +797,7 @@ export async function mount({
       if (disposed) return;
       goTo('overview');
       service = {kind: 'base', time: 0, duration: 0.01};
+      applyEffects();
     },
     // «Общий вид»: исходная камера и приближение, эффект текущей работы остаётся.
     reset() { if (!disposed) goTo('overview'); },
@@ -771,8 +831,15 @@ export async function mount({
       const info = renderer.info;
       return {quality: level, frames, drawCalls: info.render.calls, triangles: info.render.triangles,
         geometries: info.memory.geometries, textures: info.memory.textures, programs: info.programs?.length ?? 0,
-        pixelRatio: renderer.getPixelRatio(), width, height, zoom, view: viewName, running: !!raf, suspended: [...suspended], timings: {...timings}};
+        pixelRatio: renderer.getPixelRatio(), width, height, zoom, view: viewName, running: !!raf, suspended: [...suspended], timings: {...timings},
+        effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible}};
     },
+  });
+  // Текущий ракурс и приближение — свойствами-геттерами (Object.assign скопировал бы
+  // значения на момент запуска).
+  Object.defineProperties(handle, {
+    currentView: {get: () => viewName, enumerable: true},
+    zoom: {get: () => zoomTarget, enumerable: true},
   });
   mounted = true;
   return handle;
