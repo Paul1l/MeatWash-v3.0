@@ -20,6 +20,8 @@ import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 import {buildEnvironment, buildRoom, loadLogo, LOGO} from './room.js';
 import {buildInterior} from './interior.js';
 import {buildDrops, DROPS} from './drops.js';
+import {createShaderFx, NOISE, VERTEX_COMMON, VERTEX_BEGIN} from './fx.js';
+import {buildBeads} from './beads.js';
 import {VIEWS, SERVICE_VIEWS, SERVICE_FX, GLOW, REF_ASPECT} from './views.js';
 import {MODELS} from './models.js';
 
@@ -123,48 +125,36 @@ const smoothRange = (v, a, b) => { const x = MathUtils.clamp((v - a) / (b - a), 
 
 // Лак с состояниями работ: uClean — пыль и разводы (0 — пыльная машина,
 // 1 — чистая), uFinish — риски полировки (0 — «паутинка», 1 — ровное
-// отражение). Грязь гуще внизу кузова и пятнами; на грязи верхний слой лака
-// почти не блестит. Координаты — мировые, в метрах.
-const PAINT_VERTEX = [
-  ['#include <common>', '#include <common>\nvarying vec3 vSurface;\nvarying float vUp;'],
-  ['#include <begin_vertex>', '#include <begin_vertex>\nvSurface = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvUp = normalize(mat3(modelMatrix) * objectNormal).y;'],
-];
-const PAINT_FRAGMENT = [
-  ['#include <common>', `#include <common>
-uniform float uClean;
-uniform float uFinish;
-varying vec3 vSurface;
-varying float vUp;
-float mwHash(vec3 p) { return fract(sin(dot(p, vec3(127.1, 311.7, 74.7))) * 43758.5453); }
-float mwNoise(vec3 p) {
-  vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(mwHash(i), mwHash(i + vec3(1, 0, 0)), f.x), mix(mwHash(i + vec3(0, 1, 0)), mwHash(i + vec3(1, 1, 0)), f.x), f.y),
-             mix(mix(mwHash(i + vec3(0, 0, 1)), mwHash(i + vec3(1, 0, 1)), f.x), mix(mwHash(i + vec3(0, 1, 1)), mwHash(i + vec3(1, 1, 1)), f.x), f.y), f.z);
-}`],
+// отражение). Координаты — мировые, в метрах (vMwPos; шум — fx.js).
+// Шум и кольца считаем, только когда они видны: на чистом отполированном лаке
+// (почти всё время) пиксель обходится без них — крупные планы дешевле. Грязь гуще
+// внизу кузова и пятнами; сверху (капот, крыша) её нет: даже немного серого в
+// линейном цвете делает насыщенный бордо розовым. Пыль — на вертикальных бортах
+// снизу и сзади, на ней верхний слой лака почти не блестит; в варианте с эффектами
+// (fx) при мойке уходит там, где прошёл фронт смыва пены.
+const paintFragment = fx => [
+  ['#include <common>', '#include <common>\nuniform float uClean;uniform float uFinish;' + (fx ? '' : VERTEX_COMMON + NOISE)],
   ['#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-// Шум и кольца считаем, только когда они видны: на чистом отполированном
-// лаке (почти всё время) пиксель обходится без них — крупные планы дешевле.
-if (uFinish < 0.999) {
-  float mwRings = pow(max(0.0, sin(length(vSurface.xz * 1.7 - vec2(0.2, 0.9)) * 1650.0)), 24.0);
-  roughnessFactor = clamp(roughnessFactor + (1.0 - uFinish) * (0.18 + 0.13 * mwRings), 0.035, 1.0);
-}
-float mwSpots = uClean < 0.999 ? mwNoise(vSurface * 7.0) * 0.6 + mwNoise(vSurface * 31.0) * 0.4 : 0.0;
-// Сверху (капот, крыша) грязи нет: даже немного серого в линейном цвете
-// делает насыщенный бордо розовым. Пыль — на вертикальных бортах снизу и сзади.
-float mwDirt = (1.0 - smoothstep(0.35, 0.7, vUp)) * (1.0 - uClean) * clamp(smoothstep(0.72, 0.28, vSurface.y) + max(vSurface.z, 0.0) * 0.12 * smoothstep(0.95, 0.6, vSurface.y), 0.0, 1.0) * (0.5 + 0.8 * mwSpots);
-mwDirt = clamp(mwDirt, 0.0, 1.0);
-diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.18, 0.16), mwDirt * 0.7);
-roughnessFactor = mix(roughnessFactor, 0.62, mwDirt);`],
-  ['#include <lights_physical_fragment>', `#include <lights_physical_fragment>
-material.clearcoat *= 1.0 - mwDirt * 0.8;
-material.clearcoatRoughness = mix(material.clearcoatRoughness, 0.45, mwDirt);`],
+if(uFinish<0.999){float mwRings=pow(max(0.0,sin(length(vMwPos.xz*1.7-vec2(0.2,0.9))*1650.0)),24.0);
+roughnessFactor=clamp(roughnessFactor+(1.0-uFinish)*(0.18+0.13*mwRings),0.035,1.0);}
+float mwSpots=uClean<0.999?mwNoise(vMwPos*7.0)*0.6+mwNoise(vMwPos*31.0)*0.4:0.0;
+float mwDirt=(1.0-smoothstep(0.35,0.7,vMwUp))*(1.0-uClean)*clamp(smoothstep(0.72,0.28,vMwPos.y)+max(vMwPos.z,0.0)*0.12*smoothstep(0.95,0.6,vMwPos.y),0.0,1.0)*(0.5+0.8*mwSpots);
+${fx ? 'if(uMwFoam.w>0.5)mwDirt*=1.0-mwRinsed(vMwPos,uMwFoam.y,0.5,0.0,1.0);' : ''}
+mwDirt=clamp(mwDirt,0.0,1.0);
+diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.2,0.18,0.16),mwDirt*0.7);roughnessFactor=mix(roughnessFactor,0.62,mwDirt);`],
+  ['#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.clearcoat*=1.0-mwDirt*0.8;material.clearcoatRoughness=mix(material.clearcoatRoughness,0.45,mwDirt);'],
 ];
 const DEG = Math.PI / 180;
 
 // Материалы в духе клуба: глубокий бордовый лак с прозрачным верхним слоем,
 // тонированные стёкла без преломления (transmission — лишний проход рендера).
-function restyle(car, {anisotropy}) {
+// У каждого наружного материала есть вариант с эффектами (fx.js): пена мойки на всём,
+// пыль и очиститель на дисках и шинах. setFx('all') надевает варианты на машину на
+// время мойки, setFx('wheels') — только на диски и шины (очистка дисков), setFx(null)
+// возвращает обычные.
+function restyle(car, {anisotropy, low}) {
   const replaced = [];
+  const shaderFx = createShaderFx({low});
   const paint = new MeshPhysicalMaterial({
     name: 'meatwash-oxblood', color: new Color('#4a0911'), metalness: 0.1, roughness: 0.24,
     clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.25,
@@ -177,14 +167,22 @@ function restyle(car, {anisotropy}) {
     name: 'meatwash-lens', color: new Color('#ffffff'), metalness: 0, roughness: 0.04,
     transparent: true, opacity: 0.12, envMapIntensity: 1.3, depthWrite: false, clearcoat: 1,
   });
-  const fx = {clean: {value: 0}, finish: {value: 1}};
-  paint.onBeforeCompile = shader => {
+  const fx = {clean: {value: 0}, finish: {value: 1}, ...shaderFx.uniforms};
+  const paintShader = variant => shader => {
     shader.uniforms.uClean = fx.clean; shader.uniforms.uFinish = fx.finish;
-    for (const [a, b] of PAINT_VERTEX) shader.vertexShader = shader.vertexShader.replace(a, b);
-    for (const [a, b] of PAINT_FRAGMENT) shader.fragmentShader = shader.fragmentShader.replace(a, b);
+    if (!variant) shader.vertexShader = shader.vertexShader.replace('#include <common>', '#include <common>' + VERTEX_COMMON).replace('#include <begin_vertex>', '#include <begin_vertex>' + VERTEX_BEGIN);
+    for (const [a, b] of paintFragment(variant)) shader.fragmentShader = shader.fragmentShader.replace(a, b);
   };
-  paint.customProgramCacheKey = () => 'meatwash-paint-v3';
-  let paintMesh = null;
+  paint.onBeforeCompile = paintShader(false);
+  paint.customProgramCacheKey = () => 'meatwash-paint-v4';
+  // Роль материала в эффектах: пена ложится на все наружные; диски и шины — ещё
+  // и пыль и очиститель. Телефону — без мелочей: фонари, наклейки и чёрные внутренние
+  // панели (подкрылки, днище, уплотнители) остаются как есть — на три программы шейдеров
+  // меньше, а в узкой области 3D их под пеной почти не видно.
+  const ROLE = {'meatwash-oxblood': 'paint', 'meatwash-glass': 'glass', 'meatwash-lens': 'glass', '930_rim': 'rim', '930_tire': 'tire', '930_chromes': 'trim', '930_plastics': 'trim'};
+  if (!low) Object.assign(ROLE, {'930_lights': 'glass', '930_stickers': 'glass', black: 'trim'});
+  let paintMesh = null, rim = null;
+  const parts = [];
   car.traverse(o => {
     if (!o.isMesh) return;
     const m = o.material;
@@ -199,12 +197,41 @@ function restyle(car, {anisotropy}) {
       case 'black': m.color.set('#0a0807'); m.roughness = 0.75; m.metalness = 0; break;
       case '930_lights': m.color.setScalar(1.6); m.roughness = 0.1; m.metalness = 1; m.envMapIntensity = 2.6; break;
       case '930_chromes': m.roughness = 0.35; m.metalness = 1; m.envMapIntensity = 1.2; break;
-      case '930_rim': m.envMapIntensity = 1.15; break;
+      case '930_rim': m.envMapIntensity = 1.15; rim = m; break;
       case '930_tire': m.color.set('#6f655c'); m.metalness = 0; break;
       case '930_plastics': m.color.set('#6b625a'); break;
     }
+    if (ROLE[o.material.name]) parts.push(o);
   });
-  return {paint, glass, fx, paintMesh, replaced};
+  // Варианты с эффектами — копии настроенных материалов (одна на материал). Чтобы
+  // программ было меньше: стекло фары под пеной — без лака (clearcoat), тогда у неё
+  // та же программа, что у стёкол; прозрачные двусторонние (фонари, наклейки) — в один
+  // проход (иначе three собирает по программе на заднюю и переднюю стороны).
+  const variants = new Map();
+  for (const o of parts) {
+    const base = o.material;
+    if (variants.has(base)) continue;
+    const copy = base.clone();
+    if (base === lens) copy.clearcoat = 0;
+    if (copy.transparent) copy.forceSinglePass = true;
+    shaderFx.patch(copy, ROLE[base.name], base === paint ? paintShader(true) : null);
+    variants.set(base, copy);
+  }
+  const swap = parts.map(o => [o, o.material, variants.get(o.material), /^930_(rim|tire)$/.test(o.material.name)]);
+  let fxOn = null;
+  return {
+    paint, glass, rim, fx, paintMesh, replaced,
+    paints: [paint, variants.get(paint)], rims: [rim, variants.get(rim)].filter(Boolean),
+    // Все материалы обоих вариантов — для освобождения: на машине в момент dispose() только половина.
+    all: [...variants.keys(), ...variants.values()],
+    parts,
+    get fxMode() { return fxOn; },
+    setFx(mode) {
+      if (mode === fxOn) return;
+      fxOn = mode;
+      for (const [o, base, copy, wheel] of swap) o.material = mode === 'all' || (mode === 'wheels' && wheel) ? copy : base;
+    },
+  };
 }
 
 export async function mount({
@@ -243,9 +270,9 @@ export async function mount({
   // Обещание, которое выполняется при отмене: разбор и компиляцию после
   // dispose() не ждём — они могут не завершиться вовсе.
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
-  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null;
+  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null, beads = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
-  let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0;
+  let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0, warmTimer = 0;
 
   const canvas = document.createElement('canvas');
   canvas.className = 'porsche3d__canvas';
@@ -283,7 +310,7 @@ export async function mount({
     disposed = true;
     if (active === handle) active = null;
     cancelAnimationFrame(raf); raf = 0;
-    clearTimeout(crispTimer);
+    clearTimeout(crispTimer); clearTimeout(warmTimer);
     loading.abort();
     listeners.abort();
     if (firstFrame) { const done = firstFrame; firstFrame = null; done(); }
@@ -291,7 +318,8 @@ export async function mount({
     container.classList.remove('is-dragging');
     interior?.dispose();
     drops?.dispose();
-    release(scene, restyled?.replaced);
+    beads?.dispose();
+    release(scene, [...(restyled?.replaced || []), ...(restyled?.all || [])]);
     room?.dispose();
     environment?.dispose();
     renderer.renderLists.dispose();
@@ -347,7 +375,7 @@ export async function mount({
     if (disposed) { if (gltf) release(gltf.scene); bail(); }
     mark('parse');
     scene.add(gltf.scene);
-    restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, maxAnisotropy)});
+    restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, maxAnisotropy), low});
     await pause(); if (disposed) bail();
     // Кокпит из v1 вместо упрощённой «ванны» модели: он виден через стёкла.
     interior = await buildInterior(gltf.scene, pause);
@@ -360,6 +388,10 @@ export async function mount({
     await pause(); if (disposed) bail();
     drops = buildDrops(interior.glass, {low});
     if (drops) scene.add(drops.mesh);
+    // Бусины керамики на капоте — по карте высоты лака (10–30 мс, отдельным шагом).
+    await pause(); if (disposed) bail();
+    beads = buildBeads(gltf.scene, {low});
+    if (beads) scene.add(beads.mesh);
     container.appendChild(canvas);
   } catch (error) {
     const wasCancelled = disposed || signal?.aborted || error?.name === 'AbortError';
@@ -407,7 +439,7 @@ export async function mount({
   // сразу итог: чистая или отполированная машина, капли бусинами без движения,
   // без вспышек блика.
   let service = {kind: 'base', time: 0, duration: 0.01};
-  const DURATION = {wash: 2.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration};
+  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8};
   // Путь блика по детали (GLOW) — гладкая кривая через точки ракурса.
   const glowCurves = new Map();
   const glowCurve = name => {
@@ -415,39 +447,76 @@ export async function mount({
     return glowCurves.get(name);
   };
   const glowAt = new Vector3();
+  // Блик ракурса name в доле u ∈ [0, 1]: свет едет по пути, мягко загорается и гаснет.
+  function glowFx(f, name, u) {
+    if (reducedMotion || u <= 0 || u >= 1 || !GLOW[name]) return;
+    glowCurve(name).getPoint(easeInOut(u), glowAt);
+    f.light = GLOW[name].power * Math.pow(Math.sin(Math.PI * u), 2);
+    f.reach = GLOW[name].reach;
+  }
+  const seg = (t, a, b) => smoothRange(t, a, b);
+  const lin = (t, a, b) => MathUtils.clamp((t - a) / (b - a), 0, 1);
   function serviceEffects() {
-    const u = service.time / service.duration;
-    const e = reducedMotion ? 1 : smoothRange(u, 0, 1);
-    const f = {clean: 1, finish: 1, polish: 1, light: 0, rain: null};
+    const t = service.time, u = t / service.duration, still = reducedMotion;
+    const e = still ? 1 : smoothRange(u, 0, 1);
+    // foam — фронты пены [нанесение, смыв, сползание], iron — очиститель дисков
+    // [реакция, подтёки, фронт смыва]; wet — мокрый лак, rimDust — пыль на дисках,
+    // wheelWet — мокрые колёса.
+    const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0};
     switch (service.kind) {
       case 'base': f.clean = 0; break;
-      case 'wash': f.clean = e; break;
+      case 'wash':
+        // Пена ложится сверху вниз → выдержка (сползает, подтёки длиннее) → смыв
+        // сверху вниз → мокрый лак сохнет. Без движения — сразу чистая сухая машина.
+        if (still || u >= 1) break;
+        f.clean = 0;
+        f.foam = [MathUtils.lerp(1.35, -0.1, lin(t, 0.25, 2.25)), MathUtils.lerp(1.4, -0.15, lin(t, 3.0, 5.2)), Math.min(0.12, 0.035 * Math.max(0, t - 0.6))];
+        f.wet = 1 - seg(t, 5.2, 6.6);
+        f.wheelWet = f.wet * seg(t, 4.2, 4.8);
+        break;
+      case 'iron':
+        // Очиститель: диски мокрые, проступают и стекают фиолетовые пятна → смыв
+        // сверху вниз вместе с пылью → чистый яркий диск, по ободу проходит блик.
+        f.rimShine = still ? 1 : seg(t, 4.2, 5.4);
+        if (still || u >= 1) break;
+        if (t < 4.7) {
+          f.rimDust = 1;
+          if (t > 0) f.iron = [seg(t, 0.4, 2.4), 0.2 * seg(t, 0.8, 3.2), MathUtils.lerp(0.62, -0.05, easeInOut(seg(t, 3.2, 4.6)))];
+        }
+        f.wheelWet = t < 4.6 ? 0.8 * seg(t, 0, 0.5) + 0.2 * seg(t, 3.2, 4.6) : 1 - seg(t, 4.8, 6.4);
+        glowFx(f, 'wheel', (t - 4.5) / 1.9);
+        break;
+      case 'beads':
+        // Керамика: вода на капоте стягивается в бусины, по капоту проходит блик; бусины остаются.
+        f.beads = still ? 'still' : t;
+        glowFx(f, 'hood', (t - 1.6) / 2.1);
+        break;
       case 'gloss':
         f.finish = f.polish = e;
         f.light = (Math.sin(Math.PI * Math.min(1, e * 1.05)) * 0.9 + 0.1) * 7;
         glowAt.set(-2.3, 1.45, MathUtils.lerp(1.9, -1.9, e));
-        f.reach = 6;
         break;
-      case 'glow': {
-        // Блик мягко загорается, проходит по детали и гаснет; без движения — не нужен.
-        if (reducedMotion || u >= 1) break;
-        const glow = GLOW[service.glow];
-        glowCurve(service.glow).getPoint(easeInOut(u), glowAt);
-        f.light = glow.power * Math.pow(Math.sin(Math.PI * u), 2);
-        f.reach = glow.reach;
-        break;
-      }
-      case 'rain': f.rain = reducedMotion ? 'still' : service.time; break;
+      case 'glow': glowFx(f, service.glow, u); break;
+      case 'rain': f.rain = still ? 'still' : t; break;
     }
     return f;
   }
   function applyEffects() {
     if (!restyled) return;
     const f = serviceEffects();
-    restyled.fx.clean.value = f.clean;
-    restyled.fx.finish.value = f.finish;
-    restyled.paint.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
-    restyled.paint.clearcoatRoughness = MathUtils.lerp(0.035, 0.018, f.polish);
+    const fx = restyled.fx;
+    fx.clean.value = f.clean;
+    fx.finish.value = f.finish;
+    if (f.foam) fx.uMwFoam.value.set(...f.foam, 1); else fx.uMwFoam.value.set(2, 2, 0, 0);
+    if (f.iron) fx.uMwIron.value.set(...f.iron, 1); else fx.uMwIron.value.set(0, 0, 2, 0);
+    fx.uMwWash.value.set(f.wet, f.rimDust, f.wheelWet, 0);
+    for (const m of restyled.rims) m.envMapIntensity = 1.15 + 0.75 * f.rimShine;
+    for (const m of restyled.paints) {
+      m.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
+      m.clearcoatRoughness = MathUtils.lerp(0.035, 0.018, f.polish);
+    }
+    // Варианты материалов с эффектами — только пока они нужны.
+    restyled.setFx(f.foam || f.wet > 0 ? 'all' : f.iron || f.rimDust > 0 || f.wheelWet > 0 ? 'wheels' : null);
     // Один подвижный свет на все работы (room.sweep): шейдеры собраны с ним заранее,
     // яркость 0 — его нет; новый источник пересобрал бы программы и удорожил кадр.
     if (room?.sweep) {
@@ -459,6 +528,10 @@ export async function mount({
     if (drops && mounted) {
       if (f.rain === null) { if (drops.mesh.visible) drops.hide(); }
       else drops.update(f.rain === 'still' ? 0 : f.rain, f.rain === 'still');
+    }
+    if (beads && mounted) {
+      if (f.beads === null) { if (beads.mesh.visible) beads.hide(); }
+      else beads.update(f.beads === 'still' ? 0 : f.beads, f.beads === 'still');
     }
   }
   function stepService(dt) {
@@ -724,6 +797,14 @@ export async function mount({
       for (const m of renderer.compile(mesh, camera, scene)) pending.add(m);
       if (i % 4 === 3) { await pause(); if (disposed) throw lost || abortError(); }
     }
+    // Варианты материалов с эффектами (мойка, диски) — тоже сейчас: показ эффекта
+    // ничего не компилирует.
+    restyled.setFx('all');
+    for (const [i, mesh] of restyled.parts.entries()) {
+      for (const m of renderer.compile(mesh, camera, scene)) pending.add(m);
+      if (i % 4 === 3) { restyled.setFx(null); await pause(); if (disposed) throw lost || abortError(); restyled.setFx('all'); }
+    }
+    restyled.setFx(null);
     await new Promise(resolve => {
       const check = () => {
         if (disposed) return resolve();
@@ -762,12 +843,31 @@ export async function mount({
   scene.traverse(o => { if ((o.isMesh || o.isLineSegments) && o.frustumCulled) { o.frustumCulled = false; culled.push(o); } });
   await new Promise(resolve => { firstFrame = resolve; last = 0; invalidate(); });
   for (const o of culled) o.frustumCulled = true;
-  // Капли нарисованы нулевыми (программа прогрета) — до «Антидождя» их нет.
+  // Капли и бусины нарисованы нулевыми (программа прогрета) — до своих работ их нет.
   drops?.hide();
+  beads?.hide();
   if (disposed) throw lost || abortError();
   mark('firstFrame');
   if (fadeIn) canvas.style.opacity = '1';
   onFirstFrame?.();
+  // Варианты материалов с эффектами (собраны выше) рисуются один раз вскоре после показа:
+  // драйвер доделывает их шейдеры при первой отрисовке (ANGLE, swiftshader) — пусть это
+  // будет сейчас, а не на первом кадре мойки. Эффекты выключены, вид тот же; до первого
+  // кадра это не делаем, чтобы машина появлялась на ~0,4 с раньше (замер на swiftshader).
+  // Вкладка скрыта или окно гаража на паузе — попробуем позже; идёт эффект — варианты
+  // уже в деле.
+  const warm = () => {
+    if (disposed || restyled.fxMode) return;
+    if (!running()) { warmTimer = setTimeout(warm, 1000); return; }
+    const shown = [];
+    for (const o of restyled.parts) if (o.frustumCulled) { o.frustumCulled = false; shown.push(o); }
+    restyled.setFx('all');
+    renderer.render(scene, camera);
+    restyled.setFx(null);
+    for (const o of shown) o.frustumCulled = true;
+    mark('warm');
+  };
+  warmTimer = setTimeout(warm, 250);
 
   Object.assign(handle, {
     canvas,
@@ -782,6 +882,7 @@ export async function mount({
       // Прежний эффект останавливается сразу: свет гаснет, капли убираются (applyEffects).
       let kind = SERVICE_FX[id] || 'clean';
       if ((kind === 'glow' && !GLOW[name]) || (kind === 'rain' && !drops)) kind = 'clean';
+      if (kind === 'beads' && !beads) kind = 'glow';
       service = {kind, glow: name, time: 0, duration: DURATION[kind] || 0.01};
       applyEffects();
       // Полировка: доехав до борта, камера медленно ведёт вдоль него —
@@ -834,7 +935,8 @@ export async function mount({
       return {quality: level, frames, drawCalls: info.render.calls, triangles: info.render.triangles,
         geometries: info.memory.geometries, textures: info.memory.textures, programs: info.programs?.length ?? 0,
         pixelRatio: renderer.getPixelRatio(), width, height, zoom, view: viewName, running: !!raf, suspended: [...suspended], timings: {...timings},
-        effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible}};
+        effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible, beads: !!beads?.mesh.visible,
+          foam: (restyled?.fx.uMwFoam.value.w ?? 0) > 0, iron: (restyled?.fx.uMwIron.value.w ?? 0) > 0}};
     },
   });
   // Текущий ракурс и приближение — свойствами-геттерами (Object.assign скопировал бы

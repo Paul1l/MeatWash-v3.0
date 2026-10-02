@@ -25,11 +25,11 @@ export const DROPS = {
 };
 
 // Детерминированный шум: одинаковая картина капель при каждом открытии.
-function random(seed) {
+export function random(seed) {
   let s = seed >>> 0;
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
 }
-const smooth = (v, a, b) => { const x = Math.min(1, Math.max(0, (v - a) / (b - a))); return x * x * (3 - 2 * x); };
+export const smooth = (v, a, b) => { const x = Math.min(1, Math.max(0, (v - a) / (b - a))); return x * x * (3 - 2 * x); };
 
 // Шаблон: единичная полусфера, кольца снизу вверх и верхушка.
 function template() {
@@ -86,47 +86,10 @@ export function buildDrops(glass, {low = false} = {}) {
   }
   if (!drops.length) return null;
 
-  const shape = template();
-  const n = drops.length, perDrop = shape.count;
-  const position = new BufferAttribute(new Float32Array(n * perDrop * 3), 3).setUsage(DynamicDrawUsage);
-  const normal = new BufferAttribute(new Float32Array(n * perDrop * 3), 3).setUsage(DynamicDrawUsage);
-  const index = [];
-  for (let i = 0; i < n; i++) for (const k of shape.index) index.push(i * perDrop + k);
-  const geometry = new BufferGeometry();
-  geometry.setAttribute('position', position);
-  geometry.setAttribute('normal', normal);
-  geometry.setIndex(index);
-  // Как стекло фар (restyle в index.js) — та же программа шейдера; вода темнее и плотнее.
-  const material = new MeshPhysicalMaterial({
-    name: 'meatwash-drops', color: new Color('#1f2629'), metalness: 0, roughness: 0.04,
-    transparent: true, opacity: 0.58, envMapIntensity: 2.4, depthWrite: false, clearcoat: 1,
-  });
-  const mesh = new Mesh(geometry, material);
-  mesh.name = 'antirain-drops';
-  // Капли — поверх стекла (у стекла renderOrder 2); рамку не считаем: вершины меняются.
-  mesh.renderOrder = 3;
-  mesh.frustumCulled = false;
-
-  const p = new Vector3(), nrm = new Vector3(), t1 = new Vector3(), t2 = new Vector3(), v = new Vector3(), w = new Vector3();
-  // Капля i: центр основания на стекле (x, z), наклон стекла под ней g (slope), радиусы
-  // вдоль скатывания (ra) и поперёк (rb), высота h; s = 0 — капли нет (вершины в точке).
-  function place(i, x, z, g, ra, rb, h, s) {
-    nrm.set(-g.gx, 1, -g.gz).normalize();
-    // Вдоль скатывания: проекция «вниз» на плоскость стекла.
-    t1.set(0, -1, 0).addScaledVector(nrm, nrm.y).normalize();
-    if (!Number.isFinite(t1.x)) t1.set(0, 0, -1);
-    t2.crossVectors(nrm, t1).normalize();
-    p.set(x, g.y, z).addScaledVector(nrm, LIFT);
-    const base = i * perDrop * 3, a = Math.max(1e-5, ra * s), b = Math.max(1e-5, rb * s), c = Math.max(1e-5, h * s);
-    for (let k = 0; k < perDrop; k++) {
-      const cx = shape.p[k * 3], cy = shape.p[k * 3 + 1], cz = shape.p[k * 3 + 2];
-      v.copy(p).addScaledVector(t1, cx * a).addScaledVector(t2, cy * b).addScaledVector(nrm, cz * c);
-      // Нормаль эллипсоида (x/a², y/b², z/c²): для точки шаблона — (cx/a, cy/b, cz/c) в осях капли.
-      w.copy(t1).multiplyScalar(cx / a).addScaledVector(t2, cy / b).addScaledVector(nrm, cz / c).normalize();
-      position.array[base + k * 3] = v.x; position.array[base + k * 3 + 1] = v.y; position.array[base + k * 3 + 2] = v.z;
-      normal.array[base + k * 3] = w.x; normal.array[base + k * 3 + 1] = w.y; normal.array[base + k * 3 + 2] = w.z;
-    }
-  }
+  const n = drops.length, water = waterMesh(n, 'antirain-drops');
+  const {mesh, position, normal} = water;
+  // Капля i на стекле: центр основания (x, z), наклон стекла под ней g (slope).
+  const place = (i, x, z, g, ra, rb, h, s) => water.place(i, x, g.y, z, -g.gx, 1, -g.gz, ra, rb, h, s);
 
   // Скатывание считается по шагам (не дольше 1/30 с): капля идёт по самому крутому
   // спуску стекла и ускоряется; у кромки уходит со стекла. Наклон стекла под каплей
@@ -193,6 +156,50 @@ export function buildDrops(glass, {low = false} = {}) {
     hide() { mesh.visible = false; last = -1; lastStill = false; },
     // Для проверок (check:3d): центры капель, радиус и высота стекла под ними.
     sample: () => drops.map(d => ({x: d.x0, z: d.z0, r: d.r, y: top(d.x0, d.z0)})),
-    dispose() { mesh.removeFromParent(); geometry.dispose(); material.dispose(); },
+    dispose: water.dispose,
   };
+}
+
+// Вода на поверхности: count капель-полусфер в одной геометрии и материал с
+// настройками стекла фар (restyle в index.js) — та же программа шейдера; вода темнее
+// и плотнее. Капли поверх стекла (у стекла renderOrder 2), рамку не считаем: вершины
+// меняются. place(i, …) ставит каплю i: точка основания p, нормаль поверхности n,
+// радиусы вдоль стока (ra) и поперёк (rb), высота h, s = 0 — капли нет (вершины в точке).
+export function waterMesh(count, name) {
+  const shape = template(), perDrop = shape.count;
+  const position = new BufferAttribute(new Float32Array(count * perDrop * 3), 3).setUsage(DynamicDrawUsage);
+  const normal = new BufferAttribute(new Float32Array(count * perDrop * 3), 3).setUsage(DynamicDrawUsage);
+  const index = [];
+  for (let i = 0; i < count; i++) for (const k of shape.index) index.push(i * perDrop + k);
+  const geometry = new BufferGeometry();
+  geometry.setAttribute('position', position);
+  geometry.setAttribute('normal', normal);
+  geometry.setIndex(index);
+  const material = new MeshPhysicalMaterial({
+    name: 'meatwash-drops', color: new Color('#1f2629'), metalness: 0, roughness: 0.04,
+    transparent: true, opacity: 0.58, envMapIntensity: 2.4, depthWrite: false, clearcoat: 1,
+  });
+  const mesh = new Mesh(geometry, material);
+  mesh.name = name;
+  mesh.renderOrder = 3;
+  mesh.frustumCulled = false;
+  const p = new Vector3(), nrm = new Vector3(), t1 = new Vector3(), t2 = new Vector3(), v = new Vector3(), w = new Vector3();
+  function place(i, px, py, pz, nx, ny, nz, ra, rb, h, s) {
+    nrm.set(nx, ny, nz).normalize();
+    // Вдоль стока: проекция «вниз» на плоскость поверхности.
+    t1.set(0, -1, 0).addScaledVector(nrm, nrm.y).normalize();
+    if (!Number.isFinite(t1.x) || t1.lengthSq() < 0.5) t1.set(0, 0, -1);
+    t2.crossVectors(nrm, t1).normalize();
+    p.set(px, py, pz).addScaledVector(nrm, LIFT);
+    const base = i * perDrop * 3, a = Math.max(1e-5, ra * s), b = Math.max(1e-5, rb * s), c = Math.max(1e-5, h * s);
+    for (let k = 0; k < perDrop; k++) {
+      const cx = shape.p[k * 3], cy = shape.p[k * 3 + 1], cz = shape.p[k * 3 + 2];
+      v.copy(p).addScaledVector(t1, cx * a).addScaledVector(t2, cy * b).addScaledVector(nrm, cz * c);
+      // Нормаль эллипсоида (x/a², y/b², z/c²): для точки шаблона — (cx/a, cy/b, cz/c) в осях капли.
+      w.copy(t1).multiplyScalar(cx / a).addScaledVector(t2, cy / b).addScaledVector(nrm, cz / c).normalize();
+      position.array[base + k * 3] = v.x; position.array[base + k * 3 + 1] = v.y; position.array[base + k * 3 + 2] = v.z;
+      normal.array[base + k * 3] = w.x; normal.array[base + k * 3 + 1] = w.y; normal.array[base + k * 3 + 2] = w.z;
+    }
+  }
+  return {mesh, position, normal, place, dispose() { mesh.removeFromParent(); geometry.dispose(); material.dispose(); }};
 }
