@@ -17,6 +17,8 @@ body.menu-open { overflow:hidden; }
    190px и не больше 62% высоты): композиция закончена на любой высоте. */
 :root { --cta-zone:calc(46px + max(12px, env(safe-area-inset-bottom, 0px)) + 20px); }
 @media(max-width:900px) and (orientation:portrait) {
+  /* Фокус с клавиатуры не прячется под нижней кнопкой: браузер докручивает его выше неё. */
+  html { scroll-padding-bottom:var(--cta-zone); }
   .hero__booking { display:none; }
   .mobile-cta { bottom:max(12px,env(safe-area-inset-bottom)); height:46px; box-shadow:0 0 0 8px var(--black); }
   body:has(dialog[open]) .mobile-cta { visibility:hidden; }

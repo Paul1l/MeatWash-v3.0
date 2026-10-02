@@ -40,7 +40,22 @@ export function setupUI() {
   if(!dialog||dialog.open) return;
   // Длинное окно открывается с начала, а не с места, где его закрыли в прошлый раз.
   dialog.scrollTop=0;
+  // Кто открыл окно — туда вернуть фокус после закрытия (см. restoreFocus).
+  openers.set(dialog,document.activeElement);
   dialog.showModal(); openedAt=performance.now(); syncLock();
+ };
+ // Браузер сам возвращает фокус на кнопку, открывшую окно, но нижняя кнопка записи
+ // (.mobile-cta) скрыта, пока на body класс dialog-open, а снимается он только на
+ // событии close — фокус падал на body. После close кнопка видна: возвращаем сами,
+ // если фокус потерян и других окон не открыто.
+ const openers=new WeakMap();
+ const restoreFocus=dialog=>{
+  const opener=openers.get(dialog); openers.delete(dialog);
+  if(!opener?.isConnected||document.querySelector('dialog[open]'))return;
+  // На событии close фокус может ещё числиться внутри закрытого окна — это тоже «потерян».
+  const active=document.activeElement;
+  if(active&&active!==document.body&&!dialog.contains(active))return;
+  opener.focus({preventScroll:true});
  };
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
  const closeDialogs=()=>{ booking?.close(); mapDialog?.close(); requestDialog?.close(); };
@@ -115,6 +130,7 @@ export function setupUI() {
    $('#booking-title').textContent=title||'Meatwash Car Care Club';
    setContext(''); lead.hidden=false; hint.hidden=true; branches.hidden=true;
    show(booking);
+   goal('membership_open',{context:title||'—'});
  };
 
  // Окно заявки (js/request.js): модуль — по первому нажатию «Оставить заявку».
@@ -172,13 +188,17 @@ export function setupUI() {
 
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
-  // Цели Метрики: звонок и переход в онлайн-запись филиала (yclients) — ссылки уходят сами.
-  // Ссылка филиала бывает с уже набранными услугами (yclients.js), поэтому сверяем
-  // по компании в yclients, а не по ссылке целиком.
+  // Цели Метрики: звонок, маршрут и переход в онлайн-запись филиала (yclients) — ссылки
+  // уходят сами. Ссылка филиала бывает с уже набранными услугами (yclients.js), поэтому
+  // сверяем по компании в yclients, а не по ссылке целиком. Клик, который окно погасило
+  // (первые 400 мс после открытия, второй клик двойного), переходом не был — без цели.
   const href=control.getAttribute('href')||'';
-  if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
-  else if(control.hasAttribute('data-club-card'))goal('club_card');
-  else{const branch=LOCATIONS.find(l=>href&&l.booking&&href.startsWith(l.booking.replace(/\/personal\/.*$/,'/')));if(branch)goal('booking_branch',{branch:branch.id,preset:/[?&]o=m-1s/.test(href)});}
+  if(!e.defaultPrevented){
+   if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
+   else if(control.hasAttribute('data-club-card'))goal('club_card');
+   else if(control.hasAttribute('data-map-route'))goal('route_click',{branch:LOCATIONS.find(l=>l.route===href)?.id||'—'});
+   else{const branch=LOCATIONS.find(l=>href&&l.booking&&href.startsWith(l.booking.replace(/\/personal\/.*$/,'/')));if(branch)goal('booking_branch',{branch:branch.id,preset:/[?&]o=m-1s/.test(href)});}
+  }
   if(control.hasAttribute('data-book')){
    const d=control.dataset;
    const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);
@@ -195,7 +215,8 @@ export function setupUI() {
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
   if(control.dataset.map){
    // Ctrl/Cmd/Shift-клик и средняя кнопка — как у обычной ссылки: карточка в новой вкладке.
-   if(!maps||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+   // Окно карты ещё не загрузилось — тоже: интерес к карте считаем и тогда.
+   if(!maps||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey){goal('map_open',{branch:control.dataset.map,external:true});return;}
    e.preventDefault(); closeMenu(); booking?.close();
    maps.openMap(control.dataset.map,control);
    goal('map_open',{branch:control.dataset.map});
@@ -216,7 +237,7 @@ export function setupUI() {
    if(settling(e)){ if(e.target.closest('a[href]')) e.preventDefault(); return; }
    if(e.target===dialog&&downOutside&&outside(dialog,e)) dialog.close();
   },options);
-  dialog.addEventListener('close',syncLock,options);
+  dialog.addEventListener('close',()=>{syncLock();restoreFocus(dialog);},options);
  }
 
  // Прямой заход по адресу с якорем (services.html#price-polish, #programs внутри

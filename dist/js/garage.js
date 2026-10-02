@@ -530,7 +530,8 @@ export function setupGarage() {
     document.documentElement.classList.toggle('is-locked', on || other || Boolean(menu && !menu.hidden));
     document.body.classList.toggle('dialog-open', on || other);
   }
-  function open(button) {
+  // from — откуда открыли, если это не видно по кнопке (заход по ./#garage).
+  function open(button, from) {
     if (active) return;
     active = true;
     opener = button || null;
@@ -548,7 +549,7 @@ export function setupGarage() {
     dialog.showModal();
     lock(true);
     title.focus({ preventScroll: true });
-    goal('garage_open', { from: button?.closest('#garage-promo') ? 'promo' : button?.closest('.hero') ? 'hero' : 'link' });
+    goal('garage_open', { from: from || (button?.closest('#garage-promo') ? 'promo' : button?.closest('.hero') ? 'hero' : 'link') });
     load();
   }
   function teardown() {

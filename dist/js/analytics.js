@@ -5,8 +5,8 @@
 //
 // Решение посетителя — в localStorage (mw:consent): «Принять» загружает Метрику
 // сейчас и на следующих страницах, «Отказаться» — нет. «Настройки cookie» в подвале
-// открывают уведомление снова; отказ после согласия удаляет cookie Метрики и
-// перезагружает страницу, чтобы счётчик перестал работать сразу.
+// открывают уведомление снова; отказ удаляет cookie и записи Метрики в localStorage,
+// а после согласия ещё и перезагружает страницу, чтобы счётчик перестал работать сразу.
 //
 // Параметры init — как в коде счётчика из интерфейса Метрики, в том числе Вебвизор
 // (запись действий на странице). Он упомянут в уведомлении, Политике и Согласии:
@@ -15,7 +15,8 @@
 // Цели (Метрика → Цели → «JavaScript-событие», идентификаторы — как здесь):
 //   booking_open, booking_branch, phone_click, map_open,
 //   garage_open, garage_ready, garage_book, garage_request, club_card,
-//   request_open, request_sent (заявка с фото — только при подтверждённой доставке).
+//   request_open, request_sent (заявка с фото — только при подтверждённой доставке),
+//   route_click («Построить маршрут» в окне карты), membership_open («Обсудить условия»).
 
 const KEY = 'mw:consent';
 const VERSION = 1;
@@ -23,6 +24,7 @@ const counter = Number(document.querySelector('meta[name="mw-metrika"]')?.conten
 const SRC = `https://mc.yandex.ru/metrika/tag.js?id=${counter}`;
 let loaded = false;
 let banner = null;
+let returnFocus = null;
 
 function read() {
   try { const v = JSON.parse(localStorage.getItem(KEY)); return v && v.v === VERSION ? v : null; } catch { return null; }
@@ -55,21 +57,34 @@ export function goal(name, params) {
   try { window.ym(counter, 'reachGoal', name, params); } catch { /* счётчик не загрузился — сайт работает */ }
 }
 
-function forgetMetrikaCookies() {
+// Идентификатор посетителя Метрика хранит и в cookie, и в localStorage (_ym_uid и др.):
+// отказ удаляет и то и другое, иначе при новом согласии вернулся бы прежний идентификатор.
+function forgetMetrika() {
   for (const name of document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((n) => n.startsWith('_ym'))) {
     for (const domain of ['', location.hostname, '.' + location.hostname.split('.').slice(-2).join('.')]) {
       document.cookie = `${name}=; Max-Age=0; path=/${domain ? '; domain=' + domain : ''}`;
     }
   }
+  try {
+    for (const key of Object.keys(localStorage).filter((k) => k.startsWith('_ym'))) localStorage.removeItem(key);
+  } catch { /* хранилище недоступно — удалять нечего */ }
 }
 
-function hide() { if (banner) banner.hidden = true; document.body.classList.remove('has-consent'); }
+// Решение принято с клавиатуры — фокус возвращается туда, откуда открыли уведомление
+// («Настройки cookie» в подвале), а не падает на body.
+function hide() {
+  const inside = banner?.contains(document.activeElement);
+  if (banner) banner.hidden = true;
+  document.body.classList.remove('has-consent');
+  if (inside && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true });
+  returnFocus = null;
+}
 function decide(analytics) {
   const was = loaded;
   save(analytics);
   hide();
   if (analytics) { loadMetrika(); return; }
-  forgetMetrikaCookies();
+  forgetMetrika();
   // Счётчик уже работает на этой странице — остановить его можно только перезагрузкой.
   if (was) location.reload();
 }
@@ -89,11 +104,17 @@ function showBanner(focus) {
       const button = e.target.closest('[data-consent]');
       if (button) decide(button.dataset.consent === '1');
     });
-    document.body.append(banner);
+    // Сразу после ссылки «к содержанию»: с клавиатуры уведомление — в первых шагах Tab,
+    // а не после всей страницы (на экране оно всё равно внизу, position: fixed).
+    const skip = document.querySelector('.skip-link');
+    if (skip) skip.after(banner); else document.body.prepend(banner);
   }
   banner.hidden = false;
   document.body.classList.add('has-consent');
-  if (focus) banner.querySelector('.consent__accept').focus({ preventScroll: true });
+  if (focus) {
+    returnFocus = document.activeElement;
+    banner.querySelector('.consent__accept').focus({ preventScroll: true });
+  }
 }
 
 export function setupAnalytics() {
@@ -107,7 +128,8 @@ export function setupAnalytics() {
   if (choice?.analytics) loadMetrika();
   else if (!choice) {
     // Уведомление — после загрузки страницы: первый экран и LCP ему не уступают.
-    const later = () => (window.requestIdleCallback || ((fn) => setTimeout(fn, 400)))(() => showBanner(false), { timeout: 2000 });
+    // Решение могли принять раньше («Настройки cookie» в подвале) — тогда не показываем.
+    const later = () => (window.requestIdleCallback || ((fn) => setTimeout(fn, 400)))(() => { if (!read()) showBanner(false); }, { timeout: 2000 });
     if (document.readyState === 'complete') later(); else addEventListener('load', later, { once: true });
   }
 }

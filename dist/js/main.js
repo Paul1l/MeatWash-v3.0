@@ -27,7 +27,7 @@ document.addEventListener('click', (e) => {
 // обновление страницы не открывает окно снова.
 if (location.hash === '#garage') {
   history.replaceState(null, '', location.pathname + location.search);
-  garage.open(document.querySelector('[data-garage-open]'));
+  garage.open(document.querySelector('[data-garage-open]'), 'link');
 }
 
 // Шапка: после первого экрана — плотный фон и кнопка записи в шапке
