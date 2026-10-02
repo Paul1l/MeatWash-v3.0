@@ -23,6 +23,11 @@ import { LOCATIONS } from './data.js';
 import { goal } from './analytics.js';
 
 const LOAD_TIMEOUT_MS = 12000;
+// Виджет тяжёлый (скрипты карты, стили, тайлы): на мобильной сети две карты сразу
+// мешали друг другу и подолгу стояли недогруженными. Карты грузятся по очереди:
+// следующая — когда предыдущая загрузилась (load) или через QUEUE_STEP_MS.
+const QUEUE_STEP_MS = 8000;
+let queue = Promise.resolve();
 const PIN = '<svg class="location__pin" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" focusable="false"><path d="M10 18s5.5-5.2 5.5-9.4a5.5 5.5 0 0 0-11 0C4.5 12.8 10 18 10 18z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="10" cy="8.6" r="1.9" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>';
 const maps = new Map();          // область карты → её управление
 const reported = new Set();      // студии, по которым цель уже ушла
@@ -78,7 +83,10 @@ function embed(box) {
   });
 
   // Состояния области: idle → loading → loaded | error. Под iframe всегда лежит
-  // заглушка (сетка, метка, подпись): пока виджет не нарисовался, видна она.
+  // заглушка (сетка, метка, подпись «Загружаем карту…»). Пока виджет не загрузился,
+  // iframe прозрачный (стили): иначе виден его полусобранный вид — кнопки без
+  // подложки карты и голая ссылка на организацию (так было на iPhone по LTE).
+  // Через 12 с без load iframe показывается как есть, вместе с плашкой со ссылкой.
   // Ошибка кладёт заглушку поверх iframe.
   //
   // По load iframe успех не определить: страница ошибки браузера (виджет
@@ -122,10 +130,14 @@ function embed(box) {
       .finally(() => { if (probe === check) { clearTimeout(probeTimer); probe = null; } });
   }
 
+  // Возвращает обещание: выполнено, когда iframe загрузился, загрузка не удалась
+  // или прошло QUEUE_STEP_MS, — по нему очередь пускает следующую карту.
   function load() {
     unload();
     setState('loading');
-    if (navigator.onLine === false) { setState('error'); return; }
+    if (navigator.onLine === false) { setState('error'); return Promise.resolve(); }
+    let release;
+    const settled = new Promise((resolve) => { release = resolve; setTimeout(resolve, QUEUE_STEP_MS); });
     const iframe = document.createElement('iframe');
     iframe.src = location.mapWidget;
     iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
@@ -143,18 +155,20 @@ function embed(box) {
       else if (loaded) setState('loaded');
     };
     iframe.addEventListener('load', () => {
+      release();
       if (frame !== iframe) return;
       loaded = true;
       // Карта пришла после отказа (сеть ожила) — проверяем ещё раз, а не верим load.
       if (result === 'fail') verify(iframe).then((r) => { if (r) { result = r; decide(); } });
       else decide();
     });
-    verify(iframe).then((r) => { if (r) { result = r; decide(); } });
+    verify(iframe).then((r) => { if (r) { result = r; decide(); if (r === 'fail') release(); } });
     slowTimer = setTimeout(() => { if (frame === iframe && !loaded && box.dataset.state === 'loading') showSlow(true); }, LOAD_TIMEOUT_MS);
     // Слой для пальца — поверх iframe, поэтому iframe встаёт перед ним.
     box.insertBefore(iframe, shield);
     setState(box.dataset.state);
     shield.hidden = false;
+    return settled;
   }
 
   retry.addEventListener('click', () => {
@@ -167,7 +181,12 @@ function embed(box) {
   return {
     id: location.id,
     get frame() { return frame; },
-    show() { if (!frame && box.dataset.state === 'idle') load(); },
+    // Встать в очередь загрузки (см. QUEUE_STEP_MS); «Повторить» идёт без очереди.
+    show() {
+      if (frame || box.dataset.state !== 'idle' || 'queued' in box.dataset) return;
+      box.dataset.queued = '';
+      queue = queue.then(() => { delete box.dataset.queued; return frame || box.dataset.state !== 'idle' ? null : load(); });
+    },
     arm() { if (frame) shield.hidden = false; },
   };
 }
