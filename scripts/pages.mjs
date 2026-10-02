@@ -15,16 +15,21 @@
 //   {{analytics:<webmaster|metrika>}}  мета-теги Яндекс Вебмастера и номер счётчика
 //                        Метрики из site.analytics в JSON; пусто — ничего (Метрику
 //                        загружает js/analytics.js только после согласия посетителя)
+//   {{ld:locations}}     JSON-LD студий (AutoWash) из locations в JSON: адрес, телефон,
+//                        часы, координаты — те же, что в карточках локаций
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content,escape} from './catalog.mjs';
 import {CONTENT} from '../src/content/pages.mjs';
 
 const root=new URL('../',import.meta.url);
+// Адрес сайта для canonical, JSON-LD, sitemap и документов (content.mjs берёт его отсюда;
+// в check.mjs — своя копия). Ссылки внутри сайта — только относительные.
+export const SITE='https://meatwash.ru/';
 // Какие общие части есть на какой странице.
 // Страницы из src/content (статьи, Политика, Согласие) собирает scripts/content.mjs.
 export const PAGES={
- 'index.html':{id:'home',shared:['analytics','header','locations','membership','footer','dialogs']},
+ 'index.html':{id:'home',shared:['analytics','jsonld','header','locations','membership','footer','dialogs']},
  'services.html':{id:'services',shared:['analytics','header','book','footer','dialogs']},
  'about.html':{id:'about',shared:['analytics','header','membership','locations','book','footer','dialogs']},
  ...Object.fromEntries(CONTENT.map(page=>[page.file,{id:page.id,shared:page.shared}])),
@@ -36,6 +41,27 @@ const ANALYTICS={
  metrika:()=>analytics.metrika?(/^\d+$/.test(String(analytics.metrika))?`<meta name="mw-metrika" content="${escape(analytics.metrika)}">`:fail('site.analytics.metrika')):'',
 };
 function fail(field){throw new Error(`Неверное значение ${field} в meatwash-content.json`);}
+
+// Часы работы — в том виде, в каком их показывает сайт («Пн–Пт 08:00–22:00», «Ежедневно
+// 08:00–22:00»). Другой формат — ошибка сборки, а не молча неверная разметка.
+const DAYS={Пн:'Monday',Вт:'Tuesday',Ср:'Wednesday',Чт:'Thursday',Пт:'Friday',Сб:'Saturday',Вс:'Sunday'};
+const DAY_ORDER=Object.keys(DAYS);
+function openingHours(line,id){
+ const m=/^(?:(Ежедневно)|(Пн|Вт|Ср|Чт|Пт|Сб|Вс)(?:–(Пн|Вт|Ср|Чт|Пт|Сб|Вс))?) (\d\d:\d\d)–(\d\d:\d\d)$/.exec(line);
+ const days=!m?[]:m[1]?DAY_ORDER:DAY_ORDER.slice(DAY_ORDER.indexOf(m[2]),DAY_ORDER.indexOf(m[3]||m[2])+1);
+ if(!days.length)throw new Error(`locations.${id}.hours: не разобрать «${line}» для JSON-LD`);
+ return {'@type':'OpeningHoursSpecification',dayOfWeek:days.map(d=>DAYS[d]),opens:m[4],closes:m[5]};
+}
+// Студии для поиска (schema.org AutoWash). '<' экранируется, чтобы текст из JSON не закрыл <script>.
+const LD={
+ locations:()=>JSON.stringify(content.locations.map(l=>({
+  '@context':'https://schema.org','@type':'AutoWash','@id':`${SITE}#${l.id}`,
+  name:`MEATWASH Car Care Club — ${l.name}`,url:`${SITE}#locations`,image:SITE+l.image,telephone:l.tel,
+  address:{'@type':'PostalAddress',streetAddress:l.address,addressLocality:'Москва',addressCountry:'RU'},
+  geo:{'@type':'GeoCoordinates',latitude:l.lat,longitude:l.lon},hasMap:l.map,
+  openingHoursSpecification:l.hours.map(line=>openingHours(line,l.id)),sameAs:[l.map],
+ }))).replace(/</g,'\\u003c'),
+};
 const NAV_NEXT='\n    <button class="nav__next" type="button" data-scroll-next aria-label="Следующий раздел"><span class="nav__line"></span><span aria-hidden="true">→</span></button>';
 
 const LOC_FIELDS={
@@ -62,6 +88,10 @@ export function renderPartial(template,page){
    case 'analytics':{
     if(!ANALYTICS[a])throw new Error(`Нет поля аналитики ${a} (${token})`);
     return ANALYTICS[a]();
+   }
+   case 'ld':{
+    if(!LD[a])throw new Error(`Нет разметки ${a} (${token})`);
+    return LD[a]();
    }
    case 'loc':{
     const location=content.locations.find(l=>l.id===a);

@@ -8,10 +8,10 @@ import {readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content as d,escape,money} from './catalog.mjs';
 import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
-import {renderPartial,renderPage} from './pages.mjs';
+import {renderPartial,renderPage,SITE} from './pages.mjs';
 
 const root=new URL('../',import.meta.url);
-export const SITE='https://meatwash.ru/';
+export {SITE};
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 export const humanDate=iso=>{const [y,m,day]=iso.split('-').map(Number);return `${day} ${MONTHS[m-1]} ${y} г.`;};
 
