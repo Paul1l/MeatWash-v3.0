@@ -67,10 +67,12 @@ export function buildDrops(glass, {low = false} = {}) {
   };
 
   // Капли: место, размер и время — один раз; бусины крупнее скатываются раньше.
-  const rnd = random(1975), want = low ? 80 : 180, drops = [];
+  // Телефон (quality low): капель меньше, но они крупнее — в узкой области 3D
+  // капля прежнего размера занимала 1–2 px и почти не читалась.
+  const rnd = random(1975), want = low ? 80 : 180, size = low ? 1.6 : 1, drops = [];
   for (let attempt = 0; attempt < want * 40 && drops.length < want; attempt++) {
     const x = -0.66 + rnd() * 1.32, z = -0.74 + rnd() * 0.6;
-    const u = rnd(), r = 0.0045 + 0.009 * u * u;
+    const u = rnd(), r = (0.0045 + 0.009 * u * u) * size;
     const g0 = onWindscreen(x, z, 0.03 + r);
     if (!g0) continue;
     if (drops.some(d => Math.hypot(d.x0 - x, d.z0 - z) < (d.r + r) * 1.9)) continue;
