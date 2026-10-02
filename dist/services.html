@@ -278,7 +278,7 @@
   <h2 id="request-title" tabindex="-1">Заявка с фото</h2>
   <p class="dialog__lead">Детейлинг, оклейка, стёкла и другие работы, кроме мойки. Мастер посмотрит фото, оценит объём работ и свяжется с вами.</p>
   <p class="dialog__note request__wash" data-request-wash hidden><span data-request-wash-text></span> <button class="link-arrow" type="button" data-book data-request-wash-book>Записаться на мойку <span aria-hidden="true">→</span></button></p>
-  <form class="request" data-request-form novalidate>
+  <form class="request ym-hide-content" data-request-form novalidate>
     <fieldset class="request__services">
       <legend>Работы <b aria-hidden="true">*</b></legend>
       <ul class="request__chips" data-request-chips aria-label="Выбранные работы"></ul>
@@ -286,9 +286,9 @@
       <p class="request__error" id="request-services-error" data-error-for="services"></p>
     </fieldset>
     <div class="request__grid">
-      <label class="request__field"><span>Имя <b aria-hidden="true">*</b></span><input name="name" autocomplete="name" required maxlength="80" aria-describedby="request-name-error"><small class="request__error" id="request-name-error" data-error-for="name"></small></label>
-      <label class="request__field"><span>Телефон или Telegram <b aria-hidden="true">*</b></span><input name="contact" autocomplete="tel" required maxlength="100" aria-describedby="request-contact-hint request-contact-error"><small id="request-contact-hint">Как с вами связаться</small><small class="request__error" id="request-contact-error" data-error-for="contact"></small></label>
-      <label class="request__field request__field--wide"><span>Автомобиль</span><input name="car" maxlength="120" placeholder="Марка, модель, год" autocomplete="off"></label>
+      <label class="request__field"><span>Имя <b aria-hidden="true">*</b></span><input class="ym-disable-keys" name="name" autocomplete="name" required maxlength="80" aria-describedby="request-name-error"><small class="request__error" id="request-name-error" data-error-for="name"></small></label>
+      <label class="request__field"><span>Телефон или Telegram <b aria-hidden="true">*</b></span><input class="ym-disable-keys" name="contact" autocomplete="tel" required maxlength="100" aria-describedby="request-contact-hint request-contact-error"><small id="request-contact-hint">Как с вами связаться</small><small class="request__error" id="request-contact-error" data-error-for="contact"></small></label>
+      <label class="request__field request__field--wide"><span>Автомобиль</span><input class="ym-disable-keys" name="car" maxlength="120" placeholder="Марка, модель, год" autocomplete="off"></label>
     </div>
     <fieldset class="request__branch">
       <legend>Студия</legend>
@@ -296,7 +296,7 @@
       <label><input type="radio" name="branch" value="Мясницкая"><span>Мясницкая</span></label>
       <label><input type="radio" name="branch" value="Технопарк"><span>Технопарк</span></label>
     </fieldset>
-    <label class="request__field"><span>Комментарий</span><textarea name="comment" rows="3" maxlength="1000"></textarea></label>
+    <label class="request__field"><span>Комментарий</span><textarea class="ym-disable-keys" name="comment" rows="3" maxlength="1000"></textarea></label>
     <div class="request__photos" role="group" aria-labelledby="request-photos-label">
       <p class="request__label" id="request-photos-label">Фото</p>
       <p class="request__rules" id="request-photos-rules" data-request-rules>До 6 фото: JPG, PNG, WebP или HEIC, до 10 МБ каждое.</p>

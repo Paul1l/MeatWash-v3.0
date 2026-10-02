@@ -304,6 +304,14 @@ for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('membership')))
  assert(webvisor||/\bwebvisor:\s*false\b/.test(code),'js/analytics.js: webvisor в init счётчика должен быть явно true или false');
  for(const [name,text] of [['уведомление о cookie (js/analytics.js)',code.match(/consent__text">([^<]*)/)?.[1]||''],...await Promise.all(['privacy.html','consent.html'].map(async file=>[file,await readFile(resolve(dist,file),'utf8')])) ])
   assert(webvisor===text.includes('Вебвизор'),`${name}: ${webvisor?'не назван Вебвизор, а он включён':'упомянут Вебвизор, а он выключен'}`);
+ // Политика обещает, что форму заявки Вебвизор не записывает: форма — ym-hide-content,
+ // текстовые поля — ym-disable-keys (src/partials/dialogs.html).
+ if(webvisor)for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('dialogs'))){
+  const form=html[page].match(/<form class="request[^"]*" data-request-form[\s\S]*?<\/form>/)?.[0]||'';
+  assert(/class="request ym-hide-content"/.test(form),`${page}: форма заявки должна быть скрыта от Вебвизора (ym-hide-content)`);
+  for(const field of form.match(/<(?:input(?![^>]*type="(?:radio|checkbox|file)")|textarea)\b[^>]*>/g)||[])
+   assert(/class="[^"]*\bym-disable-keys\b/.test(field),`${page}: поле формы заявки без ym-disable-keys: ${field}`);
+ }
 }
 // Главная — гараж (оболочка сразу, 3D по кнопке); внутренние страницы без гаража, GSAP и 3D.
 assert(graphs['index.html'].has('garage.js'),'Главная должна подключать гараж (garage.js)');
