@@ -4,7 +4,7 @@
 // гараж — названия как в каталоге, суммы по каждому кузову, без повторного
 // начисления работ из программы мойки), первый экран без закреплённой сцены,
 // 3D только по нажатию и только в гараже главной, ссылки записи обоих филиалов,
-// окно карты, мета.
+// встроенные карты филиалов в карточках локаций, мета.
 import {readFile,readdir,stat} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -272,8 +272,10 @@ for(const page of MAIN_PAGES){
  assert(!/porsche-930|\.glb\b|assets\/3d\/|importmap|vendor\/build|vendor\/examples/.test(pageCode[page]),`${page}: ссылка на 3D-ресурсы (модель, three, importmap)`);
  assert(!/porsche3d\.bundle|js\/porsche3d/.test(text),`${page}: страница ссылается на 3D-модуль (script, preload, prefetch)`);
  for(const [tag] of text.matchAll(/<link\b[^>]*>/g))assert(!(/modulepreload|prefetch|prerender/.test(tag)&&/js\/|\.glb|assets\/3d/.test(tag)),`${page}: preload/prefetch скриптов или 3D: ${tag}`);
- // Окно карты: iframe создаёт только maps.js при открытии — в разметке его нет.
- assert(!/<iframe\b/i.test(text)&&!/map-widget/.test(text),`${page}: iframe карты в разметке — он должен создаваться только при открытии окна`);
+ // Карты филиалов: iframe создаёт maps.js, когда карточка подходит к экрану, — в разметке его нет.
+ assert(!/<iframe\b/i.test(text)&&!/map-widget/.test(text),`${page}: iframe карты в разметке — он должен создаваться скриптом при подходе к карточке`);
+ // Окно карты убрано: встроенные карты в карточках его заменили.
+ assert(!/map-dialog|data-map="/.test(text),`${page}: остатки окна карты (map-dialog, data-map)`);
 }
 for(const entry of lazy3d)assert(/→ porsche3d\.bundle\.js$/.test(entry),'Лениво можно грузить только porsche3d.bundle.js: '+entry);
 // Яндекс Метрика — только после согласия (js/analytics.js): кода счётчика и пикселя в разметке нет,
@@ -323,7 +325,12 @@ for(const location of content.locations){
  assert(/^\d+$/.test(location.orgId)&&location.map.includes(`/${location.orgId}/`),`${location.id}: org id и ссылка на карточку не совпадают`);
  assert(new RegExp(`^https://yandex\\.ru/map-widget/v1/org/[a-z_]+/${location.orgId}/\\?ll=`).test(location.mapWidget),`${location.id}: mapWidget — не виджет карточки организации`);
  assert(location.mapWidget.includes(`ll=${location.lon}%2C${location.lat}`)&&location.route.includes(`rtext=~${location.lat}%2C${location.lon}`),`${location.id}: координаты виджета и маршрута расходятся с lat/lon`);
- for(const page of MAIN_PAGES)assert(html[page].includes(`data-map="${location.id}"`)&&ids[page].has('map-dialog'),`${page}: нет «На карте» для ${location.id} или окна карты`);
+ // Карта филиала — в его карточке на страницах с блоком локаций; «На карте» в подвале ведёт к ней.
+ for(const page of MAIN_PAGES){
+  const withLocations=PAGES[page]?.shared?.includes('locations');
+  if(withLocations){const block=html[page].slice(html[page].indexOf(`id="map-${location.id}"`));assert(ids[page].has(`map-${location.id}`)&&/^id="[^"]+"[^>]*data-map-embed="/.test(block)&&block.startsWith(`id="map-${location.id}"`)&&block.slice(0,block.indexOf('</article>')).includes(`location__external" href="${location.map}"`),`${page}: нет встроенной карты ${location.id} (область, якорь, резервная ссылка на карточку организации)`);}
+  assert(new RegExp(`<a class="footer__map" href="${withLocations?'':'\\./'}#map-${location.id}"[^>]*data-map-link="${location.id}"`).test(html[page]),`${page}: «На карте» в подвале не ведёт к карте ${location.id}`);
+ }
 }
 assert.equal(bookings.size,content.locations.length,'У филиалов должны быть разные ссылки записи');
 // Любая другая ссылка на yclients (например, общая n975571.yclients.com) — ошибка.
@@ -348,4 +355,4 @@ if(missingOperator().length)notes.push(`реквизиты оператора в
 if(!site.metrika)notes.push('номер счётчика Яндекс Метрики (Метрика и уведомление о cookie выключены)');
 if(!site.webmaster)notes.push('код подтверждения Яндекс Вебмастера');
 if(notes.length)console.warn('ВНИМАНИЕ: не заполнено в site (meatwash-content.json) — '+notes.join('; ')+'.');
-console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — заявка с фото); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и карта обоих филиалов, iframe карты не в разметке.`);
+console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — заявка с фото); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и встроенная карта обоих филиалов (iframe — только скриптом, «На карте» в подвале ведёт к карте), окна карты нет.`);

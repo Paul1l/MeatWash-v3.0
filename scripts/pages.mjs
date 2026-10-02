@@ -1,4 +1,4 @@
-// Общие части страниц (шапка с меню, подвал, окна записи и карты, карточки локаций,
+// Общие части страниц (шапка с меню, подвал, окна записи и заявки, карточки локаций с картами,
 // блок записи, клубный блок «Больше, чем сервис», аналитика в <head>) живут
 // в src/partials/*.html и вставляются во все страницы между
 // маркерами <!-- SHARED:<имя>:START --> и <!-- SHARED:<имя>:END -->.
@@ -8,6 +8,8 @@
 // Подстановки в фрагментах:
 //   {{home}}             '' на главной, './' на остальных: href="{{home}}#locations"
 //   {{top}}              логотип: '#top' на главной, './' на остальных
+//   {{locations}}        '' на страницах с блоком локаций (главная, «О нас»), './' на остальных:
+//                        href="{{locations}}#map-technopark" — к карте студии на этой же странице или на главной
 //   {{current:<page>}}   aria-current="page" на своей странице
 //   {{header-class}}     ' is-solid' на внутренних страницах
 //   {{nav-next}}         стрелка «следующий раздел» — только на главной
@@ -42,10 +44,8 @@ const LOC_FIELDS={
  name:l=>escape(l.name),type:l=>escape(l.type),address:l=>escape(l.address),
  hours:l=>l.hours.map(escape).join('<br>'),
  phone:l=>escape(l.phone),tel:l=>escape(l.tel),booking:l=>escape(l.booking),
- map:l=>escape(l.map),gallery:l=>escape(l.gallery),route:l=>escape(l.route),
+ map:l=>escape(l.map),
  card:l=>l.card.map(escape).join('<br>'),
- 'entry-label':l=>escape(l.entry.label),'entry-text':l=>escape(l.entry.text),
- 'on-site':l=>l.onSite.map(escape).join(' · '),
 };
 
 export async function readPartial(name){return readFile(new URL(`src/partials/${name}.html`,root),'utf8');}
@@ -56,6 +56,7 @@ export function renderPartial(template,page){
   switch(name){
    case 'home':return home?'':'./';
    case 'top':return home?'#top':'./';
+   case 'locations':return PAGES[page].shared.includes('locations')?'':'./';
    case 'current':return a===id?' aria-current="page"':'';
    case 'header-class':return home?'':' is-solid';
    case 'nav-next':return home?NAV_NEXT:'';

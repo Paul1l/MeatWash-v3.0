@@ -1,4 +1,4 @@
-// Общее для всех страниц: меню, окна записи и карты, переходы по якорям,
+// Общее для всех страниц: меню, окна записи и заявки, карты студий, переходы по якорям,
 // появление блоков. «Следующий раздел» — первый блок страницы ниже текущего места.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
 // Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
@@ -10,7 +10,7 @@ export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
  const root=document.documentElement;
- const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), mapDialog=$('#map-dialog'), requestDialog=$('#request');
+ const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), requestDialog=$('#request');
  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
  // Прокрутка фона выключена, пока открыто меню или окно. Класс на <html>: iOS
  // не считается с overflow у одного body. Место полосы прокрутки держит
@@ -43,7 +43,7 @@ export function setupUI() {
   dialog.showModal(); openedAt=performance.now(); syncLock();
  };
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
- const closeDialogs=()=>{ booking?.close(); mapDialog?.close(); requestDialog?.close(); };
+ const closeDialogs=()=>{ booking?.close(); requestDialog?.close(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
  // Что именно выбрал человек — только текстом, без разметки.
  const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
@@ -91,7 +91,7 @@ export function setupUI() {
  };
  const openBooking=(note='',spec=null,requestList=[])=>{
    if(!booking)return;
-   closeMenu(); mapDialog?.close(); requestDialog?.close();
+   closeMenu(); requestDialog?.close();
    setRequestNote(requestList);
    $('#booking-title').textContent='Записаться';
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
@@ -109,7 +109,7 @@ export function setupUI() {
  const openMembership=(title='')=>{
    if(!booking)return;
    bookingJob++;
-   closeMenu(); mapDialog?.close(); requestDialog?.close();
+   closeMenu(); requestDialog?.close();
    if(requestNote)requestNote.hidden=true;
    if(otherNote)otherNote.hidden=true;
    $('#booking-title').textContent=title||'Meatwash Car Care Club';
@@ -127,23 +127,20 @@ export function setupUI() {
  };
  document.querySelectorAll('[data-request]').forEach(button=>button.setAttribute('aria-haspopup','dialog'));
 
- // Окно карты: модуль грузится в простое после загрузки страницы (или при наведении
- // на «На карте»). Пока он не готов, «На карте» — обычная ссылка на карточку
- // в Яндекс Картах (в новой вкладке): клик никогда не теряется.
- let maps=null, mapsLoading=null;
- const loadMaps=()=>{
-  if(!mapDialog)return null;
-  mapsLoading??=import('./maps.js').then(module=>{maps=module;module.setupMaps({dialog:mapDialog,onOpen:()=>{openedAt=performance.now();syncLock();}});return module;})
-   .catch(error=>{mapsLoading=null;console.warn('Окно карты не подключилось: «На карте» откроет Яндекс Карты.',error);});
-  return mapsLoading;
- };
- document.querySelectorAll('[data-map]').forEach(link=>link.setAttribute('aria-haspopup','dialog'));
- if(mapDialog){
-  const idle=()=>(window.requestIdleCallback||(fn=>setTimeout(fn,600)))(loadMaps,{timeout:4000});
-  if(document.readyState==='complete')idle();else addEventListener('load',idle,{once:true,signal:abort.signal});
-  document.addEventListener('pointerover',e=>{if(e.target.closest?.('[data-map]'))loadMaps();},options);
-  document.addEventListener('focusin',e=>{if(e.target.closest?.('[data-map]'))loadMaps();},options);
- }
+ // Карты студий в карточках локаций (js/maps.js): модуль и iframe виджета — только
+ // когда область карты подходит к экрану (запас 600 px). До этого, без скриптов
+ // и при ошибке в области — заглушка со ссылкой на карточку в Яндекс Картах.
+ const mapBoxes=document.querySelectorAll('[data-map-embed]');
+ let mapsLoading=null;
+ const loadMaps=()=>mapsLoading??=import('./maps.js').catch(error=>{mapsLoading=null;console.warn('Карты студий не подключились: остаётся ссылка на Яндекс Карты.',error);return null;});
+ const mapWatch=mapBoxes.length&&'IntersectionObserver' in window?new IntersectionObserver(entries=>{
+  for(const entry of entries){
+   if(!entry.isIntersecting)continue;
+   mapWatch.unobserve(entry.target);
+   loadMaps().then(module=>module?.showMap(entry.target));
+  }
+ },{rootMargin:'600px 0px'}):null;
+ mapBoxes.forEach(box=>mapWatch?.observe(box));
 
  burger?.addEventListener('click',()=>{ if(menu.hidden) setMenu(true); else closeMenu(); },options);
  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();},options);
@@ -188,18 +185,17 @@ export function setupUI() {
   // Заявка с фото — всё, кроме мойки: модуль окна грузится по первому нажатию.
   if(control.hasAttribute('data-request')){
    const d=control.dataset;
-   closeMenu(); booking?.close(); mapDialog?.close();
+   closeMenu(); booking?.close();
    loadRequest()?.then(open=>open?.({services:(d.requestServices||'').split('|').filter(Boolean),category:d.requestCategory||'',washContext:d.washContext||'',washPrograms:d.washPrograms||''}));
    return;
   }
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
-  if(control.dataset.map){
-   // Ctrl/Cmd/Shift-клик и средняя кнопка — как у обычной ссылки: карточка в новой вкладке.
-   if(!maps||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
-   e.preventDefault(); closeMenu(); booking?.close();
-   maps.openMap(control.dataset.map,control);
-   goal('map_open',{branch:control.dataset.map});
-   return;
+  // «На карте» в подвале — переход к карте студии: якорь на этой странице или на главной.
+  // Уходя на главную, запрос Метрики со старой страницы может не успеть — тогда цель
+  // отправит главная по прибытии (отметка в sessionStorage, см. ниже setupAnalytics).
+  if(control.dataset.mapLink){
+   const branch=control.dataset.mapLink;
+   if(href.startsWith('#'))goal('map_open',{branch,source:'footer'});else try{sessionStorage.setItem('mw:map-goal',branch);}catch{}
   }
   if(control.hasAttribute('data-scroll-next')){ nextBlock(); return; }
   const hash=control.getAttribute('href');
@@ -251,5 +247,7 @@ export function setupUI() {
  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){entry.target.classList.add('is-in');observer.unobserve(entry.target);}},{threshold:.1});
  document.querySelectorAll('[data-reveal]').forEach(el=>observer.observe(el));
  setupAnalytics();
- return ()=>{abort.abort();observer.disconnect();};
+ // Пришли по «На карте» из подвала другой страницы: цель map_open — здесь, рядом с картой.
+ try{const branch=sessionStorage.getItem('mw:map-goal');if(branch){sessionStorage.removeItem('mw:map-goal');if(location.hash==='#map-'+branch)goal('map_open',{branch,source:'footer'});}}catch{}
+ return ()=>{abort.abort();observer.disconnect();mapWatch?.disconnect();};
 }

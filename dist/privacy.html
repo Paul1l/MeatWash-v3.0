@@ -54,7 +54,7 @@
 <main id="main">
 <article class="doc" aria-labelledby="page-title">
   <h1 id="page-title">Политика обработки персональных данных</h1>
-<p class="doc-meta">Редакция от 1 октября 2026 г.</p>
+<p class="doc-meta">Редакция от 2 октября 2026 г.</p>
 
 <h2 id="obshchie">1. Общие положения</h2>
 <p>1.1. Настоящая Политика определяет порядок обработки и защиты персональных данных посетителей сайта <a href="https://meatwash.ru/">https://meatwash.ru/</a> (далее — Сайт) и составлена в соответствии с Федеральным законом от 27.07.2006 № 152-ФЗ «О персональных данных» (далее — Закон).</p>
@@ -67,7 +67,7 @@
 <p>2.3. <strong>Заявка с фото.</strong> Для работ, кроме мойки, на Сайте есть форма заявки: имя, номер телефона или иной контакт, сведения об автомобиле, выбранные работы и студия, комментарий и фотографии. Заявка отправляется только с согласия посетителя — без отметки о согласии форма не отправляется. Текст согласия — на странице <a href="consent-request.html">«Согласие на обработку персональных данных при отправке заявки»</a>.</p>
 <p>2.3.1. <strong>Онлайн-запись на мойку</strong> выполняется на стороннем сервисе YCLIENTS, на который ведут ссылки «Записаться»; обработку данных при записи регулируют правила этого сервиса.</p>
 <p>2.4. <strong>Звонки.</strong> При звонке по номеру, указанному на Сайте, Оператору становится известен номер телефона звонящего. Он используется только для ответа на обращение.</p>
-<p>2.5. <strong>Яндекс Карты.</strong> При открытии окна карты на Сайте загружается виджет Яндекс Карт (ООО «ЯНДЕКС»). Сервис может обрабатывать данные посетителя по своим правилам; до открытия окна виджет не загружается.</p>
+<p>2.5. <strong>Яндекс Карты.</strong> В карточках студий в блоке «Локации» (главная страница и страница «О нас») встроены виджеты Яндекс Карт (ООО «ЯНДЕКС»). Виджет загружается, когда посетитель прокручивает страницу к этому блоку; до этого и на других страницах он не загружается. Сервис может обрабатывать данные посетителя по своим правилам.</p>
 
 <h2 id="celi">3. Цели обработки</h2>
 <p>3.1. Анализ посещаемости Сайта и улучшение его работы и содержания — для данных, указанных в п. 2.1.</p>
@@ -123,14 +123,15 @@
     </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). -->
+  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
+       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
   <div class="footer__contacts">
     <div class="footer__branch">
       <h3>Мясницкая</h3>
       <p>ул. Мясницкая, 11<br>Пн–Пт 08:00–22:00<br>Сб–Вс 09:00–22:00</p>
       <div class="footer__branch-actions">
         <a href="tel:+79300352325">+7 (930) 035-23-25</a>
-        <a class="footer__map" href="https://yandex.ru/maps/org/meat_wash/191686454110/" target="_blank" rel="noopener noreferrer" data-map="myasnitskaya">На карте<span class="visually-hidden">: Мясницкая</span> <span aria-hidden="true">→</span></a>
+        <a class="footer__map" href="./#map-myasnitskaya" data-map-link="myasnitskaya">На карте<span class="visually-hidden">: Мясницкая</span> <span aria-hidden="true">→</span></a>
       </div>
     </div>
     <div class="footer__branch">
@@ -138,7 +139,7 @@
       <p>пр-т Андропова, 8, стр. 2<br>Ежедневно 08:00–22:00</p>
       <div class="footer__branch-actions">
         <a href="tel:+79324916991">+7 (932) 491-69-91</a>
-        <a class="footer__map" href="https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/" target="_blank" rel="noopener noreferrer" data-map="technopark">На карте<span class="visually-hidden">: Технопарк</span> <span aria-hidden="true">→</span></a>
+        <a class="footer__map" href="./#map-technopark" data-map-link="technopark">На карте<span class="visually-hidden">: Технопарк</span> <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </div>
@@ -237,51 +238,6 @@
     <p class="request__donetitle">Заявка отправлена</p>
     <p>Мастер посмотрит фото и свяжется с вами по указанному контакту.</p>
     <form method="dialog"><button class="btn btn--ghost">Закрыть</button></form>
-  </div>
-</dialog>
-
-<!-- Карта филиала: iframe виджета Яндекс Карт создаёт js/maps.js только при открытии
-     и только для выбранной студии; при закрытии он удаляется. Данные — js/data.js. -->
-<dialog class="dialog map-dialog" id="map-dialog" aria-labelledby="map-title">
-  <div class="map-dialog__bar">
-    <span class="eyebrow" lang="en">MEATWASH / LOCATIONS</span>
-    <div class="map-dialog__tabs" role="tablist" aria-label="Студия">
-      <button class="map-dialog__tab" type="button" role="tab" id="map-tab-myasnitskaya" data-map-tab="myasnitskaya" aria-controls="map-panel" aria-selected="true">Мясницкая</button>
-      <button class="map-dialog__tab" type="button" role="tab" id="map-tab-technopark" data-map-tab="technopark" aria-controls="map-panel" aria-selected="false" tabindex="-1">Технопарк</button>
-    </div>
-    <form method="dialog"><button class="dialog__close" aria-label="Закрыть карту">×</button></form>
-  </div>
-  <div class="map-dialog__body" id="map-panel" role="tabpanel" aria-labelledby="map-tab-myasnitskaya">
-    <div class="map-dialog__info">
-      <h2 id="map-title" tabindex="-1" data-map-field="name">Мясницкая</h2>
-      <p class="map-dialog__type" data-map-field="type">Премиальная мойка</p>
-      <!-- Сразу под названием: в конце колонки подсказка уходила за видимую область. -->
-      <p class="map-dialog__slow" role="status" hidden>Карта долго грузится — <a data-map-external href="https://yandex.ru/maps/org/meat_wash/191686454110/" target="_blank" rel="noopener noreferrer">откройте в Яндекс Картах <span aria-hidden="true">↗</span></a></p>
-      <dl class="map-dialog__facts">
-        <div><dt>Адрес</dt><dd data-map-field="address">ул. Мясницкая, 11</dd></div>
-        <div><dt>Часы</dt><dd data-map-field="hours">Пн–Пт 08:00–22:00<br>Сб–Вс 09:00–22:00</dd></div>
-        <div><dt>Телефон</dt><dd><a data-map-call href="tel:+79300352325" data-map-field="phone">+7 (930) 035-23-25</a></dd></div>
-        <div><dt data-map-field="entry-label">Въезд и парковка</dt><dd data-map-field="entry-text">Подземный паркинг, −1 этаж. Два часа закрытой парковки включены в визит.</dd></div>
-        <div><dt>На месте</dt><dd data-map-field="on-site">Wi-Fi и зона ожидания · Оплата из машины · Кофемания этажом выше</dd></div>
-      </dl>
-      <div class="map-dialog__links">
-        <a class="link-arrow" data-map-call href="tel:+79300352325">Позвонить <span aria-hidden="true">→</span></a>
-        <a class="link-arrow" data-map-external href="https://yandex.ru/maps/org/meat_wash/191686454110/" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах <span aria-hidden="true">↗</span></a>
-      </div>
-    </div>
-    <div class="map-dialog__actions">
-      <a class="btn btn--fill" data-map-route href="https://yandex.ru/maps/?rtext=~55.761864%2C37.632492&amp;rtt=auto" target="_blank" rel="noopener noreferrer"><span class="map-dialog__long">Построить маршрут</span><span class="map-dialog__short">Маршрут</span> <span aria-hidden="true">↗</span></a>
-      <a class="btn btn--ghost" data-map-book href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer">Записаться <span aria-hidden="true">↗</span></a>
-    </div>
-    <div class="map-dialog__map" data-state="idle">
-      <div class="map-dialog__placeholder">
-        <p class="map-dialog__status" role="status">Загружаем карту…</p>
-        <div class="map-dialog__fail" hidden>
-          <button class="btn btn--ghost" type="button" data-map-retry>Повторить</button>
-        </div>
-        <a class="link-arrow" data-map-external href="https://yandex.ru/maps/org/meat_wash/191686454110/" target="_blank" rel="noopener noreferrer">Открыть в Яндекс Картах <span aria-hidden="true">↗</span></a>
-      </div>
-    </div>
   </div>
 </dialog>
 <!-- SHARED:dialogs:END -->

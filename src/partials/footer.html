@@ -15,14 +15,15 @@
     </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). -->
+  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
+       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
   <div class="footer__contacts">
     <div class="footer__branch">
       <h3>{{loc:myasnitskaya:name}}</h3>
       <p>{{loc:myasnitskaya:address}}<br>{{loc:myasnitskaya:hours}}</p>
       <div class="footer__branch-actions">
         <a href="tel:{{loc:myasnitskaya:tel}}">{{loc:myasnitskaya:phone}}</a>
-        <a class="footer__map" href="{{loc:myasnitskaya:map}}" target="_blank" rel="noopener noreferrer" data-map="myasnitskaya">На карте<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">→</span></a>
+        <a class="footer__map" href="{{locations}}#map-myasnitskaya" data-map-link="myasnitskaya">На карте<span class="visually-hidden">: {{loc:myasnitskaya:name}}</span> <span aria-hidden="true">→</span></a>
       </div>
     </div>
     <div class="footer__branch">
@@ -30,7 +31,7 @@
       <p>{{loc:technopark:address}}<br>{{loc:technopark:hours}}</p>
       <div class="footer__branch-actions">
         <a href="tel:{{loc:technopark:tel}}">{{loc:technopark:phone}}</a>
-        <a class="footer__map" href="{{loc:technopark:map}}" target="_blank" rel="noopener noreferrer" data-map="technopark">На карте<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">→</span></a>
+        <a class="footer__map" href="{{locations}}#map-technopark" data-map-link="technopark">На карте<span class="visually-hidden">: {{loc:technopark:name}}</span> <span aria-hidden="true">→</span></a>
       </div>
     </div>
   </div>

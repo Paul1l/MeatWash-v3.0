@@ -614,51 +614,17 @@ export const LOCATIONS = [
  {
   "id": "myasnitskaya",
   "name": "Мясницкая",
-  "type": "Премиальная мойка",
   "address": "ул. Мясницкая, 11",
-  "hours": [
-   "Пн–Пт 08:00–22:00",
-   "Сб–Вс 09:00–22:00"
-  ],
-  "phone": "+7 (930) 035-23-25",
-  "tel": "+79300352325",
   "booking": "https://n975571.yclients.com/company/906067/personal/select-services",
   "map": "https://yandex.ru/maps/org/meat_wash/191686454110/",
-  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash/191686454110/?ll=37.632492%2C55.761864&z=16",
-  "route": "https://yandex.ru/maps/?rtext=~55.761864%2C37.632492&rtt=auto",
-  "entry": {
-   "label": "Въезд и парковка",
-   "text": "Подземный паркинг, −1 этаж. Два часа закрытой парковки включены в визит."
-  },
-  "onSite": [
-   "Wi-Fi и зона ожидания",
-   "Оплата из машины",
-   "Кофемания этажом выше"
-  ]
+  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash/191686454110/?ll=37.632492%2C55.761864&z=16"
  },
  {
   "id": "technopark",
   "name": "Технопарк",
-  "type": "Детейлинг-центр",
   "address": "пр-т Андропова, 8, стр. 2",
-  "hours": [
-   "Ежедневно 08:00–22:00"
-  ],
-  "phone": "+7 (932) 491-69-91",
-  "tel": "+79324916991",
   "booking": "https://n1982508.yclients.com/company/1743348/personal/select-services",
   "map": "https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/",
-  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash_tekhnopark/122667992007/?ll=37.666144%2C55.697146&z=16",
-  "route": "https://yandex.ru/maps/?rtext=~55.697146%2C37.666144&rtt=auto",
-  "entry": {
-   "label": "Где найти",
-   "text": "ТЦ «Мегаполис», 1 этаж."
-  },
-  "onSite": [
-   "Полный цикл детейлинга",
-   "Оклейка и бронирование",
-   "Порошковая покраска дисков",
-   "Приём топливных карт"
-  ]
+  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash_tekhnopark/122667992007/?ll=37.666144%2C55.697146&z=16"
  }
 ];
