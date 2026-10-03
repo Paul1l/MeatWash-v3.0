@@ -154,19 +154,29 @@ export const GLASS_CLEARANCE = 0.02;
 
 // Стёкла модели сверху в мировых координатах: материал стекла (исходный «glass»
 // или заменённый restyle «meatwash-glass»), без почти вертикальных боковых окон —
-// сверху на них ничего не опирается. Треугольники разложены по сетке 5 см в
-// плоскости XZ: высота над точкой ищется только среди своей ячейки.
-export function glassMap(car, cell = 0.05) {
+// сверху на них ничего не опирается.
+export const glassMap = (car, cell = 0.05) => surfaceMap(car, /^(meatwash-)?glass$/, {cell});
+
+// Карта высоты поверхностей материала match (по имени) сверху: треугольники с
+// |n.y| > minUp (в box — только с центром внутри {x, y, z: [от, до]}) разложены по
+// сетке cell в плоскости XZ — высота над точкой ищется только среди своей ячейки.
+// По ней же бусины керамики ложатся на капот (beads.js).
+export function surfaceMap(car, match, {cell = 0.05, minUp = 0.25, box = null} = {}) {
   car.updateMatrixWorld(true);
   const tris = [], p = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()], n = new THREE.Vector3(), e = new THREE.Vector3();
+  const inside = (v, [a, b]) => v >= a && v <= b;
   car.traverse(o => {
-    if (!o.isMesh || !/^(meatwash-)?glass$/.test(o.material?.name || '')) return;
+    if (!o.isMesh || !match.test(o.material?.name || '')) return;
     const position = o.geometry.attributes.position, index = o.geometry.index;
     const count = index ? index.count : position.count;
     for (let i = 0; i < count; i += 3) {
       for (let k = 0; k < 3; k++) p[k].fromBufferAttribute(position, index ? index.getX(i + k) : i + k).applyMatrix4(o.matrixWorld);
+      if (box) {
+        const cx = (p[0].x + p[1].x + p[2].x) / 3, cy = (p[0].y + p[1].y + p[2].y) / 3, cz = (p[0].z + p[1].z + p[2].z) / 3;
+        if (!inside(cx, box.x) || !inside(cy, box.y) || !inside(cz, box.z)) continue;
+      }
       n.subVectors(p[1], p[0]).cross(e.subVectors(p[2], p[0])).normalize();
-      if (Math.abs(n.y) > 0.25) tris.push(p.map(q => q.toArray()));
+      if (Math.abs(n.y) > minUp) tris.push(p.map(q => q.toArray()));
     }
   });
   if (!tris.length) return null;
