@@ -75,11 +75,14 @@ export function buildDoor(car, materials) {
   pivot.updateMatrixWorld(true);
   pivot.attach(node);
   card.position.set(-hx, 0, -hz);
+  // Закрытой двери обивка не нужна (её закрывает обшивка) — шесть вызовов отрисовки
+  // меньше во всех ракурсах, кроме салона. Программы у неё — кокпита, собраны и так.
+  card.visible = false;
   pivot.add(card);
   return {
     pivot,
     hinge: [hx, hz],
     // k — открыта на 0..1 (уже сглажено): задняя кромка уходит наружу (−X).
-    set(k) { pivot.rotation.y = -DOOR.angle * k; },
+    set(k) { pivot.rotation.y = -DOOR.angle * k; card.visible = k > 0; },
   };
 }
