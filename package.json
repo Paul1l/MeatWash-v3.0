@@ -13,7 +13,8 @@
     "optimize-3d": "node scripts/optimize-3d.mjs",
     "bundle-3d": "node scripts/bundle-3d.mjs",
     "check:3d": "node scripts/check-3d.mjs",
-    "check:page": "node scripts/check.mjs"
+    "check:page": "node scripts/check.mjs",
+    "hero-logo": "node scripts/hero-logo.mjs"
   },
   "devDependencies": {
     "@gltf-transform/core": "^4.5.0",
