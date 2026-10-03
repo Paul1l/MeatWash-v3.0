@@ -2,10 +2,16 @@
 // Окно — <dialog id="request"> из src/partials/dialogs.html; модуль грузит ui.js
 // по первому нажатию [data-request].
 //
-// Отправка — только на адрес REQUESTS.endpoint (site.requests.endpoint в JSON):
+// Отправка — только на адрес REQUESTS.endpoint (site.requests.endpoint в JSON; можно
+// относительный, например api/request.php — обработчик dist/api/request.php) и только
+// на сайтах из REQUESTS.hosts (если список задан: копия на GitHub Pages PHP не выполняет):
 // POST multipart/form-data, «Заявка отправлена» — только если сервер ответил 2xx
 // и JSON {"ok": true}. Пока адреса нет, кнопки «Отправить» нет: окно честно говорит,
 // что отправка не подключена, и даёт телефоны студий. Секретов и токенов здесь нет.
+//
+// Защита от спама без капчи: при открытии окна форма берёт у сервера подписанную
+// метку времени (POST action=token) и отправляет не раньше, чем через `wait` секунд;
+// скрытое поле-ловушка mw_extra должно остаться пустым.
 //
 // Ничего не теряется: работы и поля — в sessionStorage (черновик на время вкладки,
 // без фото), фото — в памяти страницы; ошибка проверки, загрузки или отправки
@@ -15,7 +21,7 @@ import { CATEGORIES, REQUESTS } from './data.js';
 import { goal } from './analytics.js';
 
 const KEY = 'mw:request';
-const MAX_FILES = 6;
+const MAX_FILES = 5;
 const MAX_BYTES = 10 * 1024 * 1024;
 const TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 const FIELDS = ['name', 'contact', 'car', 'comment', 'branch'];
@@ -38,12 +44,15 @@ export function setupRequest(dialog, { show }) {
   const submitBtn = $('[data-request-submit]'), done = $('[data-request-done]');
   const washNote = $('[data-request-wash]'), washText = $('[data-request-wash-text]'), washBook = $('[data-request-wash-book]');
   const errorFor = (name) => $(`[data-error-for="${name}"]`);
-  const endpoint = REQUESTS.endpoint;
+  const hosts = Array.isArray(REQUESTS.hosts) ? REQUESTS.hosts : [];
+  const endpoint = REQUESTS.endpoint && (!hosts.length || hosts.includes(location.hostname)) ? REQUESTS.endpoint : null;
 
   const draft = readDraft();
   const services = Array.isArray(draft.services) ? draft.services.filter((s) => typeof s === 'string') : [];
   const photos = [];   // {file, url}
   let sending = false;
+  // Подписанная метка времени от сервера (антиспам): когда получена и сколько ждать.
+  let token = null, tokenAt = 0, tokenWait = 0, tokenLoading = null;
 
   // «Добавить работу»: все позиции категорий с заявкой, по категориям.
   for (const category of CATEGORIES.filter((c) => c.booking === 'request')) {
@@ -158,6 +167,31 @@ export function setupRequest(dialog, { show }) {
     return errors;
   }
 
+  // Ответ сервера: JSON {ok, error, …}; не JSON или не 2xx — ошибка с текстом сервера.
+  async function post(body, signal) {
+    const response = await fetch(endpoint, { method: 'POST', body, signal, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+    let result = null;
+    try { result = await response.json(); } catch { /* не JSON — значит, не подтверждено */ }
+    if (!response.ok || result?.ok !== true) {
+      const error = new Error(result?.error || `сервер ответил ${response.status}`);
+      error.result = result || {};
+      throw error;
+    }
+    return result;
+  }
+  function loadToken(signal) {
+    if (!endpoint) return Promise.resolve();
+    const body = new FormData();
+    body.append('action', 'token');
+    tokenLoading ??= post(body, signal).then((result) => {
+      token = String(result.token || ''); tokenAt = Date.now(); tokenWait = Math.min(Number(result.wait) || 0, 30);
+    }).finally(() => { tokenLoading = null; });
+    return tokenLoading;
+  }
+  // Метка старше часа — берём новую при открытии (на сервере она живёт сутки).
+  const tokenFresh = () => token && Date.now() - tokenAt < 3600_000;
+  const pause = (ms) => new Promise((done) => setTimeout(done, ms));
+
   async function submit() {
     if (sending || !endpoint) return;
     const errors = validate();
@@ -169,14 +203,22 @@ export function setupRequest(dialog, { show }) {
     body.append('consent', 'yes');
     body.append('consentDocument', new URL('consent-request.html', location.href).href);
     body.append('page', location.href);
-    for (const { file } of photos) body.append('photos', file, file.name);
+    body.append('mw_extra', form.elements.mw_extra?.value || '');
+    for (const { file } of photos) body.append('photos[]', file, file.name);
     sending = true; submitBtn.disabled = true; submitBtn.textContent = 'Отправляем…';
-    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 90_000);
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 180_000);
     try {
-      const response = await fetch(endpoint, { method: 'POST', body, signal: controller.signal, headers: { Accept: 'application/json' } });
-      let result = null;
-      try { result = await response.json(); } catch { /* не JSON — значит, не подтверждено */ }
-      if (!response.ok || result?.ok !== true) throw new Error(result?.error || `сервер ответил ${response.status}`);
+      // Метка: устарела или сервер её не принял — берём новую и отправляем ещё раз (один раз).
+      for (let attempt = 0; ; attempt++) {
+        if (!tokenFresh()) { token = null; await loadToken(controller.signal); }
+        const left = tokenAt + tokenWait * 1000 + 300 - Date.now();
+        if (left > 0) await pause(left);
+        body.set('token', token);
+        try { await post(body, controller.signal); break; } catch (error) {
+          if (attempt || error.result?.retry !== 'token') throw error;
+          token = null;
+        }
+      }
       // Только подтверждённая доставка: очищаем черновик и показываем «отправлено».
       goal('request_sent', { works: services.length, photos: photos.length });
       services.splice(0); photos.splice(0).forEach((p) => p.url && URL.revokeObjectURL(p.url));
@@ -184,8 +226,12 @@ export function setupRequest(dialog, { show }) {
       try { sessionStorage.removeItem(KEY); } catch { /* приватный режим */ }
       form.hidden = true; done.hidden = false; done.focus();
     } catch (error) {
-      formError.textContent = `Не удалось отправить заявку (${error.name === 'AbortError' ? 'нет ответа' : error.message}). Всё введённое и фото сохранены — попробуйте ещё раз или позвоните в студию.`;
+      const reason = error.name === 'AbortError' ? 'нет ответа от сервера' : error.name === 'TypeError' ? 'нет связи с сервером' : error.message;
+      formError.textContent = `Не удалось отправить заявку: ${reason}. Всё введённое и фото сохранены — попробуйте ещё раз или позвоните в студию.`;
       formError.hidden = false;
+      // Сервер назвал поле — показываем ошибку и у него.
+      const field = error.result?.field;
+      if (field && errorFor(field)) { errorFor(field).textContent = error.message.charAt(0).toUpperCase() + error.message.slice(1) + '.'; }
     } finally {
       clearTimeout(timer); sending = false; submitBtn.disabled = false; submitBtn.textContent = 'Отправить заявку';
     }
@@ -231,6 +277,7 @@ export function setupRequest(dialog, { show }) {
       washBook.dataset.ycPrograms = washPrograms;
     }
     form.hidden = false; done.hidden = true; formError.hidden = true;
+    if (endpoint && !tokenFresh()) { token = null; loadToken().catch(() => { /* повторим при отправке */ }); }
     show(dialog);
     $('#request-title').focus({ preventScroll: true });
     goal('request_open', { works: services.length, from: category || (list.length ? 'selection' : 'general') });
