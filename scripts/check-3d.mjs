@@ -7,6 +7,10 @@
 //   с путём света для ракурса, капли (rain) — только в ракурсе лобового стекла и лежат
 //   на внешней стороне стекла обеих моделей, бусины — только в ракурсе капота и лежат
 //   на лаке капота (не ниже него) на обеих моделях;
+// - дверь водителя — отдельный узел обеих моделей: петля у передней кромки, дверь
+//   открывается наружу, обивка изнутри на месте, кокпит не держит у этого борта
+//   неподвижной обивки в проёме; химчистка и кожа (cabin, leather) — в ракурсе салона
+//   с камерой снаружи открытой двери;
 // - размеры укладываются в бюджет; печатается таблица raw / gzip / brotli.
 // Что страница не грузит 3D до нажатия, проверяет npm run check (check.mjs).
 import {readFile, readdir, mkdtemp, rm} from 'node:fs/promises';
@@ -47,10 +51,13 @@ globalThis.document ??= {createElement: () => ({width: 0, height: 0, getContext:
 const interior = await import(new URL('../src/porsche3d/interior.js', import.meta.url).href);
 const dropsModule = await import(new URL('../src/porsche3d/drops.js', import.meta.url).href);
 const beadsModule = await import(new URL('../src/porsche3d/beads.js', import.meta.url).href);
+const doorModule = await import(new URL('../src/porsche3d/door.js', import.meta.url).href);
 async function cockpitClearance(gltfDocument) {
   const car = new THREE.Group();
   for (const node of gltfDocument.getRoot().listNodes()) {
     const mesh = node.getMesh(); if (!mesh) continue;
+    // Дверь — своей группой с именем узла, как её отдаёт GLTFLoader.
+    const parent = node.getName() === doorModule.DOOR.name ? car.add(Object.assign(new THREE.Group(), {name: node.getName()})).children.at(-1) : car;
     const matrix = new THREE.Matrix4().fromArray(node.getWorldMatrix());
     for (const prim of mesh.listPrimitives()) {
       const name = prim.getMaterial()?.getName();
@@ -62,7 +69,7 @@ async function cockpitClearance(gltfDocument) {
       geometry.setAttribute('position', new THREE.BufferAttribute(xyz, 3));
       if (prim.getIndices()) geometry.setIndex(Array.from(prim.getIndices().getArray()));
       const part = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({name}));
-      part.applyMatrix4(matrix); car.add(part);
+      part.applyMatrix4(matrix); parent.add(part);
     }
   }
   const built = await interior.buildInterior(car);
@@ -131,8 +138,45 @@ async function cockpitClearance(gltfDocument) {
     }
     plaque = {count: position.count, outside, facing};
   });
+  // Дверь водителя: петля у передней кромки, открытая дверь уходит задней кромкой наружу,
+  // обивка — с внутренней стороны в пределах двери; у этого борта в проёме нет
+  // неподвижной обивки кокпита (выше пола и ниже пояса, левее −0,63 м).
+  const bounds = doorModule.doorBounds(car);
+  let door = null;
+  if (bounds) {
+    const [z0, z1] = bounds.z, [y0, y1] = bounds.y;
+    let blocking = 0;
+    built.group.traverse(o => {
+      if (!o.isMesh) return;
+      const position = o.geometry.attributes.position;
+      for (let i = 0; i < position.count; i++) {
+        v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+        if (v.x < -0.63 && v.z > z0 + 0.02 && v.z < z1 - 0.02 && v.y > y0 + 0.1 && v.y < y1 - 0.05) blocking++;
+      }
+    });
+    const built2 = doorModule.buildDoor(car, built.materials);
+    const card = built2?.pivot.getObjectByName('door-card');
+    let cardOut = 0, cardCount = 0;
+    card?.updateMatrixWorld(true);
+    card?.traverse(o => {
+      if (!o.isMesh) return;
+      const position = o.geometry.attributes.position;
+      for (let i = 0; i < position.count; i++, cardCount++) {
+        v.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld);
+        if (v.z < z0 - 0.01 || v.z > z1 + 0.01 || v.y < y0 - 0.01 || v.y > y1 + 0.01 || v.x < bounds.outer - 0.01 || v.x > bounds.inner + 0.1) cardOut++;
+      }
+    });
+    // Задняя кромка у пояса: закрыта и открыта.
+    const rear = new THREE.Vector3((bounds.inner + bounds.outer) / 2, (y0 + y1) / 2, z1);
+    const local = built2 ? built2.pivot.worldToLocal(rear.clone()) : null;
+    built2?.set(1);
+    built2?.pivot.updateMatrixWorld(true);
+    const open = local ? built2.pivot.localToWorld(local.clone()) : null;
+    door = {length: z1 - z0, height: y1 - y0, hinge: bounds.hinge, z0, outer: bounds.outer, inner: bounds.inner,
+      cardMeshes: card?.children.length ?? 0, cardCount, cardOut, blocking, rearOpen: open ? [open.x, open.z] : null};
+  }
   built.dispose();
-  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0, drops, beads, plaque};
+  return {min, under, fitted: built.fitted, triangles: glass?.triangles || 0, drops, beads, plaque, door};
 }
 const clearances = [];
 
@@ -170,7 +214,7 @@ for (const [name, variant] of Object.entries(report.variants)) {
     check(!prim.getAttribute('TANGENT'), `${variant.file}: остались касательные`);
   }
   const fit = await cockpitClearance(document);
-  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted}); капель ${fit.drops.high.count} / телефон ${fit.drops.low.count}; бусин ${fit.beads.high.count} / телефон ${fit.beads.low.count}; табличка на торпедо — ${fit.plaque?.count ?? 0} вершин`);
+  clearances.push(`${name}: ${(fit.min * 100).toFixed(1)} см (вершин под стёклами ${fit.under}, подогнано ${fit.fitted}); капель ${fit.drops.high.count} / телефон ${fit.drops.low.count}; бусин ${fit.beads.high.count} / телефон ${fit.beads.low.count}; табличка на торпедо — ${fit.plaque?.count ?? 0} вершин; дверь ${fit.door ? (fit.door.length * 100).toFixed(0) + ' см, задняя кромка открытой — x ' + fit.door.rearOpen?.[0].toFixed(2) : 'нет'}`);
   check(fit.plaque && fit.plaque.count > 0 && !fit.plaque.outside && fit.plaque.facing === fit.plaque.count,
     `${variant.file}: табличка с логотипом на торпедо (dash-logo) не найдена, выходит из-под лобового стекла или смотрит не наружу: ${JSON.stringify(fit.plaque)}`);
   for (const [q, d] of Object.entries(fit.drops)) {
@@ -180,6 +224,16 @@ for (const [name, variant] of Object.entries(report.variants)) {
   for (const [q, b] of Object.entries(fit.beads)) {
     check(b.count >= (q === 'low' ? 80 : 150), `${variant.file}: бусин керамики (${q}) ${b.count} — лак капота не найден или слишком мало места`);
     check(!b.below && !b.off && !b.away, `${variant.file}: бусины керамики (${q}) не на лаке капота: ниже лака ${b.below}, вне лака ${b.off} вершин, вне капота ${b.away}`);
+  }
+  const d = fit.door;
+  check(d, `${variant.file}: нет двери водителя (узел ${doorModule.DOOR.name}) — npm run optimize-3d`);
+  if (d) {
+    check(d.length > 1.0 && d.length < 1.35 && d.height > 0.45 && d.height < 0.7 && d.inner > d.outer,
+      `${variant.file}: размеры двери странные: ${JSON.stringify(d)}`);
+    check(Math.abs(d.hinge[1] - d.z0) < 0.06 && d.hinge[0] < d.inner, `${variant.file}: петля двери не у передней кромки: ${JSON.stringify(d.hinge)}`);
+    check(d.rearOpen && d.rearOpen[0] < d.outer - 0.6, `${variant.file}: открытая дверь не уходит наружу: задняя кромка ${JSON.stringify(d.rearOpen)}`);
+    check(d.cardMeshes >= 5 && d.cardCount > 0 && !d.cardOut, `${variant.file}: обивка двери не построена или выходит за дверь: ${JSON.stringify(d)}`);
+    check(!d.blocking, `${variant.file}: в проёме двери водителя осталась неподвижная обивка кокпита (${d.blocking} вершин)`);
   }
   check(fit.triangles > 0 && fit.under > 0, `${variant.file}: не найдено стекло над кокпитом (материал glass)`);
   check(fit.min >= interior.GLASS_CLEARANCE - 1e-4, `${variant.file}: кокпит подходит к стеклу на ${(fit.min * 100).toFixed(1)} см (нужно не меньше ${interior.GLASS_CLEARANCE * 100} см) — торпедо видно сквозь лобовое стекло`);
@@ -197,7 +251,9 @@ for (const variant of Object.values(report.variants)) check(variant.file.endsWit
 const bundle = await readFile(BUNDLE);
 sizes('dist/js/porsche3d.bundle.js', bundle);
 check(bundle.length <= 700e3, `Бандл ${bundle.length} байт больше 700 КБ`);
-check(gzipSync(bundle, {level: 9}).length <= 180e3, 'Бандл больше 180 КБ в gzip');
+// 190 КБ: с дверью и химчисткой салона (3 октября 2026) бандл — 181 КБ; дверь и грязь
+// готовы к первому кадру, отдельным файлом их не вынести без сборки шейдеров при показе.
+check(gzipSync(bundle, {level: 9}).length <= 190e3, 'Бандл больше 190 КБ в gzip');
 
 // 3. Ракурсы и работы гаража.
 const views = await import('data:text/javascript;base64,' + Buffer.from(await readFile(resolve(root, 'src/porsche3d/views.js'), 'utf8')).toString('base64'));
@@ -213,13 +269,15 @@ for (const id of [...Object.keys(views.SERVICE_VIEWS), ...Object.keys(views.SERV
 // Эффекты: пена мойки и полировка в материалах (wash, gloss), блик по детали (glow —
 // путь света для ракурса работы), очиститель дисков (iron — в ракурсе колеса, в конце
 // блик по ободу), бусины керамики (beads — в ракурсе капота, с бликом), капли на лобовом
-// стекле (rain — только в его ракурсе). Другие эффекты модель убедительно не показывает.
-const FX = ['wash', 'gloss', 'glow', 'rain', 'iron', 'beads'];
-const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood'};
+// стекле (rain — только в его ракурсе), химчистка и кондиционер кожи (cabin, leather —
+// в ракурсе салона через открытую дверь, с бликом по сиденью). Другие эффекты модель
+// убедительно не показывает.
+const FX = ['wash', 'gloss', 'glow', 'rain', 'iron', 'beads', 'cabin', 'leather'];
+const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood', cabin: 'cabin', leather: 'cabin'};
 for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
   check(FX.includes(fx), `Неизвестный эффект ${fx} у работы ${id}: известны ${FX.join(', ')}`);
   const view = views.SERVICE_VIEWS[id];
-  if (fx === 'glow' || fx === 'iron' || fx === 'beads') {
+  if (['glow', 'iron', 'beads', 'cabin', 'leather'].includes(fx)) {
     const glow = views.GLOW?.[view];
     check(glow && glow.path?.length >= 2 && glow.path.every(p => p.length === 3 && p.every(Number.isFinite) && p[1] > 0.1)
       && glow.power > 0 && glow.power <= 20 && glow.reach > 0 && glow.reach <= 2,
@@ -228,6 +286,11 @@ for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
   if (FX_VIEW[fx]) check(view === FX_VIEW[fx], `Работа ${id}: эффект ${fx} виден только в ракурсе ${FX_VIEW[fx]}, а у работы ${view}`);
 }
 for (const view of Object.keys(views.GLOW || {})) check(view in views.VIEWS, `GLOW: нет ракурса ${view}`);
+// Салон смотрят снаружи, через проём открытой двери водителя (левый борт).
+{
+  const c = views.VIEWS.cabin;
+  check(c && c.p[0] < -1.2 && Math.abs(c.t[0]) < 0.6 && c.t[1] > 0.4 && c.t[1] < 1.0, 'Ракурс салона (cabin): камера должна стоять снаружи у левого борта и смотреть в салон');
+}
 
 const pad = (v, n) => String(v).padStart(n);
 console.log('Размеры 3D-ресурсов, байт:');
@@ -237,4 +300,4 @@ for (const [label, raw, gz, br] of rows) console.log(`${label.padEnd(46)}${pad(r
 console.log('Наименьший зазор кокпит — стекло: ' + clearances.join('; '));
 
 assert.equal(failures.length, 0, failures.join('\n'));
-console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели, эффекты известны (блик — с путём света, капли — на внешней стороне лобового стекла, бусины — на лаке капота), кокпит не выходит за стёкла.');
+console.log('PASS: бандл собран из src/porsche3d, модели совпадают с отчётом и укладываются в бюджет (Meshopt, WebP, без касательных), у всех работ гаража есть ракурс модели, эффекты известны (блик — с путём света, капли — на внешней стороне лобового стекла, бусины — на лаке капота, химчистка и кожа — в салоне через открытую дверь), дверь водителя на петле открывается наружу с обивкой изнутри, кокпит не выходит за стёкла.');
