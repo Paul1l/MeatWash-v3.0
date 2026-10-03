@@ -286,7 +286,8 @@ export function setupGarage() {
       job = null;
       scene = handle;
       setState('ready');
-      showHint();
+      // Выбор сохранился с прошлого открытия — камера сразу на ракурсе работы, подсказка не нужна.
+      if (!picked.length) showHint();
       renderSelection();
       target(null);
       frameSafe();
@@ -481,6 +482,9 @@ export function setupGarage() {
       next = next.filter((x) => !includedIn(byId(x), next));
     }
     setPicked(next, on ? id : null);
+    // Работа выбрана — подсказка про жесты своё отработала и на ракурсе работы только
+    // закрывает сцену (на телефоне — знак на стене).
+    if (on) hideHint();
     const zone = byId(id);
     say(`${zone.title}: ${on ? 'выбрано' : 'убрано'}. ${totalPhrase()}.`);
   }

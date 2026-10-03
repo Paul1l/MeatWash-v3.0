@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Настройки приёма заявок (секреты) — только на хостинге, не в репозитории.
+/meatwash-private/
+request-config.php

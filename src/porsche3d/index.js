@@ -12,7 +12,7 @@
 // или пальцем по обеим осям, приближение — колесом, щипком или zoomBy()
 // в ограниченных пределах; ракурсы работ — программно.
 import {
-  ACESFilmicToneMapping, CatmullRomCurve3, Color, MathUtils, MeshPhysicalMaterial,
+  ACESFilmicToneMapping, Box3, CatmullRomCurve3, Color, MathUtils, MeshPhysicalMaterial,
   PerspectiveCamera, Scene, SRGBColorSpace, Vector3, WebGLRenderer,
 } from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -146,6 +146,8 @@ diffuseColor.rgb=mix(diffuseColor.rgb,vec3(0.2,0.18,0.16),mwDirt*0.7);roughnessF
   ['#include <lights_physical_fragment>', '#include <lights_physical_fragment>\nmaterial.clearcoat*=1.0-mwDirt*0.8;material.clearcoatRoughness=mix(material.clearcoatRoughness,0.45,mwDirt);'],
 ];
 const DEG = Math.PI / 180;
+// Середина машины (модель стоит в начале координат, ось z — вдоль кузова): центр свободного вращения.
+const CAR_CENTER = new Vector3(0, 0.6, 0);
 
 // Материалы в духе клуба: глубокий бордовый лак с прозрачным верхним слоем,
 // тонированные стёкла без преломления (transmission — лишний проход рендера).
@@ -273,6 +275,7 @@ export async function mount({
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
   let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null, beads = null, door = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
+  const carBox = new Box3();
   let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0, warmTimer = 0;
 
   const canvas = document.createElement('canvas');
@@ -376,6 +379,8 @@ export async function mount({
     if (disposed) { if (gltf) release(gltf.scene); bail(); }
     mark('parse');
     scene.add(gltf.scene);
+    // Габарит кузова с запасом: свободное вращение не заводит камеру внутрь.
+    carBox.setFromObject(gltf.scene).expandByScalar(0.15);
     restyled = restyle(gltf.scene, {anisotropy: Math.min(low ? 2 : 4, maxAnisotropy), low});
     await pause(); if (disposed) bail();
     // Кокпит из v1 вместо упрощённой «ванны» модели: он виден через стёкла.
@@ -665,7 +670,7 @@ export async function mount({
   const POLAR_MIN = 55 * DEG, POLAR_MAX = 86 * DEG;
   const pointers = new Map();
   let drag = null, pinch = null;
-  const offset = new Vector3();
+  const offset = new Vector3(), eye0 = new Vector3();
   function rotate(dAz, dPolar) {
     offset.subVectors(state.p, state.t);
     const r = offset.length();
@@ -673,11 +678,28 @@ export async function mount({
     az += dAz;
     pol = MathUtils.clamp(pol + dPolar, POLAR_MIN, Math.max(POLAR_MAX, Math.min(pol, 89 * DEG)));
     state.p.set(state.t.x + r * Math.sin(pol) * Math.sin(az), state.t.y + r * Math.cos(pol), state.t.z + r * Math.sin(pol) * Math.cos(az));
+    // Камера даже при наибольшем приближении не входит в кузов: на таком шаге она отъезжает
+    // по радиусу ровно настолько, чтобы остаться снаружи, — оборот не застревает.
+    for (let i = 0; i < 30 && inCar(state.p); i++) state.p.sub(state.t).multiplyScalar(1.05).add(state.t);
+  }
+  const inCar = p => !carBox.isEmpty() && carBox.containsPoint(eye0.subVectors(p, state.t).multiplyScalar(ZOOM_MIN).add(state.t));
+  // Ракурс работы смотрит на деталь (фару, стекло) с небольшого расстояния — вращение вокруг
+  // неё заводило камеру в салон. Рука берёт камеру — центр вращения уходит по лучу взгляда
+  // к середине машины (не дальше двух длин луча): кадр не меняется, радиус только растёт.
+  function recenter() {
+    offset.subVectors(state.t, state.p);
+    const len2 = offset.lengthSq();
+    if (len2 < 1e-6) return;
+    const s = Math.min(2, eye0.subVectors(CAR_CENTER, state.p).dot(offset) / len2);
+    if (s <= 1) return;
+    eye0.subVectors(state.p, state.t).multiplyScalar(zoom).add(state.t);
+    state.t.addScaledVector(offset, s - 1);
+    state.p.subVectors(eye0, state.t).divideScalar(zoom).add(state.t);
   }
   // Рука берёт камеру: переход и проезд вдоль борта останавливаются.
   function takeOver() {
     move = null; drift = null; driftNext = null;
-    if (viewName !== 'free') { viewName = 'free'; onViewChange?.('free'); }
+    if (viewName !== 'free') { viewName = 'free'; recenter(); onViewChange?.('free'); }
   }
   function stepSpin(dt) {
     if (!spin || drag) return false;
