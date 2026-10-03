@@ -9,6 +9,8 @@
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {createCabinFx} from './cabin.js';
+import {doorBounds} from './door.js';
 
 const V1_TO_V3 = 0.971;
 
@@ -42,7 +44,12 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
     const y = glass?.height(-x * V1_TO_V3, 0.1 - z * V1_TO_V3);
     return y == null ? null : (y + 0.05) / V1_TO_V3;
   };
-  const cockpit = await buildCockpit(pause, glassV1);
+  // Дверь водителя (отдельный узел модели) открывается: обивку её участка везёт сама
+  // дверь (door.js), кокпит у этого борта оставляет только панель за дверью.
+  // Участок двери по z — в координатах кокпита (v1: перед в +Z).
+  const door = doorBounds(car);
+  const doorV1 = door ? [(0.1 - door.z[1]) / V1_TO_V3, (0.1 - door.z[0]) / V1_TO_V3] : null;
+  const cockpit = await buildCockpit(pause, glassV1, doorV1);
   await pause();
   batchInterior(cockpit);
   cockpit.rotation.y = Math.PI;
@@ -55,6 +62,20 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
   const fitted = fitUnderGlass(cockpit, car, GLASS_CLEARANCE, glass);
   // Табличка клуба на торпедо — после подгонки: она сама держит зазор до стекла.
   const plaque = glass ? dashLogo(glass, cockpit) : null;
+  // Грязь и сухая кожа для работ салона (cabin.js) — в материалах кокпита и обивки двери.
+  const cabin = createCabinFx(), m = cockpit.userData.materials;
+  cabin.patch(m.leather, {dust: '#6d655a', amount: 0.55, dry: 1});
+  cabin.patch(m.edging, {dust: '#6d655a', amount: 0.5, dry: 0.9});
+  cabin.patch(m.cloth, {dust: '#7a7062', amount: 0.5});
+  cabin.patch(m.black, {dust: '#5c5246', amount: 0.5});
+  cabin.patch(m.carpet, {dust: '#5a4e40', amount: 0.7});
+  cabin.patch(m.dashSoft, {dust: '#5f5951', amount: 0.5, dry: 0.6});
+  // Металл и строчка — тоже (пыль чуть-чуть): у Standard без карт одна программа на всех,
+  // без них кант с кодом грязи собирался бы отдельной программой.
+  cabin.patch(m.metal, {dust: '#6a645c', amount: 0.3});
+  cabin.patch(m.thread, {dust: '#6a645c', amount: 0.3});
+  // Торцы двери цвета кузова: та же программа, что у канта (Standard без карт).
+  m.jamb = cabin.patch(new THREE.MeshStandardMaterial({color: '#3d0a10', roughness: 0.42, metalness: 0.1}));
   const textures = new Set(), materials = new Set();
   cockpit.traverse(o => { if (o.material) { materials.add(o.material); for (const v of Object.values(o.material)) if (v?.isTexture) textures.add(v); } });
   return {
@@ -64,10 +85,13 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
     glass,
     // Логотип на табличку торпедо: картинка та же, что для стены (файл шапки сайта).
     setLogo(image, options) { plaque?.setLogo(image, options); },
+    // Материалы кокпита — для обивки двери (door.js); cabin — грязь и сухость кожи.
+    materials: m,
+    cabin,
     dispose() {
       cockpit.removeFromParent();
       cockpit.traverse(o => o.geometry?.dispose());
-      materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose());
+      materials.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); m.jamb.dispose();
       removed.forEach(g => g.dispose());
     },
   };
@@ -258,13 +282,19 @@ export function fitUnderGlass(cockpit, car, clearance = GLASS_CLEARANCE, glass =
 
 // glassV1(x, z) — высота лобового стекла модели над точкой в координатах кокпита (v1),
 // null — стекла над точкой нет. По ней полка торпедо кладётся под стекло.
-async function buildCockpit(pause, glassV1 = () => null){
+// doorV1 — участок двери водителя по z [от, до] (v1) или null: дверь не отделена.
+async function buildCockpit(pause, glassV1 = () => null, doorV1 = null){
  const cockpit=new THREE.Group();cockpit.name='Detailed atelier interior';
  const texture=(type)=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=256;const ctx=canvas.getContext('2d');let seed=931;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};ctx.fillStyle=type==='cloth'?'#746957':'#808080';ctx.fillRect(0,0,256,256);for(let y=0;y<256;y+=2)for(let x=0;x<256;x+=2){const n=rnd();if(type==='cloth'){const warp=((Math.floor(x/8)+Math.floor(y/8))%4)<2;ctx.fillStyle=warp?`rgba(29,27,22,${.25+n*.4})`:`rgba(205,183,147,${.15+n*.3})`;}else ctx.fillStyle=`rgba(${n>.5?'255,255,255':'0,0,0'},${.1+n*.27})`;ctx.fillRect(x,y,1+rnd(),1+rnd());}const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(type==='cloth'?3:5,type==='cloth'?4:5);tex.anisotropy=4;return tex;};
- const grain=texture('leather');await pause();const weave=texture('cloth');weave.colorSpace=THREE.SRGBColorSpace;await pause();
+ // Ткань вставок — «гусиная лапка» (пепита), как на сиденьях 930: чёрное и кремовое,
+ // клетка ~1,2 см. В клетке: тёмный и светлый квадраты, в двух других — косые «зубцы».
+ const pepita=()=>{const canvas=document.createElement('canvas');canvas.width=canvas.height=128;const ctx=canvas.getContext('2d');ctx.fillStyle='#d6c9b0';ctx.fillRect(0,0,128,128);ctx.fillStyle='#17130f';
+  for(let ty=0;ty<8;ty++)for(let tx=0;tx<8;tx++)for(let y=0;y<16;y++)for(let x=0;x<16;x++){const u=x/16,v=y/16;const dark=u<.5&&v<.5?true:u>=.5&&v>=.5?false:((u+v)*4)%1<.5;if(dark)ctx.fillRect(tx*16+x,ty*16+y,1,1);}
+  const tex=new THREE.CanvasTexture(canvas);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(3,4);tex.anisotropy=4;return tex;};
+ const grain=texture('leather');await pause();const weave=pepita();weave.colorSpace=THREE.SRGBColorSpace;await pause();
  // Standard, а не Physical, как в v1: без лака разницы не видно, а программа легче.
  const leather=new THREE.MeshStandardMaterial({color:'#362319',roughness:.82,metalness:0,bumpMap:grain,bumpScale:.0013});
- const edging=new THREE.MeshStandardMaterial({color:'#3c291c',roughness:.61});const cloth=new THREE.MeshStandardMaterial({color:'#594736',map:weave,roughness:.95,bumpMap:grain,bumpScale:.0006});
+ const edging=new THREE.MeshStandardMaterial({color:'#3c291c',roughness:.61});const cloth=new THREE.MeshStandardMaterial({color:'#8a7f72',map:weave,roughness:.95,bumpMap:grain,bumpScale:.0006});
  // Светлее, чем в v1 (#181814): без теней в салоне торпедо сквозь стекло читалось чёрным бруском.
  const black=new THREE.MeshStandardMaterial({color:'#2a231d',roughness:.7,bumpMap:grain,bumpScale:.001});const metal=new THREE.MeshStandardMaterial({color:'#bcb09a',metalness:.84,roughness:.3});const thread=new THREE.MeshStandardMaterial({color:'#856b50',roughness:.9});
  // Торпедо: тёмный винил с лёгким сатиновым бликом (виден через стекло снаружи).
@@ -297,11 +327,17 @@ async function buildCockpit(pause, glassV1 = () => null){
  function box(parent,w,h,d,r,x,y,z,mat){const mesh=new THREE.Mesh(new RoundedBoxGeometry(w,h,d,3,r),mat);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
  function tube(parent,points,r,mat){const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,points.length*5),r,5,false),mat);parent.add(mesh);return mesh;}
  function stitch(parent,x1,y1,z1,x2,y2,z2,count=26){const points=[];const a=new THREE.Vector3(x1,y1,z1),b=new THREE.Vector3(x2,y2,z2);for(let i=0;i<count;i++){points.push(a.clone().lerp(b,i/count),a.clone().lerp(b,(i+.43)/count));}const line=new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:'#988069'}));parent.add(line);}
- box(cockpit,1.35,.065,1.95,.018,0,.39,-.32,black);
+ // Пол — тёмный ковёр (как на фото салона 930), та же программа, что у кожи (Standard с рельефом).
+ const carpet=new THREE.MeshStandardMaterial({color:'#17130f',roughness:.96,bumpMap:grain,bumpScale:.0016});
+ box(cockpit,1.35,.065,1.95,.018,0,.39,-.32,carpet);
  for(const x of [-.36,.36]){
   await pause();
-  const seat=new THREE.Group();seat.position.set(x,0,-.24);cockpit.add(seat);
+  // Сиденья на 16 см ближе к рулю, чем в v1: в открытую дверь видны целиком, спинка — у
+  // задней кромки проёма, как у 930.
+  const seat=new THREE.Group();seat.position.set(x,0,-.08);cockpit.add(seat);
   box(seat,.49,.12,.51,.045,0,.515,-.04,leather);box(seat,.315,.022,.38,.014,0,.583,-.015,cloth);
+  // Поперечная строчка подушки — как на спинке.
+  for(let rib=0;rib<7;rib++){const zz=-.17+rib*.052;tube(seat,[[-.15,.595,zz],[0,.597,zz],[.15,.595,zz]],.0012,edging);}
   for(const sx of [-.203,.203])box(seat,.085,.11,.45,.036,sx,.58,-.04,leather);
   const back=new THREE.Group();back.position.set(0,.59,-.30);back.rotation.x=-.14;seat.add(back);
   upholstery(back,.47,.58,.15,0,.235,0,leather);
@@ -316,7 +352,12 @@ async function buildCockpit(pause, glassV1 = () => null){
  }
  await pause();
  for(const x of [-.68,.68]){
-  box(cockpit,.055,.37,1.24,.024,x,.70,-.21,leather);box(cockpit,.075,.08,1.29,.024,x,.907,-.21,black);
+  // Обивка борта. У двери водителя (+X v1 — левый борт v3) — только панель за дверью:
+  // обивку двери везёт сама дверь (door.js). У пассажира панель доходит до стойки:
+  // изнутри обшивка двери модели прозрачна, в проёме открытой двери просвечивал бы гараж.
+  const driver=x>0&&doorV1,z0=-.83,z1=driver?doorV1[0]-.005:.80,zm=(z0+z1)/2;
+  box(cockpit,.055,.37,z1-z0,.024,x,.70,zm,leather);box(cockpit,.075,.08,z1-z0+.05,.024,x,.907,zm,black);
+  if(driver)continue;
   box(cockpit,.09,.066,.43,.02,x-Math.sign(x)*.05,.71,-.16,edging);
   box(cockpit,.015,.028,.18,.007,x-Math.sign(x)*.086,.80,.14,metal);
   for(const y of [.60,.64,.68])tube(cockpit,[[x-Math.sign(x)*.034,y,-.66],[x-Math.sign(x)*.034,y,.32]],.0017,thread);
@@ -372,7 +413,14 @@ async function buildCockpit(pause, glassV1 = () => null){
  const lever=new THREE.Mesh(new THREE.CylinderGeometry(.006,.006,.115,12),metal);lever.position.set(0,.64,.16);lever.rotation.x=.16;cockpit.add(lever);
  const knob=new THREE.Mesh(new THREE.SphereGeometry(.027,20,12),black);knob.scale.set(1,1.2,1);knob.position.set(0,.702,.15);cockpit.add(knob);
  for(const x of [-.32,.32]){box(cockpit,.43,.10,.34,.04,x,.51,-.99,leather);box(cockpit,.43,.31,.08,.034,x,.68,-1.18,leather);}
+ // Ноги: пол до перегородки, наклонная подставка и три педали водителя — в открытую
+ // дверь видно и это место; без перегородки за торпедо просвечивало бы переднее крыло.
+ box(cockpit,1.3,.065,.24,.018,0,.39,.77,carpet);
+ {const toe=box(cockpit,1.27,.035,.26,.012,0,.5,.83,carpet);toe.rotation.x=.75;}
+ box(cockpit,1.27,.44,.035,.012,0,.72,.93,black);
+ for(const [px,w] of [[.42,.05],[.33,.05],[.21,.075]]){const pedal=box(cockpit,w,.075,.012,.005,px,.52,.77,metal);pedal.rotation.x=.5;}
  cockpit.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+ cockpit.userData.materials={leather,edging,cloth,black,carpet,metal,thread,dashSoft};
  return cockpit;
 }
 

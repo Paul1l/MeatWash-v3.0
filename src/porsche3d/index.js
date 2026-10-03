@@ -22,6 +22,7 @@ import {buildInterior} from './interior.js';
 import {buildDrops, DROPS} from './drops.js';
 import {createShaderFx, NOISE, VERTEX_COMMON, VERTEX_BEGIN} from './fx.js';
 import {buildBeads} from './beads.js';
+import {buildDoor, DOOR} from './door.js';
 import {VIEWS, SERVICE_VIEWS, SERVICE_FX, GLOW, REF_ASPECT} from './views.js';
 import {MODELS} from './models.js';
 
@@ -272,7 +273,7 @@ export async function mount({
   // Обещание, которое выполняется при отмене: разбор и компиляцию после
   // dispose() не ждём — они могут не завершиться вовсе.
   const cancelled = new Promise(resolve => loading.signal.addEventListener('abort', () => resolve(null), {once: true}));
-  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null, beads = null;
+  let disposed = false, raf = 0, room = null, environment = null, restyled = null, interior = null, drops = null, beads = null, door = null;
   let intersection = null, resize = null, firstFrame = null, lost = null, mounted = false;
   const carBox = new Box3();
   let dprScale = 1, slowFrames = 0, prevRenderAt = 0, crispTimer = 0, scaledAt = 0, warmTimer = 0;
@@ -388,6 +389,8 @@ export async function mount({
     scene.add(interior.group);
     // Табличка на торпедо — тот же логотип, что на стене (без него — тёмная табличка).
     interior.setLogo(logoImage, {low});
+    // Дверь водителя на петле с обивкой изнутри: открывается в работах салона.
+    door = buildDoor(gltf.scene, interior.materials);
     // Капли «Антидождя» на лобовом стекле — по той же карте стекла, что торпедо
     // (расстановка — 2–20 мс, отдельным шагом).
     await pause(); if (disposed) bail();
@@ -444,7 +447,7 @@ export async function mount({
   // сразу итог: чистая или отполированная машина, капли бусинами без движения,
   // без вспышек блика.
   let service = {kind: 'base', time: 0, duration: 0.01};
-  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8};
+  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8, cabin: 4.8, leather: 4.0};
   // Путь блика по детали (GLOW) — гладкая кривая через точки ракурса.
   const glowCurves = new Map();
   const glowCurve = name => {
@@ -467,7 +470,8 @@ export async function mount({
     // foam — фронты пены [нанесение, смыв, сползание], iron — очиститель дисков
     // [реакция, подтёки, фронт смыва]; wet — мокрый лак, rimDust — пыль на дисках,
     // wheelWet — мокрые колёса.
-    const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0};
+    // cabin — салон [грязь до фронта, фронт (м, z), пятнами 1 / ровно 0, влажная полоса].
+    const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0, cabin: null};
     switch (service.kind) {
       case 'base': f.clean = 0; break;
       case 'wash':
@@ -503,6 +507,21 @@ export async function mount({
         break;
       case 'glow': glowFx(f, service.glow, u); break;
       case 'rain': f.rain = still ? 'still' : t; break;
+      case 'cabin':
+        // Химчистка: дверь открыта, салон в пыли, крошках и разводах → чистота идёт
+        // волной от торпедо к корме, за ней — влажная полоса, она сохнет → по сиденью
+        // проходит блик. Без движения — сразу чистый салон.
+        if (still || u >= 1) break;
+        f.cabin = [1, MathUtils.lerp(-0.95, 1.3, easeInOut(lin(t, 0.35, 3.5))), 1, 1 - seg(t, 3.3, 4.2)];
+        glowFx(f, 'cabin', (t - 3.2) / 1.6);
+        break;
+      case 'leather':
+        // Кондиционер кожи: сухая, светлая и матовая кожа → волна средства (влажный
+        // блеск) → кожа темнее и с сатиновым бликом.
+        if (still || u >= 1) break;
+        f.cabin = [1, MathUtils.lerp(-0.95, 1.3, easeInOut(lin(t, 0.3, 2.7))), 0, 1 - seg(t, 2.6, 3.4)];
+        glowFx(f, 'cabin', (t - 2.4) / 1.6);
+        break;
     }
     return f;
   }
@@ -515,6 +534,7 @@ export async function mount({
     if (f.foam) fx.uMwFoam.value.set(...f.foam, 1); else fx.uMwFoam.value.set(2, 2, 0, 0);
     if (f.iron) fx.uMwIron.value.set(...f.iron, 1); else fx.uMwIron.value.set(0, 0, 2, 0);
     fx.uMwWash.value.set(f.wet, f.rimDust, f.wheelWet, 0);
+    if (f.cabin) interior?.cabin.set(...f.cabin); else interior?.cabin.set(0, -9, 1, 0);
     for (const m of restyled.rims) m.envMapIntensity = 1.15 + 0.75 * f.rimShine;
     for (const m of restyled.paints) {
       m.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
@@ -545,6 +565,23 @@ export async function mount({
     if (reducedMotion) { service.time = service.duration; return false; }
     service.time = Math.min(service.duration, service.time + dt);
     return true;
+  }
+
+  // ── Дверь водителя ────────────────────────────────────────────────────────
+  // Открыта в работах салона, закрывается при другой работе и в «Общем виде» с
+  // базовой машиной. Ход — doorK 0..1 по времени (DOOR.open / close), угол — плавный.
+  let doorK = 0, doorTarget = 0;
+  function setDoor(target, instant = reducedMotion) {
+    doorTarget = target;
+    if (instant || !door) { doorK = target; door?.set(target); }
+    invalidate();
+  }
+  function stepDoor(dt) {
+    if (!door || doorK === doorTarget) return false;
+    const step = dt / (doorTarget > doorK ? DOOR.open : DOOR.close);
+    doorK = doorTarget > doorK ? Math.min(doorTarget, doorK + step) : Math.max(doorTarget, doorK - step);
+    door.set(easeInOut(doorK));
+    return doorK !== doorTarget;
   }
 
   // ── Переходы камеры ───────────────────────────────────────────────────────
@@ -782,6 +819,7 @@ export async function mount({
     busy = stepSpin(dt) || busy;
     busy = stepZoom(dt) || busy;
     busy = stepService(dt) || busy;
+    busy = stepDoor(dt) || busy;
     project();
     applyEffects();
     eye.subVectors(state.p, state.t).multiplyScalar(zoom).add(state.t);
@@ -906,6 +944,7 @@ export async function mount({
       if ((kind === 'glow' && !GLOW[name]) || (kind === 'rain' && !drops)) kind = 'clean';
       if (kind === 'beads' && !beads) kind = 'glow';
       service = {kind, glow: name, time: 0, duration: DURATION[kind] || 0.01};
+      setDoor(kind === 'cabin' || kind === 'leather' ? 1 : 0);
       applyEffects();
       // Полировка: доехав до борта, камера медленно ведёт вдоль него —
       // отражения скользят по лаку.
@@ -922,6 +961,7 @@ export async function mount({
       if (disposed) return;
       goTo('overview');
       service = {kind: 'base', time: 0, duration: 0.01};
+      setDoor(0);
       applyEffects();
     },
     // «Общий вид»: исходная камера и приближение, эффект текущей работы остаётся.
@@ -945,7 +985,7 @@ export async function mount({
     },
     setReducedMotion(value) {
       reducedMotion = !!value;
-      if (reducedMotion) { drift = null; driftNext = null; spin = null; zoom = zoomTarget; }
+      if (reducedMotion) { drift = null; driftNext = null; spin = null; zoom = zoomTarget; setDoor(doorTarget, true); }
       if (fadeIn) canvas.style.transition = `opacity ${reducedMotion ? 0 : 600}ms ease`;
       invalidate();
     },
@@ -958,7 +998,8 @@ export async function mount({
         geometries: info.memory.geometries, textures: info.memory.textures, programs: info.programs?.length ?? 0,
         pixelRatio: renderer.getPixelRatio(), width, height, zoom, view: viewName, running: !!raf, suspended: [...suspended], timings: {...timings},
         effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible, beads: !!beads?.mesh.visible,
-          foam: (restyled?.fx.uMwFoam.value.w ?? 0) > 0, iron: (restyled?.fx.uMwIron.value.w ?? 0) > 0}};
+          foam: (restyled?.fx.uMwFoam.value.w ?? 0) > 0, iron: (restyled?.fx.uMwIron.value.w ?? 0) > 0,
+          door: door ? Math.round(doorK * 1000) / 1000 : null, cabin: (interior?.cabin.uniform.value.x ?? 0) > 0}};
     },
   });
   // Текущий ракурс и приближение — свойствами-геттерами (Object.assign скопировал бы

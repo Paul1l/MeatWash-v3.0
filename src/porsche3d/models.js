@@ -2,11 +2,11 @@
 // high — компьютер, low — телефон; bytes — размер файла для процента загрузки.
 export const MODELS = {
   "high": {
-    "file": "assets/3d/porsche-930-desktop.6babd70517.glb",
-    "bytes": 2228648
+    "file": "assets/3d/porsche-930-desktop.7a2678d9dc.glb",
+    "bytes": 2233528
   },
   "low": {
-    "file": "assets/3d/porsche-930-mobile.d01adaf1b4.glb",
-    "bytes": 1201268
+    "file": "assets/3d/porsche-930-mobile.4f7ea22eb2.glb",
+    "bytes": 1205932
   }
 };

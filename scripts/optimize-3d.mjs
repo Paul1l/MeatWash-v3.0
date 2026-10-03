@@ -21,6 +21,8 @@
 // - геометрия сжимается Meshopt (EXT_meshopt_compression + квантование):
 //   декодер ~20 КБ JS против ~300 КБ WASM у Draco при близком размере после gzip;
 // - одинаковые материалы сливаются в один меш — меньше вызовов отрисовки;
+//   дверь водителя (левая) — отдельным узлом meatwash-door: в «Химчистке салона»
+//   она открывается на петле (src/porsche3d/door.js);
 // - для телефона — упрощение мелких деталей и текстуры вдвое меньше.
 //
 // Модель на выходе — в метрах: длина 4,29 м (как у 930 Turbo), низ шин на y=0,
@@ -34,7 +36,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {NodeIO, Logger} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
-import {prune, dedup, weld, flatten, join, meshopt, simplifyPrimitive, getBounds, transformMesh} from '@gltf-transform/functions';
+import {prune, dedup, weld, flatten, join, meshopt, simplifyPrimitive, getBounds, transformMesh, transformPrimitive, compactPrimitive} from '@gltf-transform/functions';
 import {MeshoptEncoder, MeshoptDecoder, MeshoptSimplifier} from 'meshoptimizer';
 import sharp from 'sharp';
 
@@ -82,6 +84,13 @@ const MOBILE_SIMPLIFY = {
 
 const LENGTH_M = 4.29;
 
+// Дверь водителя в исходнике — отдельные куски сеток: обшивка, корпус зеркала,
+// стекло, рамка окна, молдинг, ручка, ножка и стекло зеркала. Берутся все связные
+// куски, целиком лежащие в этой коробке (координаты исходника: перед в +Z, левый
+// борт — в +X). Кусок торпедо у стойки начинается с x=0,60 — граница 0,61 его не
+// берёт. Число треугольников сверяется: другой исходник — скрипт упадёт.
+const DOOR = {name: 'meatwash-door', min: [0.61, 0.38, -0.48], max: [1.2, 1.46, 1.06], triangles: 5522};
+
 const VARIANTS = [
   {name: 'desktop', size: 0, simplify: null},
   {name: 'mobile', size: 1, simplify: MOBILE_SIMPLIFY},
@@ -108,6 +117,59 @@ function stats(document) {
     triangles += (prim.getIndices() ? prim.getIndices().getCount() : count) / 3;
   }
   return {triangles, vertices, meshes: document.getRoot().listMeshes().length, materials: document.getRoot().listMaterials().length, textures: document.getRoot().listTextures().length};
+}
+
+// Треугольники примитива, чьи связные куски (вершины склеены по положению) целиком
+// внутри коробки box; matrix — мировая матрица узла.
+function trianglesInBox(prim, matrix, box) {
+  const position = prim.getAttribute('POSITION'), indices = prim.getIndices().getArray();
+  const count = position.getCount(), p = [0, 0, 0], world = new Float64Array(count * 3);
+  const parent = new Int32Array(count).map((_, i) => i), byKey = new Map();
+  const find = i => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+  for (let i = 0; i < count; i++) {
+    position.getElement(i, p);
+    for (let r = 0; r < 3; r++) world[i * 3 + r] = matrix[r] * p[0] + matrix[4 + r] * p[1] + matrix[8 + r] * p[2] + matrix[12 + r];
+    const key = `${Math.round(world[i * 3] * 2e3)},${Math.round(world[i * 3 + 1] * 2e3)},${Math.round(world[i * 3 + 2] * 2e3)}`;
+    if (byKey.has(key)) parent[find(i)] = find(byKey.get(key)); else byKey.set(key, i);
+  }
+  for (let t = 0; t < indices.length; t += 3) { const a = find(indices[t]); parent[find(indices[t + 1])] = a; parent[find(indices[t + 2])] = find(a); }
+  const inside = new Map();
+  for (let i = 0; i < count; i++) {
+    const root = find(i);
+    const ok = [0, 1, 2].every(r => world[i * 3 + r] >= box.min[r] && world[i * 3 + r] <= box.max[r]);
+    inside.set(root, (inside.get(root) ?? true) && ok);
+  }
+  const taken = [];
+  for (let t = 0; t < indices.length; t += 3) if (inside.get(find(indices[t]))) taken.push(t / 3);
+  return taken;
+}
+
+// Дверь — в свой узел DOOR.name: её треугольники уходят из общих примитивов в копии
+// (те же материалы), вершины — в мировые координаты исходника, матрица узла единичная.
+function extractDoor(document) {
+  const scene = document.getRoot().listScenes()[0];
+  const mesh = document.createMesh(DOOR.name), door = document.createNode(DOOR.name).setMesh(mesh);
+  let triangles = 0;
+  for (const node of scene.listChildren()) {
+    const source = node.getMesh();
+    if (!source) continue;
+    const matrix = node.getWorldMatrix();
+    for (const prim of source.listPrimitives()) {
+      const taken = trianglesInBox(prim, matrix, DOOR);
+      if (!taken.length) continue;
+      const indices = prim.getIndices().getArray(), take = new Set(taken), keep = [], part = [];
+      for (let t = 0; t < indices.length / 3; t++) (take.has(t) ? part : keep).push(indices[t * 3], indices[t * 3 + 1], indices[t * 3 + 2]);
+      const copy = prim.clone();
+      copy.setIndices(document.createAccessor().setType('SCALAR').setArray(new Uint32Array(part)));
+      prim.setIndices(document.createAccessor().setType('SCALAR').setArray(new Uint32Array(keep)));
+      compactPrimitive(copy); compactPrimitive(prim);
+      transformPrimitive(copy, matrix);
+      mesh.addPrimitive(copy);
+      triangles += taken.length;
+    }
+  }
+  assert.equal(triangles, DOOR.triangles, `Дверь: ${triangles} треугольников вместо ${DOOR.triangles}`);
+  scene.addChild(door);
 }
 
 async function build(variant) {
@@ -137,8 +199,13 @@ async function build(variant) {
     rimMap.setImage(await sharp(data, {raw: {width: info.width, height: info.height, channels: 4}}).png().toBuffer()).setMimeType('image/png');
   }
 
-  // Все узлы — прямые дети сцены с мировыми матрицами, затем общий меш на материал.
-  await document.transform(prune(), dedup(), flatten(), weld(), join({keepNamed: false}), prune());
+  // Все узлы — прямые дети сцены с мировыми матрицами, дверь — отдельно, затем общий
+  // меш на материал. Имена остальных узлов не нужны: join держит отдельно только
+  // именованные — то есть дверь.
+  await document.transform(prune(), dedup(), flatten(), weld());
+  extractDoor(document);
+  for (const node of scene.listChildren()) if (node.getName() !== DOOR.name) { node.setName(''); node.getMesh()?.setName(''); }
+  await document.transform(join({keepNamed: true}), prune());
 
   if (variant.simplify) {
     for (const mesh of docRoot.listMeshes()) for (const prim of mesh.listPrimitives()) {
@@ -211,6 +278,14 @@ async function verify(result) {
   const lensNode = docRoot.listNodes().find(n => n.getMesh()?.listPrimitives().some(p => p.getMaterial()?.getName() === '930_lights_refraction'));
   assert(getBounds(lensNode).max[2] < -LENGTH_M * 0.35, 'Перед модели смотрит не в −Z');
   for (const needed of ['paint', 'glass', '930_rim', '930_tire', '930_chromes', '930_lights']) assert(names.includes(needed), 'Нет материала ' + needed);
+  // Дверь водителя: отдельный узел на левом борту (−X), от передней стойки к середине.
+  const door = docRoot.listNodes().find(n => n.getName() === DOOR.name);
+  assert(door, 'Нет узла двери ' + DOOR.name);
+  const doorBounds = getBounds(door);
+  assert(doorBounds.max[0] < -0.5 && doorBounds.min[0] > -1.0, 'Дверь не на левом борту: x ' + doorBounds.min[0] + '…' + doorBounds.max[0]);
+  assert(doorBounds.min[2] > -0.8 && doorBounds.max[2] < 0.6, 'Дверь не там по длине: z ' + doorBounds.min[2] + '…' + doorBounds.max[2]);
+  const doorMaterials = door.getMesh().listPrimitives().map(p => p.getMaterial()?.getName()).sort();
+  assert.deepEqual(doorMaterials, ['930_chromes', '930_plastics', 'glass', 'paint'], 'Материалы двери: ' + doorMaterials);
   for (const mesh of docRoot.listMeshes()) for (const prim of mesh.listPrimitives()) {
     assert(!prim.getAttribute('TANGENT'), 'Остались касательные');
     const pos = prim.getAttribute('POSITION'), nor = prim.getAttribute('NORMAL');
@@ -248,7 +323,7 @@ await writeFile(resolve(root, 'source/3d/optimize-report.json'), JSON.stringify(
   author: 'Karol Miklas / Lionsharp Studios',
   source: 'https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e',
   license: 'CC-BY-4.0',
-  changes: 'Удалены второй слой кузова, пол, ароматизатор, антенна, номерные знаки с рамками; касательные; текстуры уменьшены и сжаты в WebP; геометрия сжата Meshopt; для телефона упрощены мелкие детали.',
+  changes: 'Удалены второй слой кузова, пол, ароматизатор, антенна, номерные знаки с рамками; касательные; дверь водителя выделена в отдельный узел; текстуры уменьшены и сжаты в WebP; геометрия сжата Meshopt; для телефона упрощены мелкие детали.',
   units: 'метры; низ шин y=0; перед −Z; левый борт −X',
   ...report,
 }, null, 2) + '\n');
