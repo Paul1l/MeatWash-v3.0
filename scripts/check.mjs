@@ -306,6 +306,16 @@ for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('membership')))
  assert(webvisor||/\bwebvisor:\s*false\b/.test(code),'js/analytics.js: webvisor в init счётчика должен быть явно true или false');
  for(const [name,text] of [['уведомление о cookie (js/analytics.js)',code.match(/consent__text">([^<]*)/)?.[1]||''],...await Promise.all(['privacy.html','consent.html'].map(async file=>[file,await readFile(resolve(dist,file),'utf8')])) ])
   assert(webvisor===text.includes('Вебвизор'),`${name}: ${webvisor?'не назван Вебвизор, а он включён':'упомянут Вебвизор, а он выключен'}`);
+ // Политика обещает, что ввод в форме заявки Вебвизор не пишет: текстовые поля — ym-disable-keys, форма — ym-hide-content.
+ if(webvisor){
+  const dialogs=await readFile(resolve(root,'src/partials/dialogs.html'),'utf8');
+  const form=dialogs.match(/<form class="request[^"]*"[\s\S]*?<\/form>/)?.[0]||'';
+  assert(/<form class="request[^"]*\bym-hide-content\b/.test(form),'Заявка: у формы нет ym-hide-content — Вебвизор покажет введённый текст');
+  for(const field of form.match(/<(?:input|textarea)\b[^>]*>/g)||[]){
+   if(/type="(?:radio|checkbox|file)"|name="mw_extra"/.test(field))continue;
+   assert(/\bym-disable-keys\b/.test(field),`Заявка: поле без ym-disable-keys — Вебвизор запишет ввод: ${field.slice(0,80)}`);
+  }
+ }
 }
 // Главная — гараж (оболочка сразу, 3D по кнопке); внутренние страницы без гаража, GSAP и 3D.
 assert(graphs['index.html'].has('garage.js'),'Главная должна подключать гараж (garage.js)');
@@ -346,8 +356,31 @@ for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('dialogs'))){
 }
 const requestCode=await readFile(resolve(dist,'js/request.js'),'utf8');
 assert(/result\?\.ok !== true/.test(requestCode)&&/!response\.ok/.test(requestCode),'js/request.js: «отправлено» — только после ответа сервера {ok:true}');
-const endpoint=content.site?.requests?.endpoint;
-assert(endpoint==null||/^(https:\/\/|\/)[^\s]+$/.test(endpoint),'site.requests.endpoint: https-адрес или путь на этом сайте');
+const endpoint=content.site?.requests?.endpoint,requestHosts=content.site?.requests?.hosts??[];
+assert(endpoint==null||/^(https:\/\/[^\s]+|\/[^/\s][^\s]*|[\w-][\w./-]*)$/.test(endpoint),'site.requests.endpoint: https-адрес или путь на этом сайте (например api/request.php)');
+assert(Array.isArray(requestHosts)&&requestHosts.every(host=>/^[a-z0-9.-]+$/.test(host)),'site.requests.hosts: список имён сайтов, например ["meatwash.ru"]');
+// Обработчик на хостинге (dist/api/request.php) и форма говорят об одном: до N фото,
+// поле photos[], ловушка mw_extra (в разметке — вне Tab и скринридера), согласие.
+const requestPhp=await readFile(resolve(dist,'api/request.php'),'utf8');
+const maxFiles=requestCode.match(/const MAX_FILES = (\d+);/)?.[1];
+assert(maxFiles&&requestPhp.includes(`const MAX_FILES = ${maxFiles};`),'js/request.js и api/request.php: разное наибольшее число фото (MAX_FILES)');
+assert(/const MAX_BYTES = 10 \* 1024 \* 1024;/.test(requestCode)&&/const MAX_FILE_BYTES = 10 \* 1024 \* 1024;/.test(requestPhp),'js/request.js и api/request.php: фото до 10 МБ');
+assert(requestCode.includes("body.append('photos[]'")&&requestPhp.includes("$_FILES['photos']"),'Фото уходят полем photos[] — иначе PHP получит только последнее');
+for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('dialogs'))){
+ assert(html[page].includes(`>До ${maxFiles} фото:`),`${page}: в окне заявки число фото не как в js/request.js (${maxFiles})`);
+ assert(/<div class="visually-hidden" aria-hidden="true"><label>[^<]*<input name="mw_extra" tabindex="-1" autocomplete="off"><\/label><\/div>/.test(html[page]),`${page}: в заявке нет ловушки mw_extra (скрыта, вне Tab и скринридера)`);
+}
+assert(requestCode.includes("'mw_extra'")&&requestPhp.includes("$_POST['mw_extra']")&&requestPhp.includes("$_POST['consent'] ?? '') !== 'yes'"),'api/request.php: ловушка и обязательное согласие');
+// Секреты — только в настройках на хостинге: ни токенов, ни паролей, ни адресов почты
+// в публикуемых PHP (GitHub Pages отдаёт их как текст) и только заглушки в образце.
+for(const name of (await readdir(resolve(dist,'api'))).filter(name=>name.endsWith('.php'))){
+ const code=await readFile(resolve(dist,'api',name),'utf8');
+ assert(!/\d{6,}:[\w-]{30,}/.test(code),`api/${name}: похоже на токен Telegram-бота`);
+ assert(!/[\w.+-]+@[\w-]+(\.[\w-]+)*\.[a-z]{2,}/i.test(code),`api/${name}: адрес почты — только в настройках вне сайта`);
+ assert(!/['"](secret|password|passwd|pass|token|api_?key|chat_id)['"]\s*=>\s*['"][^'"]{6,}/i.test(code),`api/${name}: секрет в коде — только в настройках вне сайта`);
+}
+const requestExample=await readFile(resolve(root,'server/request-config.example.php'),'utf8');
+assert(!/\d{6,}:[\w-]{30,}/.test(requestExample)&&[...requestExample.matchAll(/[\w.+-]+@([\w-]+(?:\.[\w-]+)+)/g)].every(m=>/^example\.(com|org|net)$/i.test(m[1]))&&/'secret' => 'ЗАМЕНИТЕ/.test(requestExample)&&/'file' => \[\s*'enabled' => false/.test(requestExample),'server/request-config.example.php: только заглушки (секрет, адреса example.com, без токена), канал file выключен');
 
 assert.equal(failures.length,0,failures.join('\n'));
 const notes=[];

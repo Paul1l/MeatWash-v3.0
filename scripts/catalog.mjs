@@ -127,8 +127,9 @@ export const ITEMS = ${JSON.stringify(items,null,1)};
 // заявка с фото; sections — подразделы (programs: true — программы и пакеты мойки,
 // accent: true — выделенный подраздел).
 export const CATEGORIES = ${JSON.stringify(categories,null,1)};
-// Заявка с фото: адрес приёма (null — отправка не подключена, форма предлагает позвонить).
-export const REQUESTS = ${JSON.stringify({endpoint:d.site?.requests?.endpoint??null})};
+// Заявка с фото: адрес приёма (null — отправка не подключена, форма предлагает позвонить)
+// и сайты, где он работает (пусто — везде; копия на GitHub Pages PHP не выполняет).
+export const REQUESTS = ${JSON.stringify({endpoint:d.site?.requests?.endpoint??null,hosts:d.site?.requests?.hosts??[]})};
 export const LOCATIONS = ${JSON.stringify(locations,null,1)};
 `;
 }
