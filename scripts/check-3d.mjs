@@ -9,8 +9,8 @@
 //   на лаке капота (не ниже него) на обеих моделях;
 // - дверь водителя — отдельный узел обеих моделей: петля у передней кромки, дверь
 //   открывается наружу, обивка изнутри на месте, кокпит не держит у этого борта
-//   неподвижной обивки в проёме; химчистка и кожа (cabin, leather) — в ракурсе салона
-//   с камерой снаружи открытой двери;
+//   неподвижной обивки в проёме; химчистка (cabin) — в ракурсе салона cabin, кожа
+//   (leather) — сиденье крупно, ракурс seat; камеры обоих — снаружи открытой двери;
 // - размеры укладываются в бюджет; печатается таблица raw / gzip / brotli.
 // Что страница не грузит 3D до нажатия, проверяет npm run check (check.mjs).
 import {readFile, readdir, mkdtemp, rm} from 'node:fs/promises';
@@ -269,11 +269,11 @@ for (const id of [...Object.keys(views.SERVICE_VIEWS), ...Object.keys(views.SERV
 // Эффекты: пена мойки и полировка в материалах (wash, gloss), блик по детали (glow —
 // путь света для ракурса работы), очиститель дисков (iron — в ракурсе колеса, в конце
 // блик по ободу), бусины керамики (beads — в ракурсе капота, с бликом), капли на лобовом
-// стекле (rain — только в его ракурсе), химчистка и кондиционер кожи (cabin, leather —
-// в ракурсе салона через открытую дверь, с бликом по сиденью). Другие эффекты модель
-// убедительно не показывает.
+// стекле (rain — только в его ракурсе), химчистка (cabin — весь салон через открытую
+// дверь) и кондиционер кожи (leather — сиденье крупно, ракурс seat), обе с бликом по
+// сиденью. Другие эффекты модель убедительно не показывает.
 const FX = ['wash', 'gloss', 'glow', 'rain', 'iron', 'beads', 'cabin', 'leather'];
-const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood', cabin: 'cabin', leather: 'cabin'};
+const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood', cabin: 'cabin', leather: 'seat'};
 for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
   check(FX.includes(fx), `Неизвестный эффект ${fx} у работы ${id}: известны ${FX.join(', ')}`);
   const view = views.SERVICE_VIEWS[id];
@@ -286,10 +286,10 @@ for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
   if (FX_VIEW[fx]) check(view === FX_VIEW[fx], `Работа ${id}: эффект ${fx} виден только в ракурсе ${FX_VIEW[fx]}, а у работы ${view}`);
 }
 for (const view of Object.keys(views.GLOW || {})) check(view in views.VIEWS, `GLOW: нет ракурса ${view}`);
-// Салон смотрят снаружи, через проём открытой двери водителя (левый борт).
-{
-  const c = views.VIEWS.cabin;
-  check(c && c.p[0] < -1.2 && Math.abs(c.t[0]) < 0.6 && c.t[1] > 0.4 && c.t[1] < 1.0, 'Ракурс салона (cabin): камера должна стоять снаружи у левого борта и смотреть в салон');
+// Салон и сиденье смотрят снаружи, через проём открытой двери водителя (левый борт).
+for (const name of ['cabin', 'seat']) {
+  const c = views.VIEWS[name];
+  check(c && c.p[0] < -1.2 && Math.abs(c.t[0]) < 0.6 && c.t[1] > 0.4 && c.t[1] < 1.0, `Ракурс ${name}: камера должна стоять снаружи у левого борта и смотреть в салон`);
 }
 
 const pad = (v, n) => String(v).padStart(n);

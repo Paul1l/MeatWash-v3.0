@@ -64,11 +64,12 @@ export async function buildInterior(car, pause = () => Promise.resolve()) {
   const plaque = glass ? dashLogo(glass, cockpit) : null;
   // Грязь и сухая кожа для работ салона (cabin.js) — в материалах кокпита и обивки двери.
   const cabin = createCabinFx(), m = cockpit.userData.materials;
-  cabin.patch(m.leather, {dust: '#6d655a', amount: 0.55, dry: 1});
-  cabin.patch(m.edging, {dust: '#6d655a', amount: 0.5, dry: 0.9});
-  cabin.patch(m.cloth, {dust: '#7a7062', amount: 0.5});
-  cabin.patch(m.black, {dust: '#5c5246', amount: 0.5});
-  cabin.patch(m.carpet, {dust: '#5a4e40', amount: 0.7});
+  // foam — сколько пены химчистки ложится: больше всего на ткань и ковёр, меньше на кожу.
+  cabin.patch(m.leather, {dust: '#6d655a', amount: 0.55, dry: 1, foam: 0.35});
+  cabin.patch(m.edging, {dust: '#6d655a', amount: 0.5, dry: 0.9, foam: 0.2});
+  cabin.patch(m.cloth, {dust: '#7a7062', amount: 0.5, foam: 1});
+  cabin.patch(m.black, {dust: '#5c5246', amount: 0.5, foam: 0.1});
+  cabin.patch(m.carpet, {dust: '#5a4e40', amount: 0.7, foam: 1});
   cabin.patch(m.dashSoft, {dust: '#5f5951', amount: 0.5, dry: 0.6});
   // Металл и строчка — тоже (пыль чуть-чуть): у Standard без карт одна программа на всех,
   // без них кант с кодом грязи собирался бы отдельной программой.
