@@ -447,7 +447,7 @@ export async function mount({
   // сразу итог: чистая или отполированная машина, капли бусинами без движения,
   // без вспышек блика.
   let service = {kind: 'base', time: 0, duration: 0.01};
-  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8, cabin: 4.8, leather: 4.0};
+  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8, cabin: 5.6, leather: 4.6};
   // Путь блика по детали (GLOW) — гладкая кривая через точки ракурса.
   const glowCurves = new Map();
   const glowCurve = name => {
@@ -470,7 +470,8 @@ export async function mount({
     // foam — фронты пены [нанесение, смыв, сползание], iron — очиститель дисков
     // [реакция, подтёки, фронт смыва]; wet — мокрый лак, rimDust — пыль на дисках,
     // wheelWet — мокрые колёса.
-    // cabin — салон [грязь до фронта, фронт (м, z), пятнами 1 / ровно 0, влажная полоса].
+    // cabin — салон [грязь (сухость) до обработки, фронт экстракции (м, z), 1 химчистка / 0 кожа,
+    // влажный след, пена, пройдено аппликатором, сатин кожи] (cabin.js).
     const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0, cabin: null};
     switch (service.kind) {
       case 'base': f.clean = 0; break;
@@ -508,19 +509,21 @@ export async function mount({
       case 'glow': glowFx(f, service.glow, u); break;
       case 'rain': f.rain = still ? 'still' : t; break;
       case 'cabin':
-        // Химчистка: дверь открыта, салон в пыли, крошках и разводах → чистота идёт
-        // волной от торпедо к корме, за ней — влажная полоса, она сохнет → по сиденью
-        // проходит блик. Без движения — сразу чистый салон.
+        // Химчистка, весь салон: дверь открыта, салон в пыли, крошках и разводах → на ткань,
+        // ковёр и кожу ложится пена → волна экстракции от торпедо к корме снимает пену
+        // вместе с грязью, за ней сохнет влажный след → по сиденью проходит блик.
+        // Без движения — сразу чистый салон.
         if (still || u >= 1) break;
-        f.cabin = [1, MathUtils.lerp(-0.95, 1.3, easeInOut(lin(t, 0.35, 3.5))), 1, 1 - seg(t, 3.3, 4.2)];
-        glowFx(f, 'cabin', (t - 3.2) / 1.6);
+        f.cabin = [1, MathUtils.lerp(-0.95, 1.3, easeInOut(lin(t, 1.9, 4.3))), 1, 1 - seg(t, 4.1, 5.0), MathUtils.lerp(-0.95, 1.3, lin(t, 0.3, 1.6)), 0, 0];
+        glowFx(f, 'cabin', (t - 4.0) / 1.6);
         break;
       case 'leather':
-        // Кондиционер кожи: сухая, светлая и матовая кожа → волна средства (влажный
-        // блеск) → кожа темнее и с сатиновым бликом.
-        if (still || u >= 1) break;
-        f.cabin = [1, MathUtils.lerp(-0.95, 1.3, easeInOut(lin(t, 0.3, 2.7))), 0, 1 - seg(t, 2.6, 3.4)];
-        glowFx(f, 'cabin', (t - 2.4) / 1.6);
+        // Кондиционер кожи, сиденье крупно: сухая светлая матовая кожа → средство ложится
+        // круглыми пятнами, как от аппликатора, свежее блестит → высыхает в глубокий сатин,
+        // он остаётся, пока выбрана работа → блик по сиденью. Без движения — сразу сатин.
+        if (still || u >= 1) { f.cabin = [0, -9, 0, 0, -9, 1, 1]; break; }
+        f.cabin = [1, -9, 0, 1 - seg(t, 2.9, 3.8), -9, lin(t, 0.3, 3.0), seg(t, 2.9, 3.8)];
+        glowFx(f, 'seat', (t - 3.0) / 1.6);
         break;
     }
     return f;
@@ -534,7 +537,7 @@ export async function mount({
     if (f.foam) fx.uMwFoam.value.set(...f.foam, 1); else fx.uMwFoam.value.set(2, 2, 0, 0);
     if (f.iron) fx.uMwIron.value.set(...f.iron, 1); else fx.uMwIron.value.set(0, 0, 2, 0);
     fx.uMwWash.value.set(f.wet, f.rimDust, f.wheelWet, 0);
-    if (f.cabin) interior?.cabin.set(...f.cabin); else interior?.cabin.set(0, -9, 1, 0);
+    if (f.cabin) interior?.cabin.set(...f.cabin); else interior?.cabin.set();
     for (const m of restyled.rims) m.envMapIntensity = 1.15 + 0.75 * f.rimShine;
     for (const m of restyled.paints) {
       m.roughness = MathUtils.lerp(0.26, 0.18, f.polish);
@@ -999,7 +1002,8 @@ export async function mount({
         pixelRatio: renderer.getPixelRatio(), width, height, zoom, view: viewName, running: !!raf, suspended: [...suspended], timings: {...timings},
         effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible, beads: !!beads?.mesh.visible,
           foam: (restyled?.fx.uMwFoam.value.w ?? 0) > 0, iron: (restyled?.fx.uMwIron.value.w ?? 0) > 0,
-          door: door ? Math.round(doorK * 1000) / 1000 : null, cabin: (interior?.cabin.uniform.value.x ?? 0) > 0}};
+          door: door ? Math.round(doorK * 1000) / 1000 : null, cabin: (interior?.cabin.uniform.value.x ?? 0) > 0,
+          cabinFoam: (interior?.cabin.uniform2.value.x ?? -9) > -8, satin: (interior?.cabin.uniform2.value.z ?? 0) > 0}};
     },
   });
   // Текущий ракурс и приближение — свойствами-геттерами (Object.assign скопировал бы
