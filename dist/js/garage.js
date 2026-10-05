@@ -388,6 +388,8 @@ export function setupGarage() {
     dialog.classList.toggle('is-summary', show);
   }
   function renderSelection() {
+    // Сцена держит по выбору вид фар: прозрачные после полировки, тонированные плёнкой.
+    scene?.setWorks?.(picked);
     const body = getBody();
     bodySelect.value = String(body);
     for (const row of rows) {

@@ -271,13 +271,15 @@ for (const id of [...Object.keys(views.SERVICE_VIEWS), ...Object.keys(views.SERV
 // блик по ободу), бусины керамики (beads — в ракурсе капота, с бликом), капли на лобовом
 // стекле (rain — только в его ракурсе), химчистка (cabin — весь салон через открытую
 // дверь) и кондиционер кожи (leather — сиденье крупно, ракурс seat), обе с бликом по
-// сиденью. Другие эффекты модель убедительно не показывает.
-const FX = ['wash', 'gloss', 'glow', 'rain', 'iron', 'beads', 'cabin', 'leather'];
-const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood', cabin: 'cabin', leather: 'seat'};
+// сиденью, полировка фар (lens — мутное жёлтое стекло становится прозрачным) и плёнка на
+// фары (tint — тонировка), обе в ракурсе фары с бликом. Другие эффекты модель
+// убедительно не показывает.
+const FX = ['wash', 'gloss', 'glow', 'rain', 'iron', 'beads', 'cabin', 'leather', 'lens', 'tint'];
+const FX_VIEW = {rain: 'windscreen', iron: 'wheel', beads: 'hood', cabin: 'cabin', leather: 'seat', lens: 'headlight', tint: 'headlight'};
 for (const [id, fx] of Object.entries(views.SERVICE_FX)) {
   check(FX.includes(fx), `Неизвестный эффект ${fx} у работы ${id}: известны ${FX.join(', ')}`);
   const view = views.SERVICE_VIEWS[id];
-  if (['glow', 'iron', 'beads', 'cabin', 'leather'].includes(fx)) {
+  if (['glow', 'iron', 'beads', 'cabin', 'leather', 'lens', 'tint'].includes(fx)) {
     const glow = views.GLOW?.[view];
     check(glow && glow.path?.length >= 2 && glow.path.every(p => p.length === 3 && p.every(Number.isFinite) && p[1] > 0.1)
       && glow.power > 0 && glow.power <= 20 && glow.reach > 0 && glow.reach <= 2,
