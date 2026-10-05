@@ -6,13 +6,13 @@
     "bytes": 14919340
   },
   "license": "CC-BY-4.0",
-  "changes": "Удалены второй слой кузова, пол, ароматизатор, антенна, номерные знаки с рамками; касательные; текстуры уменьшены и сжаты в WebP; геометрия сжата Meshopt; для телефона упрощены мелкие детали.",
+  "changes": "Удалены второй слой кузова, пол, ароматизатор, антенна, номерные знаки с рамками; касательные; дверь водителя выделена в отдельный узел; текстуры уменьшены и сжаты в WebP; геометрия сжата Meshopt; для телефона упрощены мелкие детали.",
   "units": "метры; низ шин y=0; перед −Z; левый борт −X",
   "variants": {
     "desktop": {
-      "file": "assets/3d/porsche-930-desktop.6babd70517.glb",
-      "bytes": 2228648,
-      "sha256": "6babd70517c260f8bb8fc2b6f9fde207ca66c070677330a8597407ea382f7bef",
+      "file": "assets/3d/porsche-930-desktop.7a2678d9dc.glb",
+      "bytes": 2233528,
+      "sha256": "7a2678d9dc408aeb14946f04946222a88fd2656568d5189b5fb59896285456d2",
       "before": {
         "triangles": 241260,
         "vertices": 157275,
@@ -23,15 +23,15 @@
       "after": {
         "triangles": 193241,
         "vertices": 127596,
-        "meshes": 10,
+        "meshes": 11,
         "materials": 10,
         "textures": 14
       }
     },
     "mobile": {
-      "file": "assets/3d/porsche-930-mobile.d01adaf1b4.glb",
-      "bytes": 1201268,
-      "sha256": "d01adaf1b44de0e0cdbbe1d8fa32dc3a247db662c7c47259692f5fa3537aee63",
+      "file": "assets/3d/porsche-930-mobile.4f7ea22eb2.glb",
+      "bytes": 1205932,
+      "sha256": "4f7ea22eb20aa00f40a61c074a193db47cec1c118e30a4a099e8c0cf78322a26",
       "before": {
         "triangles": 241260,
         "vertices": 157275,
@@ -40,9 +40,9 @@
         "textures": 27
       },
       "after": {
-        "triangles": 122553,
-        "vertices": 87182,
-        "meshes": 10,
+        "triangles": 122551,
+        "vertices": 87188,
+        "meshes": 11,
         "materials": 10,
         "textures": 14
       }
