@@ -225,6 +225,8 @@ function restyle(car, {anisotropy, low}) {
   return {
     paint, glass, rim, fx, paintMesh, replaced,
     paints: [paint, variants.get(paint)], rims: [rim, variants.get(rim)].filter(Boolean),
+    // Стекло фар и его вариант с пеной: мутное жёлтое, прозрачное после полировки, тонированное плёнкой.
+    lenses: [lens, variants.get(lens)].filter(Boolean),
     // Все материалы обоих вариантов — для освобождения: на машине в момент dispose() только половина.
     all: [...variants.keys(), ...variants.values()],
     parts,
@@ -447,7 +449,27 @@ export async function mount({
   // сразу итог: чистая или отполированная машина, капли бусинами без движения,
   // без вспышек блика.
   let service = {kind: 'base', time: 0, duration: 0.01};
-  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8, cabin: 5.6, leather: 4.6};
+  const DURATION = {wash: 6.6, gloss: 2.6, glow: 2.1, rain: DROPS.duration, iron: 6.4, beads: 3.8, cabin: 5.6, leather: 4.6, lens: 3.2, tint: 2.8};
+  // Выбранные в гараже работы (setWorks): по ним держится вид фар — пока не выбрана полировка
+  // фар, они мутные жёлтые (старый поликарбонат), с ней — прозрачные; плёнка на фары их
+  // затемняет. Вид меняется значениями материала стекла — программ не прибавляется.
+  let works = new Set();
+  const LENS = {
+    clear: {color: new Color('#ffffff'), opacity: 0.12, roughness: 0.04, coat: 0, env: 1.3},
+    yellow: {color: new Color('#d2b37a'), opacity: 0.42, roughness: 0.65, coat: 0.65, env: 0.6},
+    tint: {color: new Color('#1a1a1a'), opacity: 0.62, roughness: 0.05, coat: 0.02, env: 1.3},
+  };
+  const lensColor = new Color();
+  // clear — прозрачность 0 (жёлтое) … 1 (прозрачное), tint — плёнка 0 … 1 поверх.
+  function setLens(clear, tint) {
+    const {clear: c, yellow: y, tint: t} = LENS;
+    const mix = key => MathUtils.lerp(MathUtils.lerp(y[key], c[key], clear), t[key], tint);
+    lensColor.copy(y.color).lerp(c.color, clear).lerp(t.color, tint);
+    for (const m of restyled.lenses) {
+      m.color.copy(lensColor); m.opacity = mix('opacity'); m.roughness = mix('roughness');
+      m.clearcoatRoughness = mix('coat'); m.envMapIntensity = mix('env');
+    }
+  }
   // Путь блика по детали (GLOW) — гладкая кривая через точки ракурса.
   const glowCurves = new Map();
   const glowCurve = name => {
@@ -472,7 +494,9 @@ export async function mount({
     // wheelWet — мокрые колёса.
     // cabin — салон [грязь (сухость) до обработки, фронт экстракции (м, z), 1 химчистка / 0 кожа,
     // влажный след, пена, пройдено аппликатором, сатин кожи] (cabin.js).
-    const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0, cabin: null};
+    // lensClear, lensTint — фары: прозрачность после полировки и плёнка (по выбранным работам).
+    const f = {clean: 1, finish: 1, polish: 1, light: 0, reach: 6, rain: null, beads: null, foam: null, iron: null, wet: 0, rimDust: 0, wheelWet: 0, rimShine: 0, cabin: null,
+      lensClear: works.has('headlights') ? 1 : 0, lensTint: works.has('film-lights') ? 1 : 0};
     switch (service.kind) {
       case 'base': f.clean = 0; break;
       case 'wash':
@@ -507,6 +531,17 @@ export async function mount({
         glowAt.set(-2.3, 1.45, MathUtils.lerp(1.9, -1.9, e));
         break;
       case 'glow': glowFx(f, service.glow, u); break;
+      case 'lens':
+        // Полировка фар: мутное жёлтое стекло светлеет и становится прозрачным, за ним
+        // проступает отражатель, по фаре проходит блик. Без движения — сразу прозрачное.
+        f.lensClear = still ? 1 : seg(t, 0.3, 2.2);
+        glowFx(f, 'headlight', (t - 1.0) / 2.1);
+        break;
+      case 'tint':
+        // Плёнка на фары: стекло темнеет до тонировки, по фаре проходит блик.
+        f.lensTint = still ? 1 : seg(t, 0.3, 1.6);
+        glowFx(f, 'headlight', (t - 0.6) / 2.1);
+        break;
       case 'rain': f.rain = still ? 'still' : t; break;
       case 'cabin':
         // Химчистка, весь салон: дверь открыта, салон в пыли, крошках и разводах → на ткань,
@@ -537,6 +572,7 @@ export async function mount({
     if (f.foam) fx.uMwFoam.value.set(...f.foam, 1); else fx.uMwFoam.value.set(2, 2, 0, 0);
     if (f.iron) fx.uMwIron.value.set(...f.iron, 1); else fx.uMwIron.value.set(0, 0, 2, 0);
     fx.uMwWash.value.set(f.wet, f.rimDust, f.wheelWet, 0);
+    setLens(f.lensClear, f.lensTint);
     if (f.cabin) interior?.cabin.set(...f.cabin); else interior?.cabin.set();
     for (const m of restyled.rims) m.envMapIntensity = 1.15 + 0.75 * f.rimShine;
     for (const m of restyled.paints) {
@@ -967,6 +1003,14 @@ export async function mount({
       setDoor(0);
       applyEffects();
     },
+    // Выбранные работы (id из ZONES): по ним держится вид фар — прозрачные после полировки,
+    // тонированные плёнкой. Анимация — у показанной работы (showService).
+    setWorks(ids = []) {
+      if (disposed) return;
+      works = new Set(ids);
+      applyEffects();
+      invalidate();
+    },
     // «Общий вид»: исходная камера и приближение, эффект текущей работы остаётся.
     reset() { if (!disposed) goTo('overview'); },
     // Клавиатура и кнопки: поворот в градусах, приближение — множитель.
@@ -1003,7 +1047,8 @@ export async function mount({
         effect: {kind: service.kind, progress: Math.min(1, service.time / service.duration), light: room?.sweep.intensity ?? 0, drops: !!drops?.mesh.visible, beads: !!beads?.mesh.visible,
           foam: (restyled?.fx.uMwFoam.value.w ?? 0) > 0, iron: (restyled?.fx.uMwIron.value.w ?? 0) > 0,
           door: door ? Math.round(doorK * 1000) / 1000 : null, cabin: (interior?.cabin.uniform.value.x ?? 0) > 0,
-          cabinFoam: (interior?.cabin.uniform2.value.x ?? -9) > -8, satin: (interior?.cabin.uniform2.value.z ?? 0) > 0}};
+          cabinFoam: (interior?.cabin.uniform2.value.x ?? -9) > -8, satin: (interior?.cabin.uniform2.value.z ?? 0) > 0,
+          lens: restyled ? {opacity: Math.round(restyled.lenses[0].opacity * 1000) / 1000, roughness: Math.round(restyled.lenses[0].roughness * 1000) / 1000} : null}};
     },
   });
   // Текущий ракурс и приближение — свойствами-геттерами (Object.assign скопировал бы
