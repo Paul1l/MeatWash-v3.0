@@ -438,3 +438,11 @@ a.card { display: block; }
 @media (max-width: 560px) { .path__list li { grid-template-columns: 1fr; } .path__list time { grid-row: auto; } }
 
 .team__lead { grid-column: 1 / -1; max-width: 60ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+
+/* «О нас» — переходы по разделам: с 08.10 вкладка объединяет «Локации» и «Контакты». */
+.page-subnav { display: flex; gap: 8px; padding: 14px var(--gutter); background: var(--black-2); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.page-subnav::-webkit-scrollbar { display: none; }
+.page-subnav a { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); font-size: 13px; color: var(--ivory); white-space: nowrap; transition: border-color var(--t) var(--ease), background var(--t) var(--ease); }
+.page-subnav a:hover { border-color: rgb(var(--ivory-rgb) / .5); }
+.page-subnav a:last-child { border-color: var(--burgundy-2); background: rgb(var(--burgundy-2-rgb) / .14); }
+.locations__lead { grid-column: 1 / -1; padding: 0 0 8px calc(clamp(18px, 2.4vw, 34px) + 1px); max-width: 64ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }

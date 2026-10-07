@@ -46,14 +46,12 @@
     <a href="auto.html">Авто</a>
     <a href="about.html" aria-current="page">О нас</a>
     <a href="articles.html">Статьи</a>
-    <a href="./#locations">Локации</a>
-    <a href="./#contacts">Контакты</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a><a href="./#locations">Локации</a><a href="./#contacts">Контакты</a>
+  <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
   <button class="btn btn--fill" type="button" data-book>Записаться</button>
 </nav>
 <!-- SHARED:header:END -->
@@ -71,6 +69,15 @@
     </div>
   </div>
 </section>
+
+<nav class="page-subnav" aria-label="Разделы страницы «О нас»">
+  <a href="#club">Подход</a>
+  <a href="#founder">Основатель</a>
+  <a href="#path">Наш путь</a>
+  <a href="#studios">Студии и работы</a>
+  <a href="#team">Команда</a>
+  <a href="#visit-locations">Локации и контакты</a>
+</nav>
 
 <section class="about about--page" id="club" aria-labelledby="about-title">
   <div class="about__photo" data-reveal>
@@ -106,7 +113,7 @@
   </div>
 </section>
 
-<section class="path" aria-labelledby="path-title">
+<section class="path" id="path" aria-labelledby="path-title">
   <h2 id="path-title">Наш путь</h2>
   <ol class="path__list">
     <li><time datetime="2025-09">Сентябрь 2025</time><h3>Оклейка полиуретаном</h3><p>Рассказали, что давно оклеиваем машины защитной плёнкой, — показали BMW M4 в цветном полиуретане Brooklyn Grey.</p></li>
@@ -128,7 +135,7 @@
   </div>
 </section>
 
-<section class="gallery" aria-labelledby="gallery-title">
+<section class="gallery" id="studios" aria-labelledby="gallery-title">
   <h2 id="gallery-title">Студии и работы</h2>
   <div class="gallery__grid">
     <figure class="gallery__item gallery__item--wide"><img src="assets/img/studio-myasnitskaya-1200.webp" srcset="assets/img/studio-myasnitskaya-640.webp 640w, assets/img/studio-myasnitskaya-1200.webp 1170w" sizes="(max-width: 800px) 100vw, 58vw" alt="Range Rover у фирменной стены Meat Wash в студии на Мясницкой" width="1170" height="772" loading="lazy" decoding="async"><figcaption>Студия на Мясницкой</figcaption></figure>
@@ -175,7 +182,8 @@
 <!-- SHARED:membership:END -->
 
 <section class="locations locations--page" id="visit-locations" aria-labelledby="visit-locations-title">
-  <h2 class="locations__title" id="visit-locations-title">Две студии в Москве</h2>
+  <h2 class="locations__title" id="visit-locations-title">Локации и контакты</h2>
+  <p class="locations__lead">Две студии в Москве: адреса, часы работы, телефоны и онлайн-запись. Мясницкая — премиальная мойка, Технопарк — детейлинг-центр полного цикла.</p>
   <!-- SHARED:locations:START -->
   <!-- Карточка студии: слева данные и запись, справа (на телефоне — ниже) карта филиала.
        iframe виджета Яндекс Карт создаёт js/maps.js, когда блок подходит к экрану; в разметке
@@ -255,7 +263,7 @@
   <div class="footer__row">
     <a class="brand" href="./" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Работы</a><a href="auto.html">Авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a><a href="./#locations">Локации</a><a href="./#contacts">Контакты</a>
+      <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Работы</a><a href="auto.html">Авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
     </nav>
     <div class="footer__social">
       <button type="button" data-book aria-label="Онлайн-запись">
@@ -267,7 +275,8 @@
     </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
+  <!-- Адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). Пунктов «Локации» и
+       «Контакты» в меню нет с 08.10 (решение Влада): они живут на «О нас», в блоке «Локации и контакты».
        «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
   <div class="footer__contacts">
     <div class="footer__branch">
