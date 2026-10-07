@@ -446,3 +446,7 @@ a.card { display: block; }
 .page-subnav a:hover { border-color: rgb(var(--ivory-rgb) / .5); }
 .page-subnav a:last-child { border-color: var(--burgundy-2); background: rgb(var(--burgundy-2-rgb) / .14); }
 .locations__lead { grid-column: 1 / -1; padding: 0 0 8px calc(clamp(18px, 2.4vw, 34px) + 1px); max-width: 64ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+/* На телефоне все разделы видны сразу: строка переносится, а не уезжает за край. */
+@media (max-width: 760px) { .page-subnav { flex-wrap: wrap; overflow: visible; row-gap: 8px; } }
+/* Подвал на самых узких экранах — ровно по три пункта, без одиноких «Статей» во второй строке. */
+@media (max-width: 389px) { .footer__nav { display: grid; grid-template-columns: repeat(3, max-content); column-gap: 24px; justify-content: start; } }
