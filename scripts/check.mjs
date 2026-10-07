@@ -333,7 +333,7 @@ for(const location of content.locations){
  for(const page of MAIN_PAGES)assert(html[page].includes(`href="${location.booking}"`),`${page}: нет ссылки записи ${location.id}`);
  bookings.add(location.booking);
  assert(/^\d+$/.test(location.orgId)&&location.map.includes(`/${location.orgId}/`),`${location.id}: org id и ссылка на карточку не совпадают`);
- assert(new RegExp(`^https://yandex\\.ru/map-widget/v1/org/[a-z_]+/${location.orgId}/\\?ll=`).test(location.mapWidget),`${location.id}: mapWidget — не виджет карточки организации`);
+ assert(/^https:\/\/yandex\.ru\/map-widget\/v1\/\?ll=/.test(location.mapWidget)&&location.mapWidget.includes(`&pt=${location.lon}%2C${location.lat}%2Cpm2rdm`),`${location.id}: mapWidget — не карта с точкой студии`);
  assert(location.mapWidget.includes(`ll=${location.lon}%2C${location.lat}`)&&location.route.includes(`rtext=~${location.lat}%2C${location.lon}`),`${location.id}: координаты виджета и маршрута расходятся с lat/lon`);
  // Карта филиала — в его карточке на страницах с блоком локаций; «На карте» в подвале ведёт к ней.
  for(const page of MAIN_PAGES){

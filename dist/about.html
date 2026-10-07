@@ -41,16 +41,17 @@
   </a>
   <nav class="nav" aria-label="Основная навигация">
     <a href="services.html">Услуги</a>
+    <a href="wrap.html">Оклейка</a>
+    <a href="works.html">Работы</a>
+    <a href="auto.html">Авто</a>
     <a href="about.html" aria-current="page">О нас</a>
     <a href="articles.html">Статьи</a>
-    <a href="./#locations">Локации</a>
-    <a href="./#contacts">Контакты</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html">Услуги</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a><a href="./#locations">Локации</a><a href="./#contacts">Контакты</a>
+  <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
   <button class="btn btn--fill" type="button" data-book>Записаться</button>
 </nav>
 <!-- SHARED:header:END -->
@@ -68,6 +69,15 @@
     </div>
   </div>
 </section>
+
+<nav class="page-subnav" aria-label="Разделы страницы «О нас»">
+  <a href="#club">Подход</a>
+  <a href="#founder">Основатель</a>
+  <a href="#path">Наш путь</a>
+  <a href="#studios">Студии и работы</a>
+  <a href="#team">Команда</a>
+  <a href="#visit-locations">Локации и контакты</a>
+</nav>
 
 <section class="about about--page" id="club" aria-labelledby="about-title">
   <div class="about__photo" data-reveal>
@@ -89,6 +99,34 @@
   <article><span class="eyebrow">03</span><h3>Проверка перед выдачей</h3></article>
 </section>
 
+<section class="founder" id="founder" aria-labelledby="founder-title">
+  <figure class="founder__photo">
+    <img src="assets/img/founder-roman.webp" width="601" height="800" alt="Роман Антонович, основатель MEATWASH" loading="lazy" decoding="async">
+  </figure>
+  <div class="founder__copy">
+    <p class="eyebrow" lang="en">WHO WE ARE</p>
+    <h2 id="founder-title">Кто мы и зачем</h2>
+    <blockquote class="founder__quote">Людям нужна не россыпь отдельных услуг, а одна точка, где решаются любые задачи по автомобилю. Под это и построен MEATWASH: структурно, понятно и под ответственность профессионалов.</blockquote>
+    <p class="founder__sign">Роман Антонович, основатель MEATWASH</p>
+    <p>У нас два направления. Первое&nbsp;— защита, уход и восстановление: плёнка, детейлинг, химчистка, полировка, ремонт, подготовка машины к сезону или продаже. Второе&nbsp;— <a href="auto.html">покупка и продажа автомобилей</a> под ключ.</p>
+    <p>Клиент платит не за саму услугу, а за то, чтобы не думать, не разбираться и не тратить лишнее время. Поэтому мы забираем задачу целиком: один контакт&nbsp;— дальше её ведёт команда.</p>
+  </div>
+</section>
+
+<section class="path" id="path" aria-labelledby="path-title">
+  <h2 id="path-title">Наш путь</h2>
+  <ol class="path__list">
+    <li><time datetime="2025-09">Сентябрь 2025</time><h3>Оклейка полиуретаном</h3><p>Рассказали, что давно оклеиваем машины защитной плёнкой,&nbsp;— показали BMW M4 в цветном полиуретане Brooklyn Grey.</p></li>
+    <li><time datetime="2025-11">Ноябрь 2025</time><h3>Интервью в журнале</h3><p>Материал о MEATWASH в Service &amp; Parts (РЁВ): про автокультуру, системный подход и развитие проекта.</p><a class="link-arrow" href="https://car-pr.com/news/service-and-parts-7-noyabr-2025/" target="_blank" rel="noopener">Читать номер <span aria-hidden="true">→</span></a></li>
+    <li><time datetime="2026-05">Май 2026</time><h3>Детейлинг-выставка</h3><p>Впервые всей командой поучаствовали в выставке в медиаформате и решили выводить бренд в медиапространство.</p></li>
+    <li><time datetime="2026-09">Сентябрь 2026</time><h3>MEATWASH Auto</h3><p>Свои автомобили в продаже: готовим их в наших студиях и показываем вживую.</p><a class="link-arrow" href="auto.html">Автомобили в продаже <span aria-hidden="true">→</span></a></li>
+  </ol>
+  <div class="path__press">
+    <figure><img src="assets/img/press-service-parts-cover.webp" width="561" height="800" alt="Обложка журнала Service &amp; Parts, № 7, ноябрь 2025" loading="lazy" decoding="async"></figure>
+    <figure><img src="assets/img/press-service-parts-interview.webp" width="578" height="800" alt="Разворот «ИнРЁВью&nbsp;— Роман Антонович&nbsp;— проект Meat Wash» в журнале Service &amp; Parts" loading="lazy" decoding="async"></figure>
+  </div>
+</section>
+
 <section class="band" aria-label="Автомобиль после ухода">
   <img class="band__img" src="assets/shots/cf-flank-crop.webp" srcset="assets/shots/cf-flank-crop-s.webp 900w, assets/shots/cf-flank-crop.webp 1600w" sizes="100vw" alt="Автомобиль в клубном зале после полного ухода" width="1600" height="900" loading="lazy" decoding="async">
   <div class="band__text" data-reveal>
@@ -97,7 +135,7 @@
   </div>
 </section>
 
-<section class="gallery" aria-labelledby="gallery-title">
+<section class="gallery" id="studios" aria-labelledby="gallery-title">
   <h2 id="gallery-title">Студии и работы</h2>
   <div class="gallery__grid">
     <figure class="gallery__item gallery__item--wide"><img src="assets/img/studio-myasnitskaya-1200.webp" srcset="assets/img/studio-myasnitskaya-640.webp 640w, assets/img/studio-myasnitskaya-1200.webp 1170w" sizes="(max-width: 800px) 100vw, 58vw" alt="Range Rover у фирменной стены Meat Wash в студии на Мясницкой" width="1170" height="772" loading="lazy" decoding="async"><figcaption>Студия на Мясницкой</figcaption></figure>
@@ -106,6 +144,15 @@
     <figure class="gallery__item gallery__item--wide"><img src="assets/img/service-polish-1280.webp" srcset="assets/img/service-polish-640.webp 640w, assets/img/service-polish-1280.webp 1280w" sizes="(max-width: 800px) 100vw, 58vw" alt="Мастер Meatwash полирует кузов машинкой при направленном свете" width="1280" height="852" loading="lazy" decoding="async"><figcaption>Полировка кузова — работа MEATWASH</figcaption></figure>
   </div>
   <p class="gallery__credit">Фото студий — из карточек Яндекс Карт: Мясницкая — Антонович Роман, Технопарк — Кирилл Бадаев ГЕОмаркетинг.</p>
+  <a class="link-arrow gallery__more" href="works.html">Все наши работы <span aria-hidden="true">→</span></a>
+</section>
+
+<section class="visit-notes team" id="team" aria-labelledby="team-title">
+  <h2 class="visit-notes__title" id="team-title">Наша команда</h2>
+  <p class="team__lead">Мы работаем командой: техническая часть, сопровождение и организация процессов&nbsp;— внутри MEATWASH.</p>
+  <article><span class="eyebrow" lang="en">CRAFT</span><h3>Мастера студий</h3><p>Мойка, детейлинг, полировка, оклейка и восстановление&nbsp;— на Мясницкой и в Технопарке.</p></article>
+  <article><span class="eyebrow" lang="en">CARE</span><h3>Сопровождение</h3><p>Ведём задачу клиента целиком&nbsp;— от первого сообщения до выдачи машины или сделки.</p></article>
+  <article><span class="eyebrow" lang="en">PARTNERS</span><h3>Проверенные партнёры</h3><p>Когда задача шире наших студий, подключаем профессионалов, которые работают по нашим стандартам качества.</p></article>
 </section>
 
 <section class="visit-notes" aria-labelledby="visit-notes-title">
@@ -135,7 +182,8 @@
 <!-- SHARED:membership:END -->
 
 <section class="locations locations--page" id="visit-locations" aria-labelledby="visit-locations-title">
-  <h2 class="locations__title" id="visit-locations-title">Две студии в Москве</h2>
+  <h2 class="locations__title" id="visit-locations-title">Локации и контакты</h2>
+  <p class="locations__lead">Две студии в Москве: адреса, часы работы, телефоны и онлайн-запись. Мясницкая&nbsp;— премиальная мойка, Технопарк&nbsp;— детейлинг-центр полного цикла.</p>
   <!-- SHARED:locations:START -->
   <!-- Карточка студии: слева данные и запись, справа (на телефоне — ниже) карта филиала.
        iframe виджета Яндекс Карт создаёт js/maps.js, когда блок подходит к экрану; в разметке
@@ -215,7 +263,7 @@
   <div class="footer__row">
     <a class="brand" href="./" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html">Услуги</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a><a href="./#locations">Локации</a><a href="./#contacts">Контакты</a>
+      <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Работы</a><a href="auto.html">Авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
     </nav>
     <div class="footer__social">
       <button type="button" data-book aria-label="Онлайн-запись">
@@ -227,7 +275,8 @@
     </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
+  <!-- Адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). Пунктов «Локации» и
+       «Контакты» в меню нет с 08.10 (решение Влада): они живут на «О нас», в блоке «Локации и контакты».
        «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
   <div class="footer__contacts">
     <div class="footer__branch">

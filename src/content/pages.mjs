@@ -66,6 +66,33 @@ CONTENT.push({
   sitemap: { changefreq: 'yearly', priority: '0.2' },
 });
 
+// Разделы по списку Романа 05.10: продажа авто, работы, оклейка полиуретаном.
+// Тело страницы целиком — src/content/<body>: свой заголовок (h1#page-title) и
+// блоки из общих стилей; catalog.css — ради карточек .visit-notes.
+for (const page of [
+  {
+    file: 'auto.html', id: 'auto', body: 'auto.html',
+    title: 'Продажа автомобилей — MEATWASH Auto',
+    description: 'MEATWASH Auto: автомобили в продаже, продажа под реализацию, подготовка к продаже в наших студиях, подбор и покупка автомобиля под ключ в Москве.',
+    headline: 'Продажа автомобилей', ogImage: 'assets/img/auto-lotus-1.webp',
+    sitemap: { changefreq: 'weekly', priority: '0.7' },
+  },
+  {
+    file: 'works.html', id: 'works', body: 'works.html',
+    title: 'Наши работы — MEATWASH Car Care Club',
+    description: 'Работы MEATWASH: подготовка Lotus Eletre R к продаже, оклейка BMW M4 цветным полиуретаном, химчистка салона и полировка кузова в студиях в Москве.',
+    headline: 'Наши работы', ogImage: 'assets/img/auto-lotus-4.webp',
+    sitemap: { changefreq: 'monthly', priority: '0.6' },
+  },
+  {
+    file: 'wrap.html', id: 'wrap', body: 'wrap.html',
+    title: 'Оклейка автомобиля полиуретаном — MEATWASH',
+    description: 'Оклейка автомобиля защитной полиуретановой плёнкой в Москве: прозрачной или цветной, зоны риска, весь кузов, фары и лобовое стекло. Расчёт по фото.',
+    headline: 'Оклейка полиуретаном',
+    sitemap: { changefreq: 'monthly', priority: '0.7' },
+  },
+]) CONTENT.push({ ...page, kind: 'landing', css: ['catalog.css'], shared: ['analytics', 'header', 'book', 'footer', 'dialogs'] });
+
 // Карта сайта: страницы ручной вёрстки и собранные здесь.
 export const SITEMAP = [
   { file: 'index.html', lastmod: '2026-10-01', changefreq: 'monthly', priority: '1.0' },

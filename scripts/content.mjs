@@ -88,7 +88,7 @@ function layout(page,{main,jsonLd,ogType='website',ogImage=SITE+'assets/img/og-c
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/cinematic.css">
-<link rel="stylesheet" href="css/pages.css">
+${(page.css||[]).map(name=>`<link rel="stylesheet" href="css/${name}">\n`).join('')}<link rel="stylesheet" href="css/pages.css">
 <script type="application/ld+json">${json(jsonLd)}</script>
 </head>
 <body class="page-inner" data-page="${page.id}">
@@ -165,6 +165,15 @@ ${cards.join('\n')}
 ${body.trim()}
   </div>
 </article>`,
+  });
+ }
+ // Раздел сайта (авто, работы, оклейка): тело целиком в src/content — свой
+ // заголовок страницы (h1#page-title) и блоки из общих стилей.
+ if(page.kind==='landing'){
+  return layout(page,{
+   ogImage:page.ogImage?SITE+page.ogImage:undefined,
+   jsonLd:crumbs({name:page.headline,item:SITE+page.file}),
+   main:await readBody(page.body),
   });
  }
  const body=await readBody(page.body);
