@@ -618,7 +618,7 @@ export const LOCATIONS = [
   "address": "ул. Мясницкая, 11",
   "booking": "https://n975571.yclients.com/company/906067/personal/select-services",
   "map": "https://yandex.ru/maps/org/meat_wash/191686454110/",
-  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash/191686454110/?ll=37.632492%2C55.761864&z=16"
+  "mapWidget": "https://yandex.ru/map-widget/v1/?ll=37.632492%2C55.761864&z=16&pt=37.632492%2C55.761864%2Cpm2rdm"
  },
  {
   "id": "technopark",
@@ -626,6 +626,6 @@ export const LOCATIONS = [
   "address": "пр-т Андропова, 8, стр. 2",
   "booking": "https://n1982508.yclients.com/company/1743348/personal/select-services",
   "map": "https://yandex.ru/maps/org/meat_wash_tekhnopark/122667992007/",
-  "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash_tekhnopark/122667992007/?ll=37.666144%2C55.697146&z=16"
+  "mapWidget": "https://yandex.ru/map-widget/v1/?ll=37.666144%2C55.697146&z=16&pt=37.666144%2C55.697146%2Cpm2rdm"
  }
 ];
