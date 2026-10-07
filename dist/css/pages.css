@@ -14,6 +14,8 @@ body.page-inner .header__cta { opacity: 1; visibility: visible; transform: none;
 .footer__nav a[aria-current="page"] { opacity: .6; }
 /* Ссылки подвала — цель 44 px и по ширине (короткие «Услуги» были 33–43 px). */
 .footer__nav a { min-width: 44px; justify-content: center; }
+/* В подвале восемь пунктов: на узком экране переносятся в две строки, а не уезжают вправо. */
+.footer__nav { flex-wrap: wrap; column-gap: clamp(16px, 2.6vw, 44px); row-gap: 0; }
 /* Шапка при viewport-fit=cover: вырез экрана в альбомной не накрывает логотип и меню. */
 .header { padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
 
@@ -364,3 +366,75 @@ a.card { display: block; }
   .request__photo { grid-template-columns: 72px minmax(0, 1fr) 44px; }
   .request__photo img, .request__tile { width: 72px; height: 54px; }
 }
+
+/* ---------- Разделы по списку Романа 05.10: авто, работы, оклейка, основатель, команда ---------- */
+/* Лента фото: горизонтальная прокрутка со щелчком к кадру, без скриптов. */
+.car__strip { display: grid; grid-auto-flow: column; grid-auto-columns: 86%; gap: 10px; margin: 0; padding: 0 0 10px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--burgundy-3) transparent; }
+.car__strip li { scroll-snap-align: start; min-width: 0; }
+.car__strip img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid var(--line); }
+.car__strip--tall img { aspect-ratio: 4 / 5; }
+@media (min-width: 801px) { .car__strip { grid-auto-columns: 78%; } .car__strip--tall { grid-auto-columns: 46%; } }
+
+.page-head__actions { margin-top: clamp(20px, 2.4vw, 32px); }
+
+.cars { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black); display: grid; gap: clamp(48px, 6vw, 96px); }
+.cars__head h2, .project__copy h2, .path h2, .wrap-prices h2, .founder__copy h2 { font-size: clamp(30px, 3.4vw, 52px); }
+.cars__note { margin-top: 14px; max-width: 60ch; color: var(--muted); }
+.car { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 56px); align-items: start; }
+.car__info h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.2vw, 34px); line-height: 1.1; color: var(--ivory); }
+.car__meta { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.car__price { margin-top: 16px; font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 2.4vw, 36px); color: var(--ivory); font-variant-numeric: tabular-nums; }
+.car__price span { display: block; margin-top: 4px; font-family: var(--font-sans); font-weight: 400; font-size: 14px; color: var(--muted); }
+.car__info > p:not(.car__meta):not(.car__price) { margin-top: 16px; max-width: 56ch; }
+.car__specs { margin: 14px 0 0; padding-left: 18px; display: grid; gap: 6px; color: rgb(var(--ivory-rgb) / .86); font-size: 14px; }
+.car__prep { padding: 12px 14px; border-left: 2px solid var(--burgundy-2); background: rgb(var(--burgundy-2-rgb) / .12); }
+.car__cta { margin-top: 22px; }
+.cars__more { color: var(--muted); }
+.cars__more a { color: var(--ivory); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 900px) { .car { grid-template-columns: 1fr; } }
+
+.project { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: clamp(20px, 3vw, 56px); align-items: start; padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black); border-top: 1px solid var(--line); }
+.project--text { grid-template-columns: minmax(0, 1fr); }
+.project__copy p:not(.eyebrow) { margin-top: 16px; max-width: 56ch; }
+.project__copy h2 { margin-top: 14px; }
+.project__copy .link-arrow { margin-top: 12px; }
+.project__links { display: flex; flex-wrap: wrap; gap: 0 28px; margin-top: 8px; }
+.gallery__more { margin-top: 12px; }
+.works__request { font: inherit; color: var(--ivory); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 900px) { .project { grid-template-columns: 1fr; } }
+
+.wrap-prices { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
+.wrap-prices__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 24px); margin: clamp(24px, 3vw, 40px) 0 0; padding: 0; list-style: none; }
+.wrap-prices__list li { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 1px solid var(--line); min-width: 0; }
+.wrap-prices__list h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--ivory); }
+.wrap-prices__list p { color: var(--muted); font-size: 14px; }
+.wrap-prices__list .wrap-prices__price { margin-top: auto; color: var(--ivory); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wrap-prices__list .link-arrow { align-self: flex-start; font: inherit; font-size: 13px; color: var(--ivory); background: none; border: 0; padding: 0; cursor: pointer; }
+@media (max-width: 1100px) { .wrap-prices__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .wrap-prices__list { grid-template-columns: 1fr; } }
+
+.founder { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 72px); align-items: center; padding: clamp(56px, 7vw, 112px) var(--gutter); background: var(--black-2); }
+.founder__photo { margin: 0; }
+.founder__photo img { display: block; width: 100%; max-width: 520px; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line); filter: saturate(.9); }
+.founder__copy h2 { margin-top: 14px; }
+.founder__quote { margin: clamp(20px, 2.4vw, 32px) 0 0; padding-left: 18px; border-left: 2px solid var(--burgundy-2); font-family: var(--font-display); font-size: clamp(19px, 1.7vw, 26px); line-height: 1.35; color: var(--ivory); max-width: 40ch; }
+.founder__sign { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.founder__copy > p:not(.eyebrow):not(.founder__sign) { margin-top: 16px; max-width: 60ch; color: rgb(var(--ivory-rgb) / .86); }
+.founder__copy a { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 800px) { .founder { grid-template-columns: 1fr; } .founder__photo img { max-width: 360px; } }
+
+.path { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 24px clamp(32px, 5vw, 96px); padding: clamp(56px, 7vw, 112px) var(--gutter); background: var(--black); border-top: 1px solid var(--line); }
+.path h2 { grid-column: 1 / -1; }
+.path__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.path__list li { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+.path__list time { grid-row: span 3; font-size: 13px; letter-spacing: .08em; color: var(--beige); font-variant-numeric: tabular-nums; }
+.path__list h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--ivory); }
+.path__list p { color: var(--muted); max-width: 56ch; }
+.path__list .link-arrow { justify-self: start; }
+.path__press { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-self: start; }
+.path__press figure { margin: 0; }
+.path__press img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+@media (max-width: 900px) { .path { grid-template-columns: 1fr; } .path__press { max-width: 420px; } }
+@media (max-width: 560px) { .path__list li { grid-template-columns: 1fr; } .path__list time { grid-row: auto; } }
+
+.team__lead { grid-column: 1 / -1; max-width: 60ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
