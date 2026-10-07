@@ -507,7 +507,7 @@
       "slug": "meat_wash",
       "lat": 55.761864,
       "lon": 37.632492,
-      "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash/191686454110/?ll=37.632492%2C55.761864&z=16",
+      "mapWidget": "https://yandex.ru/map-widget/v1/?ll=37.632492%2C55.761864&z=16&pt=37.632492%2C55.761864%2Cpm2rdm",
       "route": "https://yandex.ru/maps/?rtext=~55.761864%2C37.632492&rtt=auto",
       "image": "assets/img/studio-myasnitskaya-1200.webp",
       "desc": "Подземный паркинг в центре Москвы. Два часа закрытой парковки включены в визит.",
@@ -550,7 +550,7 @@
       "slug": "meat_wash_tekhnopark",
       "lat": 55.697146,
       "lon": 37.666144,
-      "mapWidget": "https://yandex.ru/map-widget/v1/org/meat_wash_tekhnopark/122667992007/?ll=37.666144%2C55.697146&z=16",
+      "mapWidget": "https://yandex.ru/map-widget/v1/?ll=37.666144%2C55.697146&z=16&pt=37.666144%2C55.697146%2Cpm2rdm",
       "route": "https://yandex.ru/maps/?rtext=~55.697146%2C37.666144&rtt=auto",
       "image": "assets/img/studio-technopark-1200.webp",
       "desc": "Детейлинг-центр полного цикла в ТЦ «Мегаполис». Полировка, керамика, оклейка и восстановление.",
@@ -624,7 +624,7 @@
       }
     ],
     "maps": {
-      "widget": "Яндекс Карты, виджет карточки организации (map-widget/v1/org/<slug>/<id>/), формат кода «Поделиться → Встроить»",
+      "widget": "Яндекс Карты, виджет карты с точкой студии (map-widget/v1/?ll=<lon,lat>&z=16&pt=<lon,lat>,pm2rdm), без карточки организации — решение Влада 07.10",
       "coordinates": "coordinates организаций из данных виджета map-widget/v1 (items[0].coordinates), 28.09.2026",
       "accessed": "2026-09-28"
     }
