@@ -14,7 +14,7 @@ body.page-inner .header__cta { opacity: 1; visibility: visible; transform: none;
 .footer__nav a[aria-current="page"] { opacity: .6; }
 /* Ссылки подвала — цель 44 px и по ширине (короткие «Услуги» были 33–43 px). */
 .footer__nav a { min-width: 44px; justify-content: center; }
-/* В подвале восемь пунктов: на узком экране переносятся в две строки, а не уезжают вправо. */
+/* В подвале шесть пунктов: на узком экране переносятся в две строки, а не уезжают вправо. */
 .footer__nav { flex-wrap: wrap; column-gap: clamp(16px, 2.6vw, 44px); row-gap: 0; }
 /* Шапка при viewport-fit=cover: вырез экрана в альбомной не накрывает логотип и меню. */
 .header { padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
@@ -97,14 +97,29 @@ a.card { display: block; }
   .gallery__item--tall img { flex: none; aspect-ratio: 4 / 5; object-position: 50% 65%; }
 }
 
-/* ---------- Блок записи (services, about) ---------- */
+/* ---------- Финальный блок страницы: запись (services, works, статьи) ---------- */
+/* v2: телефонов в блоке нет — они в подвале сразу ниже. */
 .page-cta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 16px clamp(32px, 6vw, 110px); align-items: start; padding: clamp(64px, 8vw, 120px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
-.page-cta__head { grid-row: span 2; }
 .page-cta__head h2 { margin-top: 16px; font-size: clamp(32px, 3.6vw, 56px); }
 .page-cta__head p { margin-top: 16px; max-width: 40ch; color: var(--muted); }
 .page-cta__branches { grid-column: 2; margin-top: 0; }
-.page-cta__phones { grid-column: 2; margin-top: 8px; }
-@media (max-width: 800px) { .page-cta { grid-template-columns: 1fr; } .page-cta__head { grid-row: auto; } .page-cta__branches, .page-cta__phones { grid-column: auto; } }
+/* v2: адрес студии в блоке записи — не мельче 14 px (в окне записи пока 12 px, его правит свой шаг). */
+.page-cta__branches .dialog__branch span { font-size: 14px; }
+/* v2: свой финальный блок на оклейке (звонок в Технопарк) и продаже авто (Telegram и звонок) —
+   та же раскладка, справа карточка в рамке, как у студий в окне записи. */
+.page-cta__contact {
+  grid-column: 2; display: grid; gap: 12px; padding: clamp(20px, 2vw, 28px);
+  border: 1px solid rgb(var(--ivory-rgb) / .28); border-radius: var(--radius); background: rgb(var(--ivory-rgb) / .04);
+}
+.page-cta__studio { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.page-cta__studio strong { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; }
+.page-cta__studio span, .page-cta__address { font-size: 15px; line-height: 1.6; color: var(--muted); }
+.page-cta__phone { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2vw, 28px); letter-spacing: .02em; }
+.page-cta__contact .btn { width: 100%; height: 50px; margin-top: 4px; font-size: 15px; }
+.page-cta__tel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; min-height: 48px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 15px; }
+.page-cta__tel span { color: var(--muted); }
+.page-cta__tel strong { font-weight: 400; white-space: nowrap; }
+@media (max-width: 800px) { .page-cta { grid-template-columns: 1fr; } .page-cta__branches, .page-cta__contact { grid-column: auto; } }
 
 /* ---------- Карточка локации: запись ---------- */
 .location__actions { display: grid; gap: 8px; margin-top: auto; padding-top: 8px; }
@@ -164,7 +179,7 @@ a.card { display: block; }
 /* ---------- Подвал: «На карте» у адресов ---------- */
 .footer__branch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; }
 .footer__branch .footer__map { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
-.footer__branch .footer__map { color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
+.footer__branch .footer__map { color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
 .footer__branch .footer__map:hover { color: var(--ivory); }
 
 /* services.html на телефоне: три перехода в одну строку. */
@@ -191,7 +206,7 @@ a.card { display: block; }
 .strip--4 .card__label, .strip--4 .card__caption { text-shadow: 0 1px 10px rgb(var(--black-rgb) / .85); }
 
 /* ---------- Подвал: документы по 152-ФЗ ---------- */
-.footer__legal { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; margin-top: 10px; font-size: clamp(11px, .82vw, 12px); color: var(--muted); }
+.footer__legal { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; margin-top: 10px; font-size: 14px; color: var(--muted); }
 .footer__legal a, .footer__legal button { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .3); }
 .footer__legal a:hover, .footer__legal button:hover { color: var(--ivory); }
 .footer__legal a[aria-current="page"] { color: var(--ivory); text-decoration: none; }
@@ -272,14 +287,21 @@ a.card { display: block; }
   box-shadow: 0 18px 50px rgb(0 0 0 / .5);
 }
 .consent[hidden] { display: none; }
-.consent__text { font-size: 13px; line-height: 1.55; color: rgb(var(--ivory-rgb) / .88); }
+.consent__text { font-size: 14px; line-height: 1.5; color: rgb(var(--ivory-rgb) / .88); }
 .consent__text a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(var(--ivory-rgb) / .5); }
+/* v2: «Принять» и «Отказаться» в одну строку и на 320 px (основа 100 px вместо 140). */
 .consent__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-.consent__actions .btn { flex: 1 1 140px; height: 44px; font-size: 13px; }
+.consent__actions .btn { flex: 1 1 100px; height: 44px; font-size: 14px; }
+/* v2: на компьютере карточка справа внизу — кнопки первого экрана стоят слева и её не попадают. */
+@media (min-width: 901px) {
+  .consent { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
+}
 /* Телефон в портрете: над нижней кнопкой записи, во всю ширину. */
 @media (max-width: 900px) and (orientation: portrait) {
   .consent { left: 12px; right: 12px; width: auto; bottom: calc(var(--cta-zone, 78px) - 4px); }
 }
+/* v2: пока открыто мобильное меню, баннер не закрывает его пункты. */
+body.menu-open .consent { visibility: hidden; }
 @media print { .consent { display: none; } }
 
 /* Записка в окне записи: какие выбранные работы нельзя набрать онлайн. */
@@ -449,4 +471,4 @@ a.card { display: block; }
 /* На телефоне все разделы видны сразу: строка переносится, а не уезжает за край. */
 @media (max-width: 760px) { .page-subnav { flex-wrap: wrap; overflow: visible; row-gap: 8px; } }
 /* Подвал на самых узких экранах — ровно по три пункта, без одиноких «Статей» во второй строке. */
-@media (max-width: 389px) { .footer__nav { display: grid; grid-template-columns: repeat(3, max-content); column-gap: 24px; justify-content: start; } }
+@media (max-width: 389px) { .footer__nav { display: grid; grid-template-columns: repeat(3, max-content); column-gap: 24px; justify-content: start; } .footer__nav a { justify-content: flex-start; } }

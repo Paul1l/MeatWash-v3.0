@@ -1,5 +1,5 @@
 // Общее для всех страниц: меню, окна записи и заявки, карты студий, переходы по якорям,
-// появление блоков. «Следующий раздел» — первый блок страницы ниже текущего места.
+// появление блоков.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
 // Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
 import { setupAnalytics, goal } from './analytics.js';
@@ -160,12 +160,6 @@ export function setupUI() {
   target.focus({preventScroll:true});
   if(hash)history.replaceState(null,'',hash);
  };
- // «Следующий раздел»: первый блок, который начинается ниже текущего места.
- const nextBlock=()=>{
-  const pad=parseFloat(getComputedStyle(root).scrollPaddingTop)||0;
-  const next=[...document.querySelectorAll('main > section, main > header, main > div, body > footer')].find(el=>el.offsetHeight&&el.getBoundingClientRect().top-pad>8);
-  if(next)next.scrollIntoView({behavior:reduced()?'instant':'smooth'});
- };
 
  document.addEventListener('click',e=>{
   const control=e.target.closest('a,button'); if(!control)return;
@@ -197,7 +191,6 @@ export function setupUI() {
    const branch=control.dataset.mapLink;
    if(href.startsWith('#'))goal('map_open',{branch,source:'footer'});else try{sessionStorage.setItem('mw:map-goal',branch);}catch{}
   }
-  if(control.hasAttribute('data-scroll-next')){ nextBlock(); return; }
   const hash=control.getAttribute('href');
   if(hash?.startsWith('#')&&hash.length>1){const target=document.getElementById(hash.slice(1));if(target){e.preventDefault();closeMenu();closeDialogs();jump(target,hash);}}
  },options);

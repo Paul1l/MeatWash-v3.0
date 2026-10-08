@@ -9,6 +9,10 @@
 //   {{op:<name|inn|ogrn|address|email>}}      → реквизиты оператора (site.operator в JSON)
 //   {{site:url}}, {{site:date}}               → адрес сайта, дата редакции документов
 // и подстановки общих частей: {{loc:<id>:<поле>}}, {{home}}.
+//
+// cta — нижняя кнопка на телефоне (scripts/pages.mjs, MOBILE_CTA): 'book' — запись
+// на мойку, 'technopark' — звонок в Технопарк, 'auto' — вопрос о машине в Telegram.
+// Задаётся каждой странице: без неё сборка остановится.
 
 export const ARTICLES = [
   {
@@ -29,12 +33,12 @@ export const CONTENT = [
     file: 'articles.html', id: 'articles', kind: 'list',
     title: 'Статьи об уходе за автомобилем — MEATWASH Car Care Club',
     description: 'Статьи MEATWASH об уходе за автомобилем: мойка, защита кузова, стёкла и салон. Практичные советы и цены из каталога студий на Мясницкой и в Технопарке.',
-    ogTitle: 'Статьи — MEATWASH Car Care Club',
+    ogTitle: 'Статьи — MEATWASH Car Care Club', cta: 'book',
     shared: ['analytics', 'header', 'book', 'footer', 'dialogs'],
     sitemap: { changefreq: 'weekly', priority: '0.6' },
   },
   ...ARTICLES.map((a) => ({
-    ...a, id: 'articles', kind: 'article', ogTitle: a.headline,
+    ...a, id: 'articles', kind: 'article', ogTitle: a.headline, cta: 'book',
     shared: ['analytics', 'header', 'book', 'footer', 'dialogs'],
     sitemap: { changefreq: 'monthly', priority: '0.6' },
   })),
@@ -42,7 +46,7 @@ export const CONTENT = [
     file: 'privacy.html', id: 'privacy', kind: 'doc', body: 'privacy.html',
     title: 'Политика обработки персональных данных — MEATWASH',
     description: 'Политика обработки персональных данных посетителей сайта MEATWASH Car Care Club: какие данные, цели, cookie и Яндекс Метрика, права и отзыв согласия.',
-    headline: 'Политика обработки персональных данных',
+    headline: 'Политика обработки персональных данных', cta: 'book',
     shared: ['analytics', 'header', 'footer', 'dialogs'],
     sitemap: { changefreq: 'yearly', priority: '0.2' },
   },
@@ -50,7 +54,7 @@ export const CONTENT = [
     file: 'consent.html', id: 'consent', kind: 'doc', body: 'consent.html',
     title: 'Согласие на обработку персональных данных — MEATWASH',
     description: 'Согласие посетителя сайта MEATWASH на обработку персональных данных с помощью cookie и сервиса Яндекс Метрика: данные, цель, срок и отзыв.',
-    headline: 'Согласие на обработку персональных данных',
+    headline: 'Согласие на обработку персональных данных', cta: 'book',
     shared: ['analytics', 'header', 'footer', 'dialogs'],
     sitemap: { changefreq: 'yearly', priority: '0.2' },
   },
@@ -61,7 +65,7 @@ CONTENT.push({
   file: 'consent-request.html', id: 'consent-request', kind: 'doc', body: 'consent-request.html',
   title: 'Согласие на обработку персональных данных при отправке заявки — MEATWASH',
   description: 'Согласие на обработку персональных данных при отправке заявки с фото на сайте MEATWASH: какие данные, цель, срок и как отозвать.',
-  headline: 'Согласие на обработку персональных данных при отправке заявки',
+  headline: 'Согласие на обработку персональных данных при отправке заявки', cta: 'book',
   shared: ['analytics', 'header', 'footer', 'dialogs'],
   sitemap: { changefreq: 'yearly', priority: '0.2' },
 });
@@ -69,12 +73,17 @@ CONTENT.push({
 // Разделы по списку Романа 05.10: продажа авто, работы, оклейка полиуретаном.
 // Тело страницы целиком — src/content/<body>: свой заголовок (h1#page-title) и
 // блоки из общих стилей; catalog.css — ради карточек .visit-notes.
+// v2 (план юзабилити 08.10): у оклейки и продажи авто общий блок записи на мойку
+// не к месту — в конце тела страницы свой финальный блок, своя нижняя кнопка.
+const WITH_BOOK = ['analytics', 'header', 'book', 'footer', 'dialogs'];
+const NO_BOOK = ['analytics', 'header', 'footer', 'dialogs'];
 for (const page of [
   {
     file: 'auto.html', id: 'auto', body: 'auto.html',
     title: 'Продажа автомобилей — MEATWASH Auto',
     description: 'MEATWASH Auto: автомобили в продаже, продажа под реализацию, подготовка к продаже в наших студиях, подбор и покупка автомобиля под ключ в Москве.',
     headline: 'Продажа автомобилей', ogImage: 'assets/img/auto-lotus-1.webp',
+    shared: NO_BOOK, cta: 'auto',
     sitemap: { changefreq: 'weekly', priority: '0.7' },
   },
   {
@@ -82,6 +91,7 @@ for (const page of [
     title: 'Наши работы — MEATWASH Car Care Club',
     description: 'Работы MEATWASH: подготовка Lotus Eletre R к продаже, оклейка BMW M4 цветным полиуретаном, химчистка салона и полировка кузова в студиях в Москве.',
     headline: 'Наши работы', ogImage: 'assets/img/auto-lotus-4.webp',
+    shared: WITH_BOOK, cta: 'book',
     sitemap: { changefreq: 'monthly', priority: '0.6' },
   },
   {
@@ -89,9 +99,10 @@ for (const page of [
     title: 'Оклейка автомобиля полиуретаном — MEATWASH',
     description: 'Оклейка автомобиля защитной полиуретановой плёнкой в Москве: прозрачной или цветной, зоны риска, весь кузов, фары и лобовое стекло. Расчёт по фото.',
     headline: 'Оклейка полиуретаном',
+    shared: NO_BOOK, cta: 'technopark',
     sitemap: { changefreq: 'monthly', priority: '0.7' },
   },
-]) CONTENT.push({ ...page, kind: 'landing', css: ['catalog.css'], shared: ['analytics', 'header', 'book', 'footer', 'dialogs'] });
+]) CONTENT.push({ ...page, kind: 'landing', css: ['catalog.css'] });
 
 // Карта сайта: страницы ручной вёрстки и собранные здесь.
 export const SITEMAP = [

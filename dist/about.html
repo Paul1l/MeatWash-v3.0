@@ -39,20 +39,28 @@
   <a class="brand" href="./" aria-label="MEATWASH — на главную">
     <img class="brand__logo" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654">
   </a>
+  <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
+       «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
   <nav class="nav" aria-label="Основная навигация">
-    <a href="services.html">Услуги</a>
+    <a href="services.html">Услуги и цены</a>
     <a href="wrap.html">Оклейка</a>
-    <a href="works.html">Работы</a>
-    <a href="auto.html">Авто</a>
+    <a href="works.html">Наши работы</a>
+    <a href="auto.html">Продажа авто</a>
     <a href="about.html" aria-current="page">О нас</a>
-    <a href="articles.html">Статьи</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
+<!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
+     ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
-  <button class="btn btn--fill" type="button" data-book>Записаться</button>
+  <a href="services.html">Услуги и цены</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a>
+  <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
+  <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
+    <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>
+    <a class="mobile-menu__studio" href="tel:+79300352325"><span class="mobile-menu__studio-name"><strong>Мясницкая</strong><span>Премиальная мойка</span></span><span class="mobile-menu__tel">+7 (930) 035-23-25</span></a>
+    <a class="mobile-menu__studio" href="tel:+79324916991"><span class="mobile-menu__studio-name"><strong>Технопарк</strong><span>Детейлинг-центр</span></span><span class="mobile-menu__tel">+7 (932) 491-69-91</span></a>
+  </div>
 </nav>
 <!-- SHARED:header:END -->
 
@@ -237,24 +245,6 @@
   </article>
 <!-- SHARED:locations:END -->
 </section>
-
-<!-- SHARED:book:START -->
-<section class="page-cta" id="book" aria-labelledby="book-title">
-  <div class="page-cta__head">
-    <p class="eyebrow" lang="en">MEATWASH / CAR CARE CLUB</p>
-    <h2 id="book-title">Записаться</h2>
-    <p>Выберите студию. Услугу и время — в её онлайн-записи. Онлайн-запись доступна круглосуточно.</p>
-  </div>
-  <div class="dialog__branches page-cta__branches">
-    <a class="dialog__branch" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer"><strong>Мясницкая</strong><span>ул. Мясницкая, 11</span></a>
-    <a class="dialog__branch" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer"><strong>Технопарк</strong><span>пр-т Андропова, 8, стр. 2</span></a>
-  </div>
-  <div class="dialog__phones page-cta__phones">
-    <a href="tel:+79300352325"><span>Мясницкая</span><strong>+7 (930) 035-23-25</strong></a>
-    <a href="tel:+79324916991"><span>Технопарк</span><strong>+7 (932) 491-69-91</strong></a>
-  </div>
-</section>
-<!-- SHARED:book:END -->
 </main>
 
 <!-- SHARED:footer:START -->
@@ -263,21 +253,14 @@
   <div class="footer__row">
     <a class="brand" href="./" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html">Услуги</a><a href="wrap.html">Оклейка</a><a href="works.html">Работы</a><a href="auto.html">Авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
+      <a href="services.html">Услуги и цены</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html" aria-current="page">О нас</a><a href="articles.html">Статьи</a>
     </nav>
-    <div class="footer__social">
-      <button type="button" data-book aria-label="Онлайн-запись">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1" fill="none" stroke="currentColor"/><path d="M7 2v6M17 2v6M3 10h18M8 15h8" fill="none" stroke="currentColor"/></svg>
-      </button>
-      <a href="tel:+79300352325" aria-label="Позвонить">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.6 8.2c.4-.4 1-.4 1.3 0l1 1.3c.3.4.3.9 0 1.3l-.6.7c.6 1.1 1.5 2 2.6 2.6l.7-.6c.4-.3.9-.3 1.3 0l1.3 1c.4.3.4.9 0 1.3l-.7.7c-.6.6-1.5.7-2.3.4-2.5-1.1-4.5-3.1-5.6-5.6-.3-.8-.2-1.7.4-2.3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
-      </a>
-    </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
   <!-- Адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). Пунктов «Локации» и
        «Контакты» в меню нет с 08.10 (решение Влада): они живут на «О нас», в блоке «Локации и контакты».
-       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
+       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной.
+       v2: иконок календаря и трубки нет — запись рядом кнопкой, телефоны обеих студий здесь же с подписями. -->
   <div class="footer__contacts">
     <div class="footer__branch">
       <h3>Мясницкая</h3>
@@ -311,6 +294,8 @@
 <!-- SHARED:footer:END -->
 
 <!-- SHARED:dialogs:START -->
+<!-- Нижняя кнопка на телефоне — своя у страницы (поле cta в scripts/pages.mjs и src/content/pages.mjs):
+     запись на мойку, звонок в Технопарк на оклейке, вопрос о машине на продаже авто. -->
 <button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
 
 <!-- Запись: у Мясницкой и Технопарка разные компании в yclients,
