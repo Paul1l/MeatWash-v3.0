@@ -103,7 +103,7 @@
     <figure class="gallery__item"><img src="assets/img/service-interior-1280.webp" srcset="assets/img/service-interior-640.webp 640w, assets/img/service-interior-1280.webp 1280w" sizes="(max-width: 800px) 100vw, 42vw" alt="Мастер MEATWASH очищает кожаную дверную карту и салон автомобиля" width="1280" height="852" loading="lazy" decoding="async"><figcaption>Химчистка салона</figcaption></figure>
     <figure class="gallery__item gallery__item--wide"><img src="assets/img/service-polish-1280.webp" srcset="assets/img/service-polish-640.webp 640w, assets/img/service-polish-1280.webp 1280w" sizes="(max-width: 800px) 100vw, 58vw" alt="Мастер MEATWASH полирует кузов машинкой при направленном свете" width="1280" height="852" loading="lazy" decoding="async"><figcaption>Полировка кузова</figcaption></figure>
   </div>
-  <p class="gallery__credit">Хотите так же? <button class="link-arrow works__request" type="button" data-request>Отправьте фото машины&nbsp;— посчитаем работу <span aria-hidden="true">→</span></button></p>
+  <p class="gallery__credit">Хотите так же? <button class="link-arrow works__request" type="button" data-request>Узнать цену <span aria-hidden="true">→</span></button></p>
 </section>
 
 <!-- SHARED:book:START -->
@@ -175,31 +175,35 @@
 <button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
 
 <!-- Запись: у Мясницкой и Технопарка разные компании в yclients,
-     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес. -->
-<dialog class="dialog" id="booking" aria-labelledby="booking-title">
+     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес.
+     То же окно без студий — разговор с администратором (js/ui.js, data-mode="talk"):
+     «Обсудить условия» клуба и «Узнать цену», пока заявки с сайта не принимаются
+     (site.requests.endpoint пуст) — тогда главное в окне телефоны, их блок всегда развёрнут. -->
+<dialog class="dialog" id="booking" aria-labelledby="booking-title" data-mode="book">
   <form method="dialog"><button class="dialog__close" aria-label="Закрыть">×</button></form>
-  <span class="eyebrow" lang="en">MEATWASH / CAR CARE CLUB</span>
   <!-- Начальный фокус — на заголовке: на ссылке филиала он выглядел выбором по умолчанию. -->
   <h2 id="booking-title" tabindex="-1" autofocus>Записаться</h2>
   <p class="dialog__context" id="booking-context" hidden></p>
-  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на вопросы и подберёт время.</p>
-  <p class="dialog__note" id="booking-yc-note" hidden></p>
-  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её онлайн-записи.</p>
+  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на&nbsp;вопросы и&nbsp;подберёт время.</p>
+  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и&nbsp;время&nbsp;— в&nbsp;её онлайн-записи.</p>
   <div class="dialog__branches">
-    <a class="dialog__branch" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>Мясницкая</strong><span>ул. Мясницкая, 11</span></a>
-    <a class="dialog__branch" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>Технопарк</strong><span>пр-т Андропова, 8, стр. 2</span></a>
+    <a class="dialog__branch" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>Мясницкая</strong><span class="dialog__branch-type">Премиальная мойка</span><span>Пн–Пт 08:00–22:00<br>Сб–Вс 09:00–22:00</span><span>ул. Мясницкая, 11</span></a>
+    <a class="dialog__branch" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>Технопарк</strong><span class="dialog__branch-type">Детейлинг-центр</span><span>Ежедневно 08:00–22:00</span><span>пр-т Андропова, 8, стр. 2</span></a>
   </div>
-  <!-- Мойка и другие работы выбраны вместе: остальное — заявкой с фото (js/request.js). -->
-  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Оставить заявку с фото <span aria-hidden="true">→</span></button></p>
+  <!-- Мойка и другие работы выбраны вместе (гараж): цену остального — «Узнать цену». -->
+  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену <span aria-hidden="true">→</span></button></p>
+  <p class="dialog__aside" id="booking-other">Химчистка, полировка, плёнка, ремонт&nbsp;— по&nbsp;телефону: администратор назовёт цену.</p>
+  <!-- Порядок телефонов меняет ui.js: про плёнку и защиту первым звонят в Технопарк. -->
   <div class="dialog__phones">
-    <a href="tel:+79300352325"><span>Мясницкая</span><strong>+7 (930) 035-23-25</strong></a>
-    <a href="tel:+79324916991"><span>Технопарк</span><strong>+7 (932) 491-69-91</strong></a>
+    <a href="tel:+79300352325" data-phone="myasnitskaya"><span>Мясницкая&nbsp;— мойка</span><strong>+7 (930) 035-23-25</strong></a>
+    <a href="tel:+79324916991" data-phone="technopark"><span>Технопарк&nbsp;— детейлинг и&nbsp;плёнка</span><strong>+7 (932) 491-69-91</strong></a>
   </div>
-  <p class="dialog__aside" id="booking-other">Детейлинг, оклейка, стёкла и другие работы, кроме мойки, — <button class="link-arrow" type="button" data-request>по заявке с фото <span aria-hidden="true">→</span></button></p>
 </dialog>
 
 <!-- Заявка с фото: всё, кроме мойки (детейлинг, оклейка, стёкла и другие работы).
-     Логика — js/request.js, грузится по первому нажатию «Оставить заявку». Отправка —
+     v2: открывается кнопками «Узнать цену», только когда приём включён (site.requests.endpoint
+     задан и сайт в hosts); до того те же кнопки открывают окно #booking с телефонами.
+     Логика — js/request.js, грузится по первому нажатию. Отправка —
      только на адрес site.requests.endpoint (meatwash-content.json; на meatwash.ru —
      api/request.php); пока его нет, форма не отправляет и не пишет «отправлено» —
      предлагает позвонить в студию. -->

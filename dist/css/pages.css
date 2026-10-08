@@ -103,8 +103,6 @@ a.card { display: block; }
 .page-cta__head h2 { margin-top: 16px; font-size: clamp(32px, 3.6vw, 56px); }
 .page-cta__head p { margin-top: 16px; max-width: 40ch; color: var(--muted); }
 .page-cta__branches { grid-column: 2; margin-top: 0; }
-/* v2: адрес студии в блоке записи — не мельче 14 px (в окне записи пока 12 px, его правит свой шаг). */
-.page-cta__branches .dialog__branch span { font-size: 14px; }
 /* v2: свой финальный блок на оклейке (звонок в Технопарк) и продаже авто (Telegram и звонок) —
    та же раскладка, справа карточка в рамке, как у студий в окне записи. */
 .page-cta__contact {
@@ -311,15 +309,18 @@ body.menu-open .consent { visibility: hidden; }
   border: 1px solid var(--line);
   border-radius: 3px;
   background: rgba(233, 223, 208, .05);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
   color: var(--muted);
 }
 
-/* ---------- Окно записи: напоминание о заявке (смешанный выбор) и подсказка ---------- */
+/* ---------- Окно записи: «Узнать цену» по остальным работам (смешанный выбор) и подсказка ---------- */
 .dialog__note--request { color: var(--ivory); }
-.dialog__note .link-arrow, .dialog__aside .link-arrow { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; vertical-align: middle; }
-.dialog p.dialog__aside { margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.dialog__note .link-arrow { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; vertical-align: middle; }
+/* v2: «Химчистка, полировка… — по телефону» — заголовок блока телефонов: линия над строкой,
+   телефоны сразу под ней. */
+.dialog p.dialog__aside { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; }
+.dialog__aside:not([hidden]) + .dialog__phones { margin-top: 4px; padding-top: 0; border-top: 0; }
 .dialog__note[hidden], .dialog__aside[hidden] { display: none; }
 
 /* ---------- Заявка с фото (js/request.js) ---------- */

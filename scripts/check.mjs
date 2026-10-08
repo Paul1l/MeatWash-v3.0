@@ -123,6 +123,8 @@ for(const group of content.groups){
  for(const section of group.sections){
   assert(/^(programs|price-[a-z-]+)$/.test(section.id)&&section.title,`Подраздел без id или названия в ${group.id}`);
   assert(Boolean(section.programs)===(section.id==='programs')&&(!section.programs||group.id==='wash'),`Подраздел программ — только «programs» в «Мойке»`);
+  // v2: план юзабилити 08.10 — onsite («продаётся только на месте») — только у работ с онлайн-записью (мойка), не у программ.
+  assert(!section.onsite||(group.booking==='yclients'&&!section.programs),`Подраздел ${section.id}: onsite — только у работ мойки`);
   for(const name of section.items||[])sectionOf[name]=[group.id,section.id];
  }
 }
@@ -162,11 +164,14 @@ content.groups.forEach((group,gi)=>{
  group.sections.forEach((section,si)=>{
   const block=panel.slice(blocks[si].index,si+1<blocks.length?blocks[si+1].index:panel.length);
   assert(block.includes(`<h3 class="catalog__subhead">${escape(section.title)}`),`Подраздел ${section.id}: нет заголовка`);
+  // v2: план юзабилити 08.10 — подпись «Узнать цену» вместо «Заявка с фото»; у подраздела
+  // onsite (продаётся только на месте) вместо кнопки — подпись «добавим при приёмке».
   for(const name of section.items||[]){
    const [,price,about]=group.items.find(([n])=>n===name),n=escape(name);
-   const action=group.booking==='yclients'?`data-book data-book-context="${n}" data-yc-items="${n}">Записаться`:`data-request data-request-category="${group.id}" data-request-services="${n}">Заявка с фото`;
-   assert(block.includes(`<li class="catalog__item" data-price-item="${n}"><div class="catalog__item-text"><p class="catalog__item-name">${n}</p><p class="catalog__item-note">${escape(about)}</p></div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceLabel(price)}</p><button class="catalog__action" type="button" ${action}`),`Нет или устарела услуга «${name}» в подразделе ${section.id}`);
+   const action=section.onsite?`<p class="catalog__item-onsite">добавим при приёмке</p></li>`:`<button class="catalog__action" type="button" ${group.booking==='yclients'?`data-book data-book-context="${n}" data-yc-items="${n}">Записаться`:`data-request data-request-category="${group.id}" data-request-services="${n}">Узнать цену`}`;
+   assert(block.includes(`<li class="catalog__item" data-price-item="${n}"><div class="catalog__item-text"><p class="catalog__item-name">${n}</p><p class="catalog__item-note">${escape(about)}</p></div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceLabel(price)}</p>${action}`),`Нет или устарела услуга «${name}» в подразделе ${section.id}`);
   }
+  if(section.onsite)assert(!/data-book|data-request/.test(block),`Подраздел ${section.id}: работы на месте — без кнопок записи и «Узнать цену»`);
  });
  // Сценарий записи в категории: мойка — окно филиалов (data-book), остальное — заявка (data-request).
  if(group.booking==='yclients')assert(/data-book/.test(panel)&&!/data-request/.test(panel),`Категория ${group.id}: нужна запись в YCLIENTS, без заявки`);
@@ -388,4 +393,4 @@ if(missingOperator().length)notes.push(`реквизиты оператора в
 if(!site.metrika)notes.push('номер счётчика Яндекс Метрики (Метрика и уведомление о cookie выключены)');
 if(!site.webmaster)notes.push('код подтверждения Яндекс Вебмастера');
 if(notes.length)console.warn('ВНИМАНИЕ: не заполнено в site (meatwash-content.json) — '+notes.join('; ')+'.');
-console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — заявка с фото); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и встроенная карта обоих филиалов (iframe — только скриптом, «На карте» в подвале ведёт к карте), окна карты нет.`);
+console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — «Узнать цену»); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и встроенная карта обоих филиалов (iframe — только скриптом, «На карте» в подвале ведёт к карте), окна карты нет.`);

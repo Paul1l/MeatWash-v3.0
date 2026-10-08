@@ -1,9 +1,9 @@
-// Общее для всех страниц: меню, окна записи и заявки, карты студий, переходы по якорям,
+// Общее для всех страниц: меню, окна записи, «Узнать цену» и заявки, карты студий, переходы по якорям,
 // появление блоков.
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
 // Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
 import { setupAnalytics, goal } from './analytics.js';
-import { LOCATIONS } from './data.js';
+import { LOCATIONS, REQUESTS, CATEGORIES, ITEMS } from './data.js';
 import { getBody } from './body.js';
 
 export function setupUI() {
@@ -45,14 +45,19 @@ export function setupUI() {
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
  const closeDialogs=()=>{ booking?.close(); requestDialog?.close(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
- // Что именно выбрал человек — только текстом, без разметки.
- const setContext=note=>{ if(!context)return; context.textContent=note?'Вы выбрали: '+note:''; context.hidden=!note; };
+ const leadText=lead?.textContent||'';
+ // Что именно выбрал или спрашивает человек — только текстом, без разметки.
+ // Знак рубля не уходит на следующую строку от числа.
+ const setContext=(note,prefix='Вы выбрали: ')=>{ if(!context)return; context.textContent=note?(prefix+note).replace(/ ₽/g,'\u00a0₽'):''; context.hidden=!note; };
+ // Телефоны студий (блок всегда развёрнут): порядок из разметки, по плёнке и защите
+ // первым — Технопарк. Переставляем сами ссылки: порядок чтения и Tab тот же, что на экране.
+ const phones=booking?.querySelector('.dialog__phones'), phoneLinks=[...(phones?.querySelectorAll('[data-phone]')||[])];
+ const phonesFirst=id=>{ if(phones&&phoneLinks.length)phones.append(...[...phoneLinks].sort((a,b)=>(b.dataset.phone===id)-(a.dataset.phone===id))); };
  // Запись: филиал выбирается здесь, потому что у площадок разные компании в yclients.
  // Ссылки филиалов ведут в YCLIENTS с уже набранными услугами. Карта
  // соответствий подгружается один раз; пока её нет, ссылки остаются такими,
  // как в разметке — обычный выбор услуги, запись всё равно работает.
- const noteEl=$('#booking-yc-note');
- let yc=null, bookingJob=0;
+ let yc=null, bookingJob=0, bookingNote='';
  const loadYc=()=>yc?Promise.resolve(yc):import('./yclients.js').then(m=>m.loadMap().then(()=>(yc=m)));
  // Каждое открытие окна начинает с ссылок из разметки: иначе общая «Записаться»
  // унесла бы в yclients корзину прошлого выбора.
@@ -62,7 +67,7 @@ export function setupUI() {
    if(!yc||!branches)return;
    const body=getBody();
    // rest — сколько работ этого же филиала уже попало в корзину: если ни одной,
-   // «Остальное уже в заказе» не пишем (выбрана только работа, которую добавляют на месте).
+   // выбранное целиком добавляют на месте.
    let unmatched=[],rest=0;
    branches.querySelectorAll('[data-branch]').forEach(link=>{
      const branch=link.dataset.branch;
@@ -71,31 +76,33 @@ export function setupUI() {
      if(url)link.href=url;
      if(missing.length>unmatched.length){unmatched=missing;rest=ids.length;}
    });
-   if(noteEl){
-     noteEl.textContent=unmatched.length
-       ? 'На месте добавите: '+unmatched.join(', ')+'. Эти работы мастер примет при приёмке — в онлайн-записи они не продаются.'+(rest?' Остальное уже в заказе.':'')
-       : '';
-     noteEl.hidden=!unmatched.length;
-   }
+   // v2 (план юзабилити 08.10): выбранное онлайн не продаётся — одна строка вместо
+   // «Вы выбрали», «На месте добавите… не продаются» и «Выберите студию» подряд.
+   if(!unmatched.length)return;
+   const onSite=rest?`${unmatched.join(', ')} мастер добавит при\u00a0приёмке, остальное уже в\u00a0заказе.`:'Запишитесь на\u00a0мойку\u00a0— это мастер добавит при\u00a0приёмке.';
+   setContext((bookingNote?bookingNote+'. ':'')+onSite,bookingNote?'Вы выбрали: ':'');
+   hint.hidden=true;
  };
  // Мойка и другие работы выбраны вместе (гараж): запись — только мойка, а окно
- // напоминает про заявку с фото по остальным; общая подсказка тогда не нужна.
+ // напоминает про цену остальных работ; общая строка про них тогда не нужна.
  const requestNote=$('#booking-request'), otherNote=$('#booking-other');
  const setRequestNote=list=>{
    if(!requestNote)return;
    requestNote.hidden=!list.length;
    if(otherNote)otherNote.hidden=Boolean(list.length);
    if(!list.length)return;
-   requestNote.querySelector('[data-booking-request-text]').textContent=`По остальным работам — заявка с фото: ${list.join(', ')}.`;
+   requestNote.querySelector('[data-booking-request-text]').textContent=`Цену остальных работ назовёт администратор: ${list.join(', ')}.`;
    requestNote.querySelector('[data-booking-request]').dataset.requestServices=list.join('|');
  };
  const openBooking=(note='',spec=null,requestList=[])=>{
    if(!booking)return;
    closeMenu(); requestDialog?.close();
    setRequestNote(requestList);
+   booking.dataset.mode='book';
    $('#booking-title').textContent='Записаться';
+   bookingNote=note;
    setContext(note); lead.hidden=true; hint.hidden=false; branches.hidden=false;
-   if(noteEl){noteEl.textContent='';noteEl.hidden=true;}
+   phonesFirst('');
    resetLinks();
    // Ответ карты yclients может прийти после следующего открытия окна — тогда он уже не нужен.
    const job=++bookingJob;
@@ -105,16 +112,44 @@ export function setupUI() {
    // Фокус на заголовке, а не на Мясницкой: иначе она выглядела выбранной по умолчанию.
    $('#booking-title').focus({preventScroll:true});
  };
- // Разговор с администратором: телефоны без онлайн-записи.
- const openMembership=(title='')=>{
+ // Разговор с администратором: то же окно без студий — заголовок, что человек
+ // спрашивает, подсказка и телефоны. Окно бывает уже открыто (кнопка «Узнать цену»
+ // в окне записи) — тогда оно перестраивается на месте и встаёт в начало.
+ const openTalk=({title,ask='',text=leadText,first=''})=>{
    if(!booking)return;
    bookingJob++;
    closeMenu(); requestDialog?.close();
    if(requestNote)requestNote.hidden=true;
    if(otherNote)otherNote.hidden=true;
-   $('#booking-title').textContent=title||'Meatwash Car Care Club';
-   setContext(''); lead.hidden=false; hint.hidden=true; branches.hidden=true;
+   booking.dataset.mode='talk';
+   $('#booking-title').textContent=title;
+   setContext(ask,'Вы спрашиваете: ');
+   lead.textContent=text; lead.hidden=false; hint.hidden=true; branches.hidden=true;
+   phonesFirst(first);
+   if(booking.open)booking.scrollTop=0;
    show(booking);
+   $('#booking-title').focus({preventScroll:true});
+ };
+ const openMembership=(title='')=>openTalk({title:title||'Meatwash Car Care Club'});
+ // v2 (план юзабилити 08.10): «Узнать цену», пока заявки с сайта не принимаются, — не
+ // форма, которую нельзя отправить, а телефоны студий. Условие то же, что в request.js:
+ // адрес приёма задан и этот сайт в списке hosts. Когда приём включат, кнопки снова
+ // открывают форму заявки (#request).
+ const requestHosts=Array.isArray(REQUESTS.hosts)?REQUESTS.hosts:[];
+ const requestsOn=Boolean(REQUESTS.endpoint)&&(!requestHosts.length||requestHosts.includes(location.hostname));
+ const openPrice=(services,category)=>{
+   // Категория — из кнопки или общая у всех выбранных работ (гараж): от неё порядок телефонов.
+   const found=new Set(services.map(name=>ITEMS[name]?.category).filter(Boolean));
+   const id=category||(found.size===1?[...found][0]:'');
+   const group=CATEGORIES.find(c=>c.id===id);
+   const about=group?group.desc.replace(/\.$/,''):'';
+   openTalk({
+     title:'Узнать цену',
+     ask:services.length?services.join(', '):about&&about[0].toLowerCase()+about.slice(1),
+     text:'Позвоните в\u00a0студию\u00a0— администратор назовёт цену и\u00a0подберёт время.',
+     first:id==='protection'?'technopark':'',
+   });
+   goal('request_open',{works:services.length,from:category||(services.length?'selection':'general'),mode:'phone'});
  };
 
  // Окно заявки (js/request.js): модуль — по первому нажатию «Оставить заявку».
@@ -176,9 +211,11 @@ export function setupUI() {
    const items=(d.ycItems||'').split('|').filter(Boolean);
    return openBooking(d.bookContext||'',{programs,items},(d.requestServices||'').split('|').filter(Boolean));
   }
-  // Заявка с фото — всё, кроме мойки: модуль окна грузится по первому нажатию.
+  // «Узнать цену» — всё, кроме мойки: пока приём заявок выключен — телефоны студий,
+  // иначе заявка с фото (модуль окна грузится по первому нажатию).
   if(control.hasAttribute('data-request')){
    const d=control.dataset;
+   if(!requestsOn)return openPrice((d.requestServices||'').split('|').filter(Boolean),d.requestCategory||'');
    closeMenu(); booking?.close();
    loadRequest()?.then(open=>open?.({services:(d.requestServices||'').split('|').filter(Boolean),category:d.requestCategory||'',washContext:d.washContext||'',washPrograms:d.washPrograms||''}));
    return;
