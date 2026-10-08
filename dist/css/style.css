@@ -163,8 +163,8 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
 
 /* ---------- Первый экран: статичная фотография ---------- */
 /* Шапка сплошная (cinematic.css), поэтому фото начинается под ней. Компьютер и
-   альбом: фото на весь экран, текст слева внизу, вход в гараж справа внизу
-   (garage.css). Телефон в портрете — колонкой: фото, текст, вход в гараж. */
+   альбом: фото на весь экран, текст и кнопки слева внизу (справа внизу на ≥901 px —
+   место уведомления о cookie). Телефон в портрете — колонкой: фото, текст, ссылки. */
 .hero { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; background: var(--black); overflow: hidden; }
 .hero__media { position: absolute; inset: var(--header-h) 0 0; }
 .hero__photo { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; }
@@ -175,24 +175,35 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
     linear-gradient(90deg, rgb(var(--black-rgb) / .7) 0%, rgb(var(--black-rgb) / .2) 34%, rgb(var(--black-rgb) / 0) 56%);
 }
 .hero__copy { position: absolute; z-index: 1; left: var(--gutter); bottom: var(--hero-bottom, clamp(36px, 8svh, 96px)); max-width: min(56vw, 760px); }
-.hero__eyebrow { margin-bottom: 18px; font-size: 11px; letter-spacing: .25em; color: var(--muted); text-shadow: 0 1px 12px rgb(var(--black-rgb) / .75); }
+/* v2: надпись над вордмарком говорит, что это и где, — 14 px (информация), капитель с разрядкой как была. */
+.hero__eyebrow { margin-bottom: 16px; font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: rgb(var(--ivory-rgb) / .78); text-shadow: 0 1px 12px rgb(var(--black-rgb) / .75); }
 /* Крупный вордмарк MEATWASH и подзаголовок — как в версии Vercel. */
 .hero__title {
   font-size: clamp(46px, 5.5vw, 90px); line-height: .96; text-transform: uppercase; letter-spacing: .005em;
   color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45);
 }
-.hero__sub { margin-top: clamp(14px, 2vw, 28px); font-size: clamp(15px, 1.75vw, 25px); font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
-/* Одна заливка и одна текстовая ссылка: уровни не спорят между собой. */
+.hero__sub { margin-top: clamp(14px, 1.6vw, 24px); max-width: 34em; font-size: clamp(15px, 1.4vw, 21px); line-height: 1.45; font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
+/* Строка под вордмарком: полная — от 901 px, короткая — на телефоне и планшете. */
+.hero__sub-short { display: none; }
+@media (max-width: 900px) {
+  .hero__sub-full { display: none; }
+  .hero__sub-short { display: inline; }
+}
+/* Одна заливка и текстовые ссылки: уровни не спорят между собой. */
 .hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(14px, 1.8vw, 28px); margin-top: clamp(18px, 2.4vw, 32px); }
 .hero__more {
   display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
-  font-size: clamp(12px, .95vw, 14px); color: var(--ivory);
+  font-size: 14px; color: var(--ivory);
   text-decoration: underline; text-decoration-color: rgb(var(--ivory-rgb) / .4); text-decoration-thickness: 1px; text-underline-offset: 5px;
   transition: text-decoration-color var(--t) var(--ease);
 }
 .hero__more span { transition: transform var(--t) var(--ease); }
 .hero__more:hover { text-decoration-color: var(--ivory); }
 .hero__more:hover span { transform: translateX(3px); }
+/* v2: вход в 3D-гараж на первом экране — второстепенный: та же текстовая ссылка, что
+   «Услуги и цены», значок 3D вместо стрелки. Главный вход — промоблок ниже. */
+.hero__garage { white-space: nowrap; }
+.hero__garage-ico { flex: none; opacity: .85; }
 @media (min-width: 1700px) { .hero__title { font-size: 108px; } }
 
 /* ---------- 02 / 03 / 04 strip ---------- */
@@ -237,7 +248,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .about__photo.is-in img { transform: none; }
 .about__photo::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 88%, var(--ivory-2) 100%); }
 .about__copy { padding: clamp(36px, 4vw, 60px) clamp(28px, 4vw, 64px) clamp(36px, 4vw, 60px) clamp(28px, 5.7vw, 84px); }
-.about__copy p { margin-top: clamp(24px, 3.2vw, 46px); font-size: clamp(13px, 1.05vw, 15px); line-height: 1.6; max-width: 32ch; hyphens: manual; }
+.about__copy p { margin-top: clamp(24px, 3.2vw, 46px); font-size: clamp(14px, 1.05vw, 15px); line-height: 1.6; max-width: 32ch; hyphens: manual; }
 .about__copy .btn { margin-top: clamp(20px, 2.4vw, 34px); height: clamp(36px, 2.6vw, 40px); padding: 0 clamp(30px, 3.4vw, 50px); font-size: clamp(11px, .9vw, 13px); }
 .about__stats {
   display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 2.4vw, 34px);
@@ -247,7 +258,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .about__stats div + div { position: relative; }
 .about__stats div + div::before { content: ''; position: absolute; left: 0; top: calc(-1 * clamp(9px, 1.2vw, 17px)); width: 10px; height: 1px; background: rgb(var(--ink-rgb) / .35); }
 .about__stats dt { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 1.9vw, 28px); line-height: 1; letter-spacing: .01em; }
-.about__stats dd { margin-top: 6px; font-size: clamp(10px, .78vw, 11px); color: var(--ink-soft); letter-spacing: .02em; white-space: nowrap; }
+/* v2: подписи цифр — 14 px (было 10–11), в колонке переносятся по словам. */
+.about__stats dd { margin-top: 6px; max-width: 14em; font-size: 14px; line-height: 1.35; color: var(--ink-soft); letter-spacing: .01em; }
 
 /* ---------- Locations ---------- */
 .locations {
@@ -266,8 +278,9 @@ button.card { width: 100%; text-align: left; appearance: none; }
   padding: clamp(18px, 2.4vw, 34px) clamp(18px, 2.4vw, 34px) clamp(14px, 1.9vw, 26px);
 }
 .location__card h3 { font-family: var(--font-sans); font-weight: 400; font-size: clamp(18px, 1.65vw, 24px); letter-spacing: .01em; }
-.location__type { margin-top: 4px; font-size: clamp(11px, 1vw, 15px); color: var(--ink-soft); }
-.location__meta { margin-top: clamp(14px, 1.9vw, 28px); font-size: clamp(11px, .95vw, 14px); line-height: 1.7; color: var(--ink); }
+/* v2 (план юзабилити 08.10): тип студии, адрес, часы и подробности — не мельче 14 px. */
+.location__type { margin-top: 4px; font-size: clamp(14px, 1vw, 15px); color: var(--ink-soft); }
+.location__meta { margin-top: clamp(14px, 1.9vw, 28px); font-size: 14px; line-height: 1.7; color: var(--ink); }
 /* «Записаться» и «Подробнее» стоят друг под другом: у каждой цель 44px и зазор. */
 .location__card .link-arrow { align-self: flex-start; padding-top: 0; color: var(--ink); }
 .location__book { margin-top: auto; }
@@ -478,7 +491,10 @@ button.card { width: 100%; text-align: left; appearance: none; }
   .about__photo::after { background: linear-gradient(180deg, transparent 90%, var(--ivory-2)); }
   .about__copy { padding: 28px var(--gutter) 8px; }
   .about__stats { grid-column: auto; margin: 0 var(--gutter); padding: 24px 0 32px; flex-direction: row; gap: 14px; }
-  .about__stats dd { white-space: normal; font-size: 10px; }
+  .about__stats dd { white-space: normal; }
+  /* v2: три цифры — равными колонками, «30 мин» не разрывается. */
+  .about__stats > div { flex: 1 1 0; min-width: 0; }
+  .about__stats dt { white-space: nowrap; }
   .locations { padding: 8px var(--gutter); }
   .location { grid-template-columns: 1fr; }
   .location__card { border-right: 1px solid var(--line-ink); border-bottom: 0; }

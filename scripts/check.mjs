@@ -344,7 +344,8 @@ for(const location of content.locations){
  for(const page of MAIN_PAGES){
   const withLocations=PAGES[page]?.shared?.includes('locations');
   if(withLocations){const block=html[page].slice(html[page].indexOf(`id="map-${location.id}"`));assert(ids[page].has(`map-${location.id}`)&&/^id="[^"]+"[^>]*data-map-embed="/.test(block)&&block.startsWith(`id="map-${location.id}"`)&&block.slice(0,block.indexOf('</article>')).includes(`location__external" href="${location.map}"`),`${page}: нет встроенной карты ${location.id} (область, якорь, резервная ссылка на карточку организации)`);}
-  assert(new RegExp(`<a class="footer__map" href="${withLocations?'':'\\./'}#map-${location.id}"[^>]*data-map-link="${location.id}"`).test(html[page]),`${page}: «На карте» в подвале не ведёт к карте ${location.id}`);
+  // v2: план юзабилити 08.10 — без своего блока локаций «На карте» ведёт к карте на «О нас» (about.html#map-…), а не на главную.
+  assert(new RegExp(`<a class="footer__map" href="${withLocations?'':'about\\.html'}#map-${location.id}"[^>]*data-map-link="${location.id}"`).test(html[page]),`${page}: «На карте» в подвале не ведёт к карте ${location.id}`);
  }
 }
 assert.equal(bookings.size,content.locations.length,'У филиалов должны быть разные ссылки записи');

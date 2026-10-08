@@ -8,8 +8,9 @@
 // Подстановки в фрагментах:
 //   {{home}}             '' на главной, './' на остальных: href="{{home}}#locations"
 //   {{top}}              логотип: '#top' на главной, './' на остальных
-//   {{locations}}        '' на страницах с блоком локаций (главная, «О нас»), './' на остальных:
-//                        href="{{locations}}#map-technopark" — к карте студии на этой же странице или на главной
+//   {{locations}}        '' на страницах с блоком локаций (главная, «О нас»), 'about.html' на остальных:
+//                        href="{{locations}}#map-technopark" — к карте студии на этой же странице или на «О нас»
+//                        (v2, план юзабилити 08.10: контакты живут на «О нас», а не на главной)
 //   {{current:<page>}}   aria-current="page" на своей странице
 //   {{header-class}}     ' is-solid' на внутренних страницах
 //   {{mobile-cta}}       нижняя кнопка на телефоне — по полю cta страницы (MOBILE_CTA ниже)
@@ -64,7 +65,7 @@ export function renderPartial(template,page){
   switch(name){
    case 'home':return home?'':'./';
    case 'top':return home?'#top':'./';
-   case 'locations':return PAGES[page].shared.includes('locations')?'':'./';
+   case 'locations':return PAGES[page].shared.includes('locations')?'':'about.html';
    case 'current':return a===id?' aria-current="page"':'';
    case 'header-class':return home?'':' is-solid';
    case 'mobile-cta':{

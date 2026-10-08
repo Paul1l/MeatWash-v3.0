@@ -40,8 +40,8 @@ function markOnSite() {
 
 // Вкладки категорий. ui.js (setupUI вызывается раньше) уже раскрывает <details>
 // по якорю и прокручивает к нему в requestAnimationFrame — к этому времени панель
-// здесь уже открыта. Отступ под шапку — scroll-padding-top у html; у панели ещё
-// scroll-margin-top на высоту вкладок (catalog.css), чтобы они оставались видны.
+// здесь уже открыта. Отступ под шапку и липкий ряд вкладок — scroll-padding-top
+// у html (catalog.css, v2), поэтому цель якоря не уезжает под вкладки.
 function setupTabs(signal) {
   const root = document.getElementById('catalog');
   const list = root?.querySelector('[data-catalog-tabs]');

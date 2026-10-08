@@ -221,7 +221,7 @@ export function setupUI() {
    return;
   }
   if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
-  // «На карте» в подвале — переход к карте студии: якорь на этой странице или на главной.
+  // «На карте» в подвале — переход к карте студии: якорь на этой странице или на «О нас».
   // Уходя на главную, запрос Метрики со старой страницы может не успеть — тогда цель
   // отправит главная по прибытии (отметка в sessionStorage, см. ниже setupAnalytics).
   if(control.dataset.mapLink){
