@@ -13,7 +13,7 @@
    При «уменьшить движение» анимаций нет (общее правило в cinematic.css). */
 .garage-cta {
   position: relative; isolation: isolate; overflow: hidden;
-  height: 44px; padding: 0 16px 0 18px; gap: 9px; font-size: 13px; letter-spacing: .02em;
+  height: 44px; padding: 0 16px 0 18px; gap: 9px; font-size: 14px; letter-spacing: .02em;
   transition: background var(--t) var(--ease), border-color var(--t) var(--ease), transform .25s var(--ease);
   animation: garage-cta-ring 4.2s ease-out 1.2s infinite;
 }

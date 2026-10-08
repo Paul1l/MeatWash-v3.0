@@ -83,18 +83,32 @@ function setupTabs(signal) {
     return true;
   };
 
+  // v2: ряд вкладок липкий — переключают и из середины длинного списка. Новая панель
+  // тогда начиналась выше экрана (человек видел её конец или подвал). Если верх панели
+  // ушёл под ряд вкладок, встаём к её началу: отступ под шапку и вкладки — в
+  // scroll-padding-top. Фокус остаётся на вкладке.
+  const choose = (i, focus = false) => {
+    select(i, focus);
+    const panel = panels[i];
+    if (!panel || panel.hidden) return;
+    if (panel.getBoundingClientRect().top < list.getBoundingClientRect().bottom - 1) {
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      panel.scrollIntoView({ block: 'start', behavior: still ? 'instant' : 'smooth' });
+    }
+  };
+
   list.addEventListener('click', (event) => {
     const tab = event.target.closest('[role="tab"]');
-    if (tab) select(tabs.indexOf(tab));
+    if (tab) choose(tabs.indexOf(tab));
   }, { signal });
   list.addEventListener('keydown', (event) => {
     const i = tabs.indexOf(event.target.closest('[role="tab"]'));
     if (i < 0 || event.altKey || event.ctrlKey || event.metaKey) return;
     const last = tabs.length - 1;
     const next = { ArrowRight: i === last ? 0 : i + 1, ArrowLeft: i === 0 ? last : i - 1, Home: 0, End: last }[event.key];
-    if (next != null) { event.preventDefault(); select(next, true); }
+    if (next != null) { event.preventDefault(); choose(next, true); }
     // У ссылки без href Enter и пробел ничего не делают; пробел ещё и листал бы страницу.
-    else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); select(i); }
+    else if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choose(i); }
   }, { signal });
 
   // Открыта «Мойка», если адрес не ведёт в другую категорию. Браузер уже прокрутил
