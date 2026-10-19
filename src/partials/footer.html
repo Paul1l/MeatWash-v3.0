@@ -3,20 +3,14 @@
   <div class="footer__row">
     <a class="brand" href="{{top}}" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html"{{current:services}}>Услуги</a><a href="about.html"{{current:about}}>О нас</a><a href="articles.html"{{current:articles}}>Статьи</a><a href="{{home}}#locations">Локации</a><a href="{{home}}#contacts">Контакты</a>
+      <a href="services"{{current:services}}>Услуги и цены</a><a href="wrap"{{current:wrap}}>Оклейка</a><a href="works"{{current:works}}>Наши работы</a><a href="auto"{{current:auto}}>Продажа авто</a><a href="about"{{current:about}}>О нас</a><a href="articles"{{current:articles}}>Статьи</a>
     </nav>
-    <div class="footer__social">
-      <button type="button" data-book aria-label="Онлайн-запись">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1" fill="none" stroke="currentColor"/><path d="M7 2v6M17 2v6M3 10h18M8 15h8" fill="none" stroke="currentColor"/></svg>
-      </button>
-      <a href="tel:{{loc:myasnitskaya:tel}}" aria-label="Позвонить">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.6 8.2c.4-.4 1-.4 1.3 0l1 1.3c.3.4.3.9 0 1.3l-.6.7c.6 1.1 1.5 2 2.6 2.6l.7-.6c.4-.3.9-.3 1.3 0l1.3 1c.4.3.4.9 0 1.3l-.7.7c-.6.6-1.5.7-2.3.4-2.5-1.1-4.5-3.1-5.6-5.6-.3-.8-.2-1.7.4-2.3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
-      </a>
-    </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
-       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
+  <!-- Адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). Пунктов «Локации» и
+       «Контакты» в меню нет с 08.10 (решение Влада): они живут на «О нас», в блоке «Локации и контакты».
+       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — на «О нас».
+       v2: иконок календаря и трубки нет — запись рядом кнопкой, телефоны обеих студий здесь же с подписями. -->
   <div class="footer__contacts">
     <div class="footer__branch">
       <h3>{{loc:myasnitskaya:name}}</h3>
@@ -37,13 +31,15 @@
   </div>
   <div class="footer__base">
     <span>© 2026 Meatwash. Все права защищены.</span>
-    <span>Moscow, Russia</span>
+    <span>Москва</span>
     <span>Чистота. Стиль. Характер.</span>
   </div>
   <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
   <div class="footer__legal">
-    <a href="privacy.html"{{current:privacy}}>Политика обработки персональных данных</a>
-    <a href="consent.html"{{current:consent}}>Согласие на обработку данных</a>
+    <a href="privacy"{{current:privacy}}>Политика обработки персональных данных</a>
+    <a href="consent"{{current:consent}}>Согласие на обработку данных</a>
     <button type="button" data-consent-open hidden>Настройки cookie</button>
   </div>
+  <!-- По слову Влада 19.10: пометка про Meta в подвале всех страниц, на случай упоминания Instagram в текстах. -->
+  <p class="footer__note">Instagram принадлежит компании Meta, которая признана экстремистской организацией и&nbsp;запрещена на&nbsp;территории РФ.</p>
 </footer>

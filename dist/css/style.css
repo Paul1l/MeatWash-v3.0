@@ -78,10 +78,12 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .brand { display: inline-flex; flex-direction: column; justify-content: center; gap: .35em; min-height: 44px; line-height: 1; }
 .eyebrow { font-size: 10px; letter-spacing: .28em; color: var(--muted); text-transform: uppercase; }
 
+/* v2 (план юзабилити 08.10): подпись кнопки и ссылки со стрелкой — 14 px на любой ширине.
+   По формуле от ширины окна выходило 11–12 px на телефоне и 12–13,7 px на ноутбуке. */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 12px;
   height: clamp(40px, 3.35vw, 50px); padding: 0 clamp(20px, 2.1vw, 32px);
-  border-radius: var(--radius); font-size: clamp(12px, .95vw, 14px); font-weight: 400; letter-spacing: .01em;
+  border-radius: var(--radius); font-size: 14px; font-weight: 400; letter-spacing: .01em;
   white-space: nowrap; border: 1px solid transparent;
   transition: background var(--t) var(--ease), border-color var(--t) var(--ease), color var(--t) var(--ease);
 }
@@ -104,7 +106,7 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .btn--ink-fill:hover { background: #0d0304; }
 .btn__circle { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--ivory); color: #1a0709; font-size: 13px; }
 /* min-height, а не padding: цель нажатия 44px без изменения визуального веса. */
-.link-arrow { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: clamp(11px, .95vw, 14px); }
+.link-arrow { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; }
 .link-arrow span { transition: transform var(--t) var(--ease); }
 .link-arrow:hover span { transform: translateX(4px); }
 
@@ -119,12 +121,10 @@ a, button { -webkit-tap-highlight-color: transparent; }
 .header.is-solid, body.menu-open .header { background: rgb(var(--black-rgb) / .86); border-bottom-color: rgba(255, 255, 255, .08); backdrop-filter: blur(10px); }
 .header .brand { flex: 0 0 auto; }
 .nav { display: flex; align-items: center; gap: clamp(22px, 3.2vw, 52px); margin: 0 auto; padding-left: clamp(0px, 4vw, 70px); }
-/* min-height, а не padding: цель нажатия 44px, строка шапки и кегль прежние. */
-.nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: clamp(12px, .95vw, 14px); color: var(--ivory); transition: opacity var(--t); }
+/* min-height, а не padding: цель нажатия 44px, строка шапки прежняя.
+   v2: подписи длиннее («Услуги и цены») — 14 px на любой ширине и без переноса внутри пункта. */
+.nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; white-space: nowrap; color: var(--ivory); transition: opacity var(--t); }
 .nav a:hover { opacity: .6; }
-.nav__next { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; margin-left: clamp(4px, 1vw, 16px); transition: color var(--t); }
-.nav__next:hover { color: var(--ivory); }
-.nav__line { display: block; width: 22px; height: 1px; background: currentColor; }
 /* На первом экране главная кнопка одна — в hero. Место под кнопку в шапке
    зарезервировано (visibility), поэтому навигация при появлении не дёргается. */
 .header__cta { flex: 0 0 auto; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity var(--t) var(--ease), transform var(--t) var(--ease), visibility var(--t) linear; }
@@ -142,13 +142,38 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
 }
 .mobile-menu > * { flex-shrink: 0; }
 .mobile-menu a { display: flex; align-items: center; min-height: 48px; font-family: var(--font-display); font-size: 24px; }
-.mobile-menu .btn { align-self: flex-start; margin-top: 16px; }
+/* v2: «Записаться» сразу за пунктами и во всю ширину, ниже — студии с телефонами. */
+.mobile-menu .mobile-menu__book { align-self: stretch; margin-top: 16px; height: 48px; font-size: 15px; }
+.mobile-menu__studios { margin-top: 24px; border-top: 1px solid var(--line); }
+.mobile-menu__label { padding: 14px 0 4px; font-family: var(--font-display); font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+/* Строка студии — целиком ссылка tel: (цель нажатия во всю ширину, не ниже 56 px). */
+.mobile-menu .mobile-menu__studio {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 56px; padding: 6px 0; font-family: var(--font-sans); font-size: 15px;
+  border-bottom: 1px solid var(--line);
+}
+.mobile-menu__studio-name { display: grid; line-height: 1.3; }
+.mobile-menu__studio-name strong { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: .02em; }
+.mobile-menu__studio-name span { font-size: 14px; color: var(--muted); }
+.mobile-menu__tel { white-space: nowrap; }
+/* Телефон в альбомной (844×390): «Записаться» помещается без прокрутки меню. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mobile-menu a { min-height: 44px; }
+  .mobile-menu .mobile-menu__book { margin-top: 12px; }
+}
+/* v2: низкий альбом (568×320 … 844×390) — пункты в два столбца, «Записаться» сразу под ними
+   и видна без прокрутки меню (в один столбец она стояла на 332–380 px, ниже края экрана).
+   Порядок чтения прежний: пункты, кнопка, студии. */
+@media (orientation: landscape) and (max-height: 400px) {
+  .mobile-menu { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: clamp(24px, 6vw, 64px); align-content: start; padding-top: 8px; }
+  .mobile-menu .mobile-menu__book, .mobile-menu__studios { grid-column: 1 / -1; }
+}
 .mobile-cta { display: none; }
 
 /* ---------- Первый экран: статичная фотография ---------- */
 /* Шапка сплошная (cinematic.css), поэтому фото начинается под ней. Компьютер и
-   альбом: фото на весь экран, текст слева внизу, вход в гараж справа внизу
-   (garage.css). Телефон в портрете — колонкой: фото, текст, вход в гараж. */
+   альбом: фото на весь экран, текст и кнопки слева внизу (справа внизу на ≥901 px —
+   место уведомления о cookie). Телефон в портрете — колонкой: фото, текст, ссылки. */
 .hero { position: relative; z-index: 2; min-height: 100vh; min-height: 100svh; background: var(--black); overflow: hidden; }
 .hero__media { position: absolute; inset: var(--header-h) 0 0; }
 .hero__photo { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 58%; }
@@ -159,24 +184,35 @@ body.menu-open .burger span:last-child { transform: translateY(-3.5px) rotate(-4
     linear-gradient(90deg, rgb(var(--black-rgb) / .7) 0%, rgb(var(--black-rgb) / .2) 34%, rgb(var(--black-rgb) / 0) 56%);
 }
 .hero__copy { position: absolute; z-index: 1; left: var(--gutter); bottom: var(--hero-bottom, clamp(36px, 8svh, 96px)); max-width: min(56vw, 760px); }
-.hero__eyebrow { margin-bottom: 18px; font-size: 11px; letter-spacing: .25em; color: var(--muted); text-shadow: 0 1px 12px rgb(var(--black-rgb) / .75); }
+/* v2: надпись над вордмарком говорит, что это и где, — 14 px (информация), капитель с разрядкой как была. */
+.hero__eyebrow { margin-bottom: 16px; font-size: 14px; letter-spacing: .2em; text-transform: uppercase; color: rgb(var(--ivory-rgb) / .78); text-shadow: 0 1px 12px rgb(var(--black-rgb) / .75); }
 /* Крупный вордмарк MEATWASH и подзаголовок — как в версии Vercel. */
 .hero__title {
   font-size: clamp(46px, 5.5vw, 90px); line-height: .96; text-transform: uppercase; letter-spacing: .005em;
   color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45);
 }
-.hero__sub { margin-top: clamp(14px, 2vw, 28px); font-size: clamp(15px, 1.75vw, 25px); font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
-/* Одна заливка и одна текстовая ссылка: уровни не спорят между собой. */
+.hero__sub { margin-top: clamp(14px, 1.6vw, 24px); max-width: 34em; font-size: clamp(15px, 1.4vw, 21px); line-height: 1.45; font-weight: 400; color: var(--ivory); text-shadow: 0 2px 40px rgb(var(--black-rgb) / .45); }
+/* Строка под вордмарком: полная — от 901 px, короткая — на телефоне и планшете. */
+.hero__sub-short { display: none; }
+@media (max-width: 900px) {
+  .hero__sub-full { display: none; }
+  .hero__sub-short { display: inline; }
+}
+/* Одна заливка и текстовые ссылки: уровни не спорят между собой. */
 .hero__actions { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(14px, 1.8vw, 28px); margin-top: clamp(18px, 2.4vw, 32px); }
 .hero__more {
   display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
-  font-size: clamp(12px, .95vw, 14px); color: var(--ivory);
+  font-size: 14px; color: var(--ivory);
   text-decoration: underline; text-decoration-color: rgb(var(--ivory-rgb) / .4); text-decoration-thickness: 1px; text-underline-offset: 5px;
   transition: text-decoration-color var(--t) var(--ease);
 }
 .hero__more span { transition: transform var(--t) var(--ease); }
 .hero__more:hover { text-decoration-color: var(--ivory); }
 .hero__more:hover span { transform: translateX(3px); }
+/* v2: вход в 3D-гараж на первом экране — второстепенный: та же текстовая ссылка, что
+   «Услуги и цены», значок 3D вместо стрелки. Главный вход — промоблок ниже. */
+.hero__garage { white-space: nowrap; }
+.hero__garage-ico { flex: none; opacity: .85; }
 @media (min-width: 1700px) { .hero__title { font-size: 108px; } }
 
 /* ---------- 02 / 03 / 04 strip ---------- */
@@ -203,7 +239,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
 /* Номера 02/03/04 — как в версии Vercel (текст берём оттуда). Вопрос «сбитой
    нумерации без 01» остаётся дизайнеру. */
 .card__label span:first-child { font-size: clamp(11px, 1.1vw, 16px); color: rgb(var(--ivory-rgb) / .78); }
-.card__label span:last-child { font-size: clamp(13px, 1.35vw, 20px); }
+/* v2: название категории — не мельче 14 px (на телефоне было 13). */
+.card__label span:last-child { font-size: clamp(14px, 1.35vw, 20px); }
 .card__caption {
   position: absolute; z-index: 2; left: clamp(16px, 2.2vw, 34px); bottom: clamp(14px, 1.5vw, 22px);
   font-size: 11px; letter-spacing: .08em; color: var(--muted); opacity: 0; transform: translateY(6px);
@@ -221,8 +258,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .about__photo.is-in img { transform: none; }
 .about__photo::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 88%, var(--ivory-2) 100%); }
 .about__copy { padding: clamp(36px, 4vw, 60px) clamp(28px, 4vw, 64px) clamp(36px, 4vw, 60px) clamp(28px, 5.7vw, 84px); }
-.about__copy p { margin-top: clamp(24px, 3.2vw, 46px); font-size: clamp(13px, 1.05vw, 15px); line-height: 1.6; max-width: 32ch; hyphens: manual; }
-.about__copy .btn { margin-top: clamp(20px, 2.4vw, 34px); height: clamp(36px, 2.6vw, 40px); padding: 0 clamp(30px, 3.4vw, 50px); font-size: clamp(11px, .9vw, 13px); }
+.about__copy p { margin-top: clamp(24px, 3.2vw, 46px); font-size: clamp(14px, 1.05vw, 15px); line-height: 1.6; max-width: 32ch; hyphens: manual; }
+.about__copy .btn { margin-top: clamp(20px, 2.4vw, 34px); height: clamp(36px, 2.6vw, 40px); padding: 0 clamp(30px, 3.4vw, 50px); font-size: 14px; }
 .about__stats {
   display: flex; flex-direction: column; justify-content: center; gap: clamp(18px, 2.4vw, 34px);
   margin: clamp(24px, 3.4vw, 50px) 0; padding: 0 var(--gutter) 0 clamp(20px, 2.6vw, 40px);
@@ -231,7 +268,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .about__stats div + div { position: relative; }
 .about__stats div + div::before { content: ''; position: absolute; left: 0; top: calc(-1 * clamp(9px, 1.2vw, 17px)); width: 10px; height: 1px; background: rgb(var(--ink-rgb) / .35); }
 .about__stats dt { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 1.9vw, 28px); line-height: 1; letter-spacing: .01em; }
-.about__stats dd { margin-top: 6px; font-size: clamp(10px, .78vw, 11px); color: var(--ink-soft); letter-spacing: .02em; white-space: nowrap; }
+/* v2: подписи цифр — 14 px (было 10–11), в колонке переносятся по словам. */
+.about__stats dd { margin-top: 6px; max-width: 14em; font-size: 14px; line-height: 1.35; color: var(--ink-soft); letter-spacing: .01em; }
 
 /* ---------- Locations ---------- */
 .locations {
@@ -250,8 +288,9 @@ button.card { width: 100%; text-align: left; appearance: none; }
   padding: clamp(18px, 2.4vw, 34px) clamp(18px, 2.4vw, 34px) clamp(14px, 1.9vw, 26px);
 }
 .location__card h3 { font-family: var(--font-sans); font-weight: 400; font-size: clamp(18px, 1.65vw, 24px); letter-spacing: .01em; }
-.location__type { margin-top: 4px; font-size: clamp(11px, 1vw, 15px); color: var(--ink-soft); }
-.location__meta { margin-top: clamp(14px, 1.9vw, 28px); font-size: clamp(11px, .95vw, 14px); line-height: 1.7; color: var(--ink); }
+/* v2 (план юзабилити 08.10): тип студии, адрес, часы и подробности — не мельче 14 px. */
+.location__type { margin-top: 4px; font-size: clamp(14px, 1vw, 15px); color: var(--ink-soft); }
+.location__meta { margin-top: clamp(14px, 1.9vw, 28px); font-size: 14px; line-height: 1.7; color: var(--ink); }
 /* «Записаться» и «Подробнее» стоят друг под другом: у каждой цель 44px и зазор. */
 .location__card .link-arrow { align-self: flex-start; padding-top: 0; color: var(--ink); }
 .location__book { margin-top: auto; }
@@ -281,7 +320,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .membership__card img { filter: drop-shadow(0 8px 16px rgb(0 0 0 / .3)); }
 /* Карта — ссылка на оформление клубной карты: картинка и подпись под ней. */
 .membership__link { display: grid; justify-items: center; gap: clamp(10px, 1.2vw, 16px); color: var(--ivory); text-decoration: none; border-radius: 6px; }
-.membership__hint { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-size: clamp(13px, 1vw, 15px); letter-spacing: .02em; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .5); }
+.membership__hint { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 4px; font-size: clamp(14px, 1vw, 15px); letter-spacing: .02em; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .5); }
 .membership__link:focus-visible { outline: 2px solid var(--ivory); outline-offset: 6px; }
 .membership__link:focus-visible .membership__hint { text-decoration-color: var(--ivory); }
 @media (hover: hover) {
@@ -294,19 +333,16 @@ button.card { width: 100%; text-align: left; appearance: none; }
 }
 .membership__copy { position: relative; padding: clamp(28px, 3vw, 44px) var(--gutter) clamp(28px, 3vw, 44px) 0; }
 .membership__copy h2 { font-size: clamp(24px, 2.3vw, 34px); letter-spacing: .005em; }
-.membership__copy p { margin-top: clamp(12px, 1.4vw, 20px); font-size: clamp(12px, 1.05vw, 16px); line-height: 1.6; color: var(--ivory); max-width: 34ch; }
-.membership__copy .btn { margin-top: clamp(18px, 2vw, 30px); height: clamp(40px, 3.3vw, 50px); font-size: clamp(11px, .95vw, 14px); }
+.membership__copy p { margin-top: clamp(12px, 1.4vw, 20px); font-size: clamp(14px, 1.05vw, 16px); line-height: 1.6; color: var(--ivory); max-width: 34ch; }
+.membership__copy .btn { margin-top: clamp(18px, 2vw, 30px); height: clamp(40px, 3.3vw, 50px); font-size: 14px; }
 
 /* ---------- Footer ---------- */
 .footer { position: relative; z-index: 2; background: var(--black); padding: clamp(26px, 3.4vw, 50px) var(--gutter) clamp(22px, 2.6vw, 36px); }
 .footer__row { display: flex; align-items: center; gap: clamp(20px, 3vw, 48px); }
 .footer__nav { display: flex; gap: clamp(16px, 2.6vw, 44px); margin-left: auto; }
-.footer__nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: clamp(12px, .95vw, 14px); transition: opacity var(--t); }
+/* v2: подписи как в шапке, 14 px; иконок календаря и трубки нет — рядом кнопка «Записаться». */
+.footer__nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; white-space: nowrap; transition: opacity var(--t); }
 .footer__nav a:hover { opacity: .6; }
-.footer__social { display: flex; gap: clamp(4px, 1vw, 16px); margin: 0 clamp(4px, 1.8vw, 32px); }
-/* Иконка записи в подвале — кнопка: филиал выбирается в окне записи. */
-.footer__social a, .footer__social button { display: grid; place-items: center; width: 44px; height: 44px; color: var(--ivory); opacity: .85; transition: opacity var(--t); }
-.footer__social a:hover, .footer__social button:hover { opacity: 1; }
 /* «Контакты» в меню ведут в подвал: адреса, часы и телефоны должны быть здесь. */
 .footer__contacts {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(20px, 3vw, 56px);
@@ -314,7 +350,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
   border-top: 1px solid var(--line);
 }
 .footer__branch h3 { font-size: clamp(16px, 1.3vw, 20px); letter-spacing: .02em; }
-.footer__branch p { margin-top: 8px; font-size: 12px; line-height: 1.7; color: var(--muted); }
+.footer__branch p { margin-top: 8px; font-size: 14px; line-height: 1.7; color: var(--muted); }
 .footer__branch a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 2px; font-size: 14px; color: var(--ivory); }
 .footer__base { display: flex; justify-content: space-between; gap: 24px; margin-top: clamp(28px, 3.6vw, 56px); font-size: clamp(11px, .82vw, 12px); color: var(--muted); }
 
@@ -328,7 +364,8 @@ button.card { width: 100%; text-align: left; appearance: none; }
 }
 .dialog::backdrop { background: rgb(var(--black-rgb) / .78); backdrop-filter: blur(6px); }
 .dialog h2 { margin-top: 14px; font-size: clamp(28px, 2.4vw, 36px); }
-.dialog p { margin-top: 14px; font-size: 13px; color: var(--muted); }
+/* v2: текст в окнах не мельче 14 px (было 13). */
+.dialog p { margin-top: 14px; font-size: 14px; color: var(--muted); }
 .dialog .btn { margin-top: 24px; }
 /* Строка с крестиком липнет к верху окна: в длинном списке услуг он остаётся на виду. */
 .dialog > form {
@@ -338,9 +375,9 @@ button.card { width: 100%; text-align: left; appearance: none; }
 .dialog__close { display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--radius); font-size: 26px; line-height: 1; color: var(--muted); }
 .dialog__close:hover { color: var(--ivory); background: rgb(var(--ivory-rgb) / .07); }
 .dialog__phones { display: flex; flex-direction: column; gap: 2px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
-.dialog__phones a { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; font-size: 13px; }
+.dialog__phones a { display: flex; align-items: center; justify-content: space-between; gap: 4px 16px; min-height: 44px; font-size: 14px; }
 .dialog__phones span { color: var(--muted); }
-.dialog__phones strong { font-weight: 400; }
+.dialog__phones strong { font-weight: 400; white-space: nowrap; }
 
 /* ---------- Reveal helpers ---------- */
 /* Появление блоков при прокрутке: короткий подъём, без «киселя». */
@@ -349,21 +386,34 @@ button.card { width: 100%; text-align: left; appearance: none; }
 @media (prefers-reduced-motion: reduce) { [data-reveal] { opacity: 1; transform: none; transition: none; } }
 
 /* Что человек выбрал — отбито линией, чтобы не терялось среди служебного текста. */
-.dialog__context { margin-top: 14px; padding: 10px 14px; border-left: 2px solid var(--burgundy-2); background: rgb(var(--ivory-rgb) / .05); font-size: 13px; color: var(--ivory); }
+.dialog__context { margin-top: 14px; padding: 10px 14px; border-left: 2px solid var(--burgundy-2); background: rgb(var(--ivory-rgb) / .05); font-size: 14px; color: var(--ivory); }
 .dialog__lead { max-width: 34ch; }
-/* Выбор филиала: две крупные строки-кнопки, адрес — мельче, ↗ = новая вкладка. */
+/* Выбор филиала: две крупные строки-кнопки, адрес — мельче, ↗ = новая вкладка.
+   v2: в окне записи под названием тип студии и часы — чем студии отличаются и когда открыты. */
 .dialog__branches { display: grid; gap: 8px; margin-top: 22px; }
 .dialog__branch {
-  display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 16px;
+  display: grid; grid-template-columns: 1fr auto; align-items: center; align-content: center; column-gap: 16px;
   min-height: 56px; padding: 12px 16px; border-radius: var(--radius);
   border: 1px solid rgb(var(--ivory-rgb) / .28); background: rgb(var(--ivory-rgb) / .04);
   transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
 }
 .dialog__branch strong { grid-column: 1; font-family: var(--font-display); font-weight: 700; font-size: 19px; letter-spacing: .02em; }
-.dialog__branch span { grid-column: 1; font-size: 12px; color: var(--muted); }
+.dialog__branch span { grid-column: 1; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.dialog__branch .dialog__branch-type { color: var(--beige); }
 .dialog__branch::after { content: '↗'; grid-column: 2; grid-row: 1 / 3; font-size: 14px; color: var(--muted); }
 .dialog__branch:hover { background: rgb(var(--ivory-rgb) / .09); border-color: var(--ivory); }
 .dialog__branch:hover::after { color: var(--ivory); }
+/* Окно без онлайн-записи («Узнать цену», разговор с администратором, ui.js data-mode="talk"):
+   телефоны — главное действие, поэтому крупные строки в рамке, как студии в окне записи. */
+#booking[data-mode="talk"] .dialog__phones { gap: 8px; margin-top: 22px; padding-top: 0; border-top: 0; }
+#booking[data-mode="talk"] .dialog__phones a {
+  flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px;
+  min-height: 64px; padding: 10px 16px; border-radius: var(--radius);
+  border: 1px solid rgb(var(--ivory-rgb) / .28); background: rgb(var(--ivory-rgb) / .04);
+  transition: background var(--t) var(--ease), border-color var(--t) var(--ease);
+}
+#booking[data-mode="talk"] .dialog__phones strong { font-size: 18px; color: var(--ivory); letter-spacing: .02em; }
+#booking[data-mode="talk"] .dialog__phones a:hover { background: rgb(var(--ivory-rgb) / .09); border-color: var(--ivory); }
 /* Заголовок окна получает фокус при открытии, но это не элемент управления — без рамки. */
 .dialog h2[tabindex="-1"]:focus { outline: none; }
 /* Телефон в альбомной (844×390 … 568×320): обе студии видны без прокрутки —
@@ -371,17 +421,29 @@ button.card { width: 100%; text-align: left; appearance: none; }
 @media (orientation: landscape) and (max-height: 500px) {
   #booking.dialog { width: min(94vw, 680px); max-height: calc(100svh - 16px); padding-top: 18px; --dialog-pad: 24px; }
   #booking.dialog > form { position: absolute; top: 4px; right: 4px; margin: 0; padding: 0; background: none; }
-  #booking .eyebrow { display: none; }
   #booking h2 { margin-top: 0; padding-right: 44px; font-size: 26px; }
   #booking p { margin-top: 6px; }
   #booking .dialog__lead { max-width: none; }
   #booking .dialog__context { padding: 6px 12px; }
   #booking .dialog__branches { grid-template-columns: 1fr 1fr; margin-top: 12px; }
-  #booking .dialog__branch { min-height: 52px; padding: 8px 14px; }
+  /* Строки карточек — от верха: у Мясницкой часы в две строки, и по центру её название
+     вставало выше, чем у Технопарка. */
+  #booking .dialog__branch { min-height: 52px; padding: 8px 14px; align-content: start; }
   #booking .dialog__branch strong { font-size: 17px; }
   #booking .dialog__phones { flex-direction: row; gap: 8px; margin-top: 10px; padding-top: 6px; }
   #booking .dialog__phones a { flex: 1 1 0; min-width: 0; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; }
-  #booking .dialog__phones span { font-size: 11px; }
+  #booking .dialog__phones span { font-size: 14px; }
+  #booking[data-mode="talk"] .dialog__phones { margin-top: 12px; }
+  #booking[data-mode="talk"] .dialog__phones a { min-height: 56px; padding: 8px 14px; }
+}
+/* Самый низкий альбом (568×320): иначе телефоны студий уходили за нижний край окна без
+   признака прокрутки. Часы студий — в подвале и на «О нас»; здесь — название, тип и адрес. */
+@media (orientation: landscape) and (max-height: 340px) {
+  #booking.dialog { max-height: calc(100svh - 8px); padding-bottom: 16px; }
+  #booking .dialog__branch .dialog__branch-hours { display: none; }
+  #booking .dialog__branch { padding-block: 6px; }
+  #booking p.dialog__aside { padding-top: 8px; }
+  #booking .dialog__phones { margin-top: 6px; }
 }
 
 /* ==========================================================================
@@ -393,7 +455,6 @@ button.card { width: 100%; text-align: left; appearance: none; }
 
 @media (max-width: 1100px) {
   .nav { gap: 22px; padding-left: 0; }
-  .nav__next { display: none; }
   .about { grid-template-columns: 34% 1fr auto; }
 }
 
@@ -416,7 +477,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
   .membership__copy { padding: 0 var(--gutter) clamp(36px, 5vw, 48px); }
   .footer__row { flex-wrap: wrap; }
   .footer__nav { order: 3; width: 100%; margin-left: 0; }
-  .footer__social { margin-left: auto; }
+  .footer__row > .btn { margin-left: auto; }
   .footer__base { flex-direction: column; gap: 8px; }
 }
 
@@ -428,7 +489,7 @@ button.card { width: 100%; text-align: left; appearance: none; }
     display: inline-flex; position: fixed; z-index: 28;
     left: 50%; transform: translateX(-50%);
     bottom: max(16px, env(safe-area-inset-bottom));
-    width: min(420px, calc(100% - var(--gutter) * 2)); height: 48px;
+    width: min(420px, calc(100% - var(--gutter) * 2)); height: 48px; font-size: 15px;
   }
   body.menu-open .mobile-cta { visibility: hidden; }
   .footer { padding-bottom: 96px; }
@@ -451,7 +512,10 @@ button.card { width: 100%; text-align: left; appearance: none; }
   .about__photo::after { background: linear-gradient(180deg, transparent 90%, var(--ivory-2)); }
   .about__copy { padding: 28px var(--gutter) 8px; }
   .about__stats { grid-column: auto; margin: 0 var(--gutter); padding: 24px 0 32px; flex-direction: row; gap: 14px; }
-  .about__stats dd { white-space: normal; font-size: 10px; }
+  .about__stats dd { white-space: normal; }
+  /* v2: три цифры — равными колонками, «30 мин» не разрывается. */
+  .about__stats > div { flex: 1 1 0; min-width: 0; }
+  .about__stats dt { white-space: nowrap; }
   .locations { padding: 8px var(--gutter); }
   .location { grid-template-columns: 1fr; }
   .location__card { border-right: 1px solid var(--line-ink); border-bottom: 0; }
@@ -499,6 +563,8 @@ body.dialog-open .mobile-cta { visibility: hidden; }
 /* Окна записи и заявки на телефоне — нижний лист: крестик и «Записаться» ближе к пальцу.
    dialog.dialog, а не .dialog: правило должно перебивать ширину .request-dialog из pages.css. */
 @media (max-width: 600px) and (orientation: portrait) {
+  /* v2: подпись студии («Технопарк — детейлинг и плёнка») и номер рядом не помещаются — номер под подписью. */
+  .dialog__phones a { flex-direction: column; align-items: flex-start; justify-content: center; gap: 0; min-height: 52px; }
   dialog.dialog {
     width: 100%; max-width: none; inset: auto 0 0 0; margin: 0; max-height: calc(100svh - 24px);
     border-radius: var(--radius) var(--radius) 0 0; border-bottom: 0;

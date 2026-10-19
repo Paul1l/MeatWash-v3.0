@@ -14,6 +14,11 @@ body.page-inner .header__cta { opacity: 1; visibility: visible; transform: none;
 .footer__nav a[aria-current="page"] { opacity: .6; }
 /* Ссылки подвала — цель 44 px и по ширине (короткие «Услуги» были 33–43 px). */
 .footer__nav a { min-width: 44px; justify-content: center; }
+/* v2: до 900 px меню подвала переносится во вторую строку — подписи от левого края,
+   иначе короткое «О нас» в рамке 44 px сдвигало вторую строку на 6 px. */
+@media (max-width: 900px) { .footer__nav a { justify-content: flex-start; } }
+/* В подвале шесть пунктов: на узком экране переносятся в две строки, а не уезжают вправо. */
+.footer__nav { flex-wrap: wrap; column-gap: clamp(16px, 2.6vw, 44px); row-gap: 0; }
 /* Шапка при viewport-fit=cover: вырез экрана в альбомной не накрывает логотип и меню. */
 .header { padding-left: max(var(--gutter), env(safe-area-inset-left)); padding-right: max(var(--gutter), env(safe-area-inset-right)); }
 
@@ -22,13 +27,15 @@ body.page-inner .header__cta { opacity: 1; visibility: visible; transform: none;
 .services-preview__head { display: grid; grid-template-columns: 1fr minmax(0, 44ch); gap: clamp(20px, 4vw, 70px); align-items: end; padding: 0 var(--gutter); margin-bottom: clamp(28px, 4vw, 56px); }
 .services-preview__head h2 { font-size: clamp(32px, 3.9vw, 60px); line-height: 1.1; margin-top: 20px; }
 .services-preview__head > p { font-size: 15px; line-height: 1.8; color: var(--muted); }
-.services-preview__all { margin: clamp(18px, 2vw, 28px) var(--gutter) 0; font-size: 13px; }
+/* v2: ссылка на полный каталог под карточками — заметная, 15 px с подчёркиванием, как ссылки первого экрана. */
+.services-preview__all { margin: clamp(18px, 2vw, 28px) var(--gutter) 0; font-size: 15px; text-decoration: underline; text-decoration-color: rgb(var(--ivory-rgb) / .4); text-decoration-thickness: 1px; text-underline-offset: 5px; }
+.services-preview__all:hover { text-decoration-color: var(--ivory); }
 .strip--4 { grid-template-columns: repeat(4, 1fr); }
 .strip--4 .card--wash > img { object-position: 45% 55%; filter: saturate(.78); }
 a.card { display: block; }
 .card__price { display: block; margin-top: 4px; font: 400 15px/1.2 var(--font-sans); color: var(--ivory); letter-spacing: 0; font-variant-numeric: tabular-nums; }
 /* Подпись карточки — короткое описание категории: обычный кегль и трекинг, с полем справа. */
-.strip--4 .card__caption { right: clamp(16px, 2.2vw, 34px); max-width: 34ch; font-size: 13px; line-height: 1.4; letter-spacing: .01em; }
+.strip--4 .card__caption { right: clamp(16px, 2.2vw, 34px); max-width: 34ch; font-size: 14px; line-height: 1.4; letter-spacing: .01em; }
 .strip--4 .card__price { margin-top: 6px; }
 @media (max-width: 900px) {
   .services-preview__head { grid-template-columns: 1fr; }
@@ -39,10 +46,14 @@ a.card { display: block; }
 }
 @media (max-width: 430px) {
   .strip--4 .card__label { left: 12px; top: 12px; }
-  .strip--4 .card__caption { left: 12px; right: 12px; bottom: 12px; font-size: 12px; line-height: 1.35; }
+  .strip--4 .card__caption { left: 12px; right: 12px; bottom: 12px; font-size: 14px; line-height: 1.3; text-shadow: 0 1px 10px rgb(var(--black-rgb) / .9); }
+  /* Подпись в 14 px на узкой карточке — до четырёх строк: затемнение снизу выше, текст читается и на блике. */
+  .strip--4 .card::after { background: linear-gradient(180deg, rgb(var(--black-rgb) / .65), transparent 34%, rgb(var(--black-rgb) / .45) 52%, rgb(var(--black-rgb) / .82)); }
+  /* Блик со сколом — выше подписи: увеличение кадра от нижней точки, а не от центра. */
+  .strip--4 .card--help > img { transform-origin: 50% 90%; }
   .card__price { font-size: 14px; }
 }
-.proof__more { margin-top: clamp(20px, 2.4vw, 32px); font-size: 13px; }
+.proof__more { margin-top: clamp(20px, 2.4vw, 32px); font-size: 14px; }
 
 /* ---------- Заголовок страницы услуг ---------- */
 .page-head { padding: calc(var(--header-h) + clamp(40px, 6vw, 96px)) var(--gutter) clamp(28px, 4vw, 56px); background: var(--black-2); }
@@ -86,7 +97,7 @@ a.card { display: block; }
 /* Вертикальное фото Технопарка тянется на высоту ряда (её задаёт соседнее 4:3), а не своей. */
 .gallery__item--tall img { flex: 1 1 0; min-height: 0; aspect-ratio: auto; }
 .gallery__item figcaption { margin-top: 10px; font-size: 12px; color: var(--muted); }
-.gallery__credit { margin-top: 20px; font-size: 12px; color: var(--muted); }
+.gallery__credit { margin-top: 20px; font-size: 14px; color: var(--muted); }
 .gallery__credit a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 800px) {
   .gallery__grid { grid-template-columns: 1fr; }
@@ -95,18 +106,33 @@ a.card { display: block; }
   .gallery__item--tall img { flex: none; aspect-ratio: 4 / 5; object-position: 50% 65%; }
 }
 
-/* ---------- Блок записи (services, about) ---------- */
+/* ---------- Финальный блок страницы: запись (services, works, статьи) ---------- */
+/* v2: телефонов в блоке нет — они в подвале сразу ниже. */
 .page-cta { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 520px); gap: 16px clamp(32px, 6vw, 110px); align-items: start; padding: clamp(64px, 8vw, 120px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
-.page-cta__head { grid-row: span 2; }
 .page-cta__head h2 { margin-top: 16px; font-size: clamp(32px, 3.6vw, 56px); }
+.page-cta__head h2:first-child { margin-top: 0; }
 .page-cta__head p { margin-top: 16px; max-width: 40ch; color: var(--muted); }
 .page-cta__branches { grid-column: 2; margin-top: 0; }
-.page-cta__phones { grid-column: 2; margin-top: 8px; }
-@media (max-width: 800px) { .page-cta { grid-template-columns: 1fr; } .page-cta__head { grid-row: auto; } .page-cta__branches, .page-cta__phones { grid-column: auto; } }
+/* v2: свой финальный блок на оклейке (звонок в Технопарк) и продаже авто (Telegram и звонок) —
+   та же раскладка, справа карточка в рамке, как у студий в окне записи. */
+.page-cta__contact {
+  grid-column: 2; display: grid; gap: 12px; padding: clamp(20px, 2vw, 28px);
+  border: 1px solid rgb(var(--ivory-rgb) / .28); border-radius: var(--radius); background: rgb(var(--ivory-rgb) / .04);
+}
+.page-cta__studio { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.page-cta__studio strong { font-family: var(--font-display); font-weight: 700; font-size: 22px; letter-spacing: .02em; }
+.page-cta__studio span, .page-cta__address { font-size: 15px; line-height: 1.6; color: var(--muted); }
+.page-cta__phone { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2vw, 28px); letter-spacing: .02em; }
+.page-cta__contact .btn { width: 100%; height: 50px; margin-top: 4px; font-size: 15px; }
+.page-cta__tel { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 16px; min-height: 48px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 15px; }
+.page-cta__tel span { color: var(--muted); }
+.page-cta__tel strong { font-weight: 400; white-space: nowrap; }
+@media (max-width: 800px) { .page-cta { grid-template-columns: 1fr; } .page-cta__branches, .page-cta__contact { grid-column: auto; } }
 
 /* ---------- Карточка локации: запись ---------- */
 .location__actions { display: grid; gap: 8px; margin-top: auto; padding-top: 8px; }
-.location__actions .btn { width: 100%; height: 44px; padding: 0 12px; gap: 8px; font-size: 13px; }
+/* v2: «Записаться» в карточке студии — 14 px, как остальные кнопки. */
+.location__actions .btn { width: 100%; height: 44px; padding: 0 12px; gap: 8px; font-size: 14px; }
 .location__card .location__book { margin-top: 0; }
 
 /* ---------- Карта студии в карточке локации ---------- */
@@ -132,8 +158,8 @@ a.card { display: block; }
 .location p.location__status { max-width: 30ch; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
 .location p.location__status:empty { display: none; }
 .location__map[data-state="error"] p.location__status { font-size: 15px; color: var(--ink); }
-.location__retry.btn { height: 44px; padding: 0 24px; font-size: 13px; }
-.location__external.link-arrow { font-size: 13px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ink-rgb) / .35); }
+.location__retry.btn { height: 44px; padding: 0 24px; font-size: 14px; }
+.location__external.link-arrow { font-size: 14px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ink-rgb) / .35); }
 .location__external.link-arrow:hover { text-decoration-color: var(--ink); }
 /* Под iframe ссылка заглушки недоступна (inert) — и не видна, чтобы не казаться кнопкой.
    Если карта грузится дольше 12 с, ссылка — в плашке поверх карты (.location__slow). */
@@ -162,14 +188,14 @@ a.card { display: block; }
 /* ---------- Подвал: «На карте» у адресов ---------- */
 .footer__branch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; }
 .footer__branch .footer__map { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; }
-.footer__branch .footer__map { color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
+.footer__branch .footer__map { color: var(--muted); font-size: 14px; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
 .footer__branch .footer__map:hover { color: var(--ivory); }
 
 /* services.html на телефоне: три перехода в одну строку. */
 
-/* «О нас»: три принципа — только заголовки (текст уже сказан абзацем выше). */
+/* «О нас»: три принципа — заголовок и строка о том, что он значит для клиента. */
 .visit-notes--approach { padding-bottom: clamp(40px, 5vw, 64px); }
-.visit-notes--approach h3 { margin: 12px 0 0; }
+.visit-notes--approach h3 { margin: 12px 0 8px; }
 
 /* services.html: гараж и «Под вашу задачу» — кремовая полоса после тёмного прайса. */
 .services-extra { background: var(--ivory-2); color: var(--ink); padding: clamp(8px, 2vw, 24px) var(--gutter) clamp(56px, 6vw, 96px); }
@@ -177,6 +203,7 @@ a.card { display: block; }
 .services-extra .catalog__concierge + .catalog__concierge { margin-top: clamp(36px, 4vw, 50px); }
 .services-extra .eyebrow { color: var(--ink-soft); }
 .services-extra .catalog__concierge h2 { font-size: clamp(26px, 2.5vw, 40px); line-height: 1.2; margin: 20px 0; color: var(--ink); }
+.services-extra .catalog__concierge h2:first-child { margin-top: 0; }
 .services-extra .catalog__concierge p { color: var(--ink-soft); }
 .services-extra :focus-visible { outline-color: var(--ink); }
 .services-extra .cfg-teaser:first-child { border-top: 0; }
@@ -189,11 +216,12 @@ a.card { display: block; }
 .strip--4 .card__label, .strip--4 .card__caption { text-shadow: 0 1px 10px rgb(var(--black-rgb) / .85); }
 
 /* ---------- Подвал: документы по 152-ФЗ ---------- */
-.footer__legal { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; margin-top: 10px; font-size: clamp(11px, .82vw, 12px); color: var(--muted); }
+.footer__legal { display: flex; flex-wrap: wrap; align-items: center; gap: 0 24px; margin-top: 10px; font-size: 14px; color: var(--muted); }
 .footer__legal a, .footer__legal button { display: inline-flex; align-items: center; min-height: 44px; color: inherit; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .3); }
 .footer__legal a:hover, .footer__legal button:hover { color: var(--ivory); }
 .footer__legal a[aria-current="page"] { color: var(--ivory); text-decoration: none; }
 .footer__legal button[hidden] { display: none; }
+.footer__note { margin-top: 6px; max-width: 72ch; font-size: clamp(11px, .82vw, 12px); line-height: 1.5; color: var(--muted); }
 
 /* ---------- Статьи: список ---------- */
 .articles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: clamp(16px, 2vw, 28px); padding: clamp(28px, 4vw, 56px) var(--gutter) clamp(64px, 8vw, 120px); background: var(--black-2); }
@@ -210,7 +238,7 @@ a.card { display: block; }
 /* ---------- Статья ---------- */
 .article { padding: calc(var(--header-h) + clamp(32px, 5vw, 80px)) var(--gutter) clamp(48px, 6vw, 96px); background: var(--black-2); }
 .article__head, .article__body { max-width: 760px; margin: 0 auto; }
-.article__crumbs { font-size: 13px; color: var(--muted); }
+.article__crumbs { font-size: 14px; color: var(--muted); }
 .article__crumbs a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--ivory-rgb) / .35); }
 .article__head h1 { margin-top: 6px; font-size: clamp(34px, 4.6vw, 64px); line-height: 1.04; color: var(--ivory); }
 .article__lead { margin-top: clamp(16px, 2vw, 24px); font-size: clamp(17px, 1.5vw, 21px); line-height: 1.55; color: var(--ivory); }
@@ -270,14 +298,38 @@ a.card { display: block; }
   box-shadow: 0 18px 50px rgb(0 0 0 / .5);
 }
 .consent[hidden] { display: none; }
-.consent__text { font-size: 13px; line-height: 1.55; color: rgb(var(--ivory-rgb) / .88); }
+.consent__text { font-size: 14px; line-height: 1.5; color: rgb(var(--ivory-rgb) / .88); }
 .consent__text a { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgb(var(--ivory-rgb) / .5); }
+/* v2: «Принять» и «Отказаться» в одну строку и на 320 px (основа 100 px вместо 140). */
 .consent__actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-.consent__actions .btn { flex: 1 1 140px; height: 44px; font-size: 13px; }
+.consent__actions .btn { flex: 1 1 100px; height: 44px; font-size: 14px; }
+/* v2: на компьютере карточка справа внизу — кнопки первого экрана стоят слева и её не попадают. */
+@media (min-width: 901px) {
+  .consent { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); }
+}
+/* v2: телефон в альбомной — тоже справа и уже: текст и «Записаться» первого экрана
+   стоят слева (не шире 48vw), нижней кнопки записи в альбомной нет. */
+@media (max-width: 900px) and (orientation: landscape) {
+  .consent { left: auto; right: max(16px, env(safe-area-inset-right, 0px)); width: min(360px, 44vw); padding: 14px 14px 12px; max-height: calc(100svh - var(--header-h) - 24px); overflow-y: auto; overscroll-behavior: contain; }
+  .consent__actions { margin-top: 10px; }
+}
+/* v2: самый низкий альбом (568×320): в 44vw карточка выходила 250×250 и заходила на шапку.
+   Чуть шире (до 48vw — левее не пускает текст первого экрана) и ниже к краю — верх под шапкой. */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 340px) {
+  .consent { width: min(360px, 48vw); bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+}
 /* Телефон в портрете: над нижней кнопкой записи, во всю ширину. */
 @media (max-width: 900px) and (orientation: portrait) {
   .consent { left: 12px; right: 12px; width: auto; bottom: calc(var(--cta-zone, 78px) - 4px); }
 }
+/* v2: главная на телефоне и планшете в портрете — сверху, под шапкой: текст первого экрана (MEATWASH, «Мойка
+   и детейлинг · Мясницкая и Технопарк», ссылки) стоит внизу, над нижней кнопкой, и снизу
+   баннер закрыл бы его целиком; сверху он ложится на фото. Нижняя «Записаться» видна. */
+@media (max-width: 900px) and (orientation: portrait) {
+  body[data-page="home"] .consent { top: calc(var(--header-h) + 12px); bottom: auto; }
+}
+/* v2: пока открыто мобильное меню, баннер не закрывает его пункты. */
+body.menu-open .consent { visibility: hidden; }
 @media print { .consent { display: none; } }
 
 /* Записка в окне записи: какие выбранные работы нельзя набрать онлайн. */
@@ -287,15 +339,18 @@ a.card { display: block; }
   border: 1px solid var(--line);
   border-radius: 3px;
   background: rgba(233, 223, 208, .05);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.45;
   color: var(--muted);
 }
 
-/* ---------- Окно записи: напоминание о заявке (смешанный выбор) и подсказка ---------- */
+/* ---------- Окно записи: «Узнать цену» по остальным работам (смешанный выбор) и подсказка ---------- */
 .dialog__note--request { color: var(--ivory); }
-.dialog__note .link-arrow, .dialog__aside .link-arrow { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; vertical-align: middle; }
-.dialog p.dialog__aside { margin-top: 10px; font-size: 12px; line-height: 1.5; }
+.dialog__note .link-arrow { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; vertical-align: middle; }
+/* v2: «Химчистка, полировка… — по телефону» — заголовок блока телефонов: линия над строкой,
+   телефоны сразу под ней. */
+.dialog p.dialog__aside { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; }
+.dialog__aside:not([hidden]) + .dialog__phones { margin-top: 4px; padding-top: 0; border-top: 0; }
 .dialog__note[hidden], .dialog__aside[hidden] { display: none; }
 
 /* ---------- Заявка с фото (js/request.js) ---------- */
@@ -364,3 +419,109 @@ a.card { display: block; }
   .request__photo { grid-template-columns: 72px minmax(0, 1fr) 44px; }
   .request__photo img, .request__tile { width: 72px; height: 54px; }
 }
+
+/* ---------- Разделы по списку Романа 05.10: авто, работы, оклейка, основатель, команда ---------- */
+/* Лента фото: горизонтальная прокрутка со щелчком к кадру, без скриптов. */
+.car__strip { display: grid; grid-auto-flow: column; grid-auto-columns: 86%; gap: 10px; margin: 0; padding: 0 0 10px; list-style: none; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: thin; scrollbar-color: var(--burgundy-3) transparent; }
+.car__strip li { scroll-snap-align: start; min-width: 0; }
+.car__strip img { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid var(--line); }
+.car__strip--tall img { aspect-ratio: 4 / 5; }
+@media (min-width: 801px) { .car__strip { grid-auto-columns: 78%; } .car__strip--tall { grid-auto-columns: 46%; } }
+
+.page-head__actions { margin-top: clamp(20px, 2.4vw, 32px); }
+
+.cars { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black); display: grid; gap: clamp(48px, 6vw, 96px); }
+.cars__head h2, .project__copy h2, .path h2, .wrap-prices h2, .founder__copy h2 { font-size: clamp(30px, 3.4vw, 52px); }
+.cars__note { margin-top: 14px; max-width: 60ch; color: var(--muted); }
+.car { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 56px); align-items: start; }
+.car__info h3 { font-family: var(--font-display); font-weight: 700; font-size: clamp(24px, 2.2vw, 34px); line-height: 1.1; color: var(--ivory); }
+.car__meta { margin-top: 8px; color: var(--muted); font-size: 14px; }
+.car__price { margin-top: 16px; font-family: var(--font-display); font-weight: 700; font-size: clamp(26px, 2.4vw, 36px); color: var(--ivory); font-variant-numeric: tabular-nums; }
+.car__price span { display: block; margin-top: 4px; font-family: var(--font-sans); font-weight: 400; font-size: 14px; color: var(--muted); }
+.car__info > p:not(.car__meta):not(.car__price) { margin-top: 16px; max-width: 56ch; }
+.car__specs { margin: 14px 0 0; padding-left: 18px; display: grid; gap: 6px; color: rgb(var(--ivory-rgb) / .86); font-size: 14px; }
+.car__prep { padding: 12px 14px; border-left: 2px solid var(--burgundy-2); background: rgb(var(--burgundy-2-rgb) / .12); }
+.car__cta { margin-top: 22px; }
+.cars__more { color: var(--muted); }
+.cars__more a { color: var(--ivory); text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 900px) { .car { grid-template-columns: 1fr; } }
+
+/* «Уже продали» (19.10): сетка проданных машин — фото 3:2, название, плашка «Продан».
+   Кадры 532–534 px по высоте: aspect-ratio и cover выравнивают карточки в ряду. Без анимаций.
+   Колонки 4 / 2 (≤700) под 16 карточек: оба шага делят 16 без остатка. Шага в 3 колонки нет —
+   при нём последняя карточка стоит одна. Меняется число карточек — проверить последний ряд. */
+.sold { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
+.sold h2 { font-size: clamp(30px, 3.4vw, 52px); }
+.sold__note { margin-top: 14px; max-width: 60ch; color: var(--muted); }
+.sold__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(24px, 2.4vw, 36px) clamp(12px, 1.6vw, 24px); margin: clamp(24px, 3vw, 40px) 0 0; padding: 0; list-style: none; }
+.sold__card { position: relative; min-width: 0; }
+.sold__card img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border: 1px solid var(--line); }
+.sold__name { margin-top: 12px; font-family: var(--font-display); font-weight: 700; font-size: clamp(17px, 1.4vw, 21px); line-height: 1.2; color: var(--ivory); overflow-wrap: break-word; }
+.sold__badge { position: absolute; top: 8px; left: 8px; padding: 3px 8px; border-radius: var(--radius); background: var(--burgundy-2); color: var(--ivory); font-size: 11px; line-height: 1.4; letter-spacing: .14em; text-transform: uppercase; }
+@media (max-width: 700px) { .sold__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) {
+  .sold__list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 10px; }
+  .sold__name { margin-top: 8px; font-size: 15px; }
+  .sold__badge { top: 6px; left: 6px; padding: 2px 6px; font-size: 10px; letter-spacing: .1em; }
+}
+
+.project { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: clamp(20px, 3vw, 56px); align-items: start; padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black); border-top: 1px solid var(--line); }
+.project--text { grid-template-columns: minmax(0, 1fr); }
+.project__copy p:not(.eyebrow) { margin-top: 16px; max-width: 56ch; }
+.project__copy h2 { margin-top: 14px; }
+/* v2: надписи над заголовком больше нет — заголовок без верхнего отступа. */
+.project__copy h2:first-child, .founder__copy h2:first-child { margin-top: 0; }
+.project__copy .link-arrow { margin-top: 12px; }
+.project__links { display: flex; flex-wrap: wrap; gap: 0 28px; margin-top: 8px; }
+.gallery__more { margin-top: 12px; }
+.works__request { font: inherit; color: var(--ivory); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 900px) { .project { grid-template-columns: 1fr; } }
+
+.wrap-prices { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
+.wrap-prices__list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 24px); margin: clamp(24px, 3vw, 40px) 0 0; padding: 0; list-style: none; }
+.wrap-prices__list li { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 1px solid var(--line); min-width: 0; }
+.wrap-prices__list h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--ivory); }
+.wrap-prices__list p { color: var(--muted); font-size: 14px; }
+.wrap-prices__list .wrap-prices__price { margin-top: auto; color: var(--ivory); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.wrap-prices__list .link-arrow { align-self: flex-start; font: inherit; font-size: 14px; color: var(--ivory); background: none; border: 0; padding: 0; cursor: pointer; }
+@media (max-width: 1100px) { .wrap-prices__list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .wrap-prices__list { grid-template-columns: 1fr; } }
+
+.founder { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(24px, 4vw, 72px); align-items: center; padding: clamp(56px, 7vw, 112px) var(--gutter); background: var(--black-2); }
+.founder__photo { margin: 0; }
+.founder__photo img { display: block; width: 100%; max-width: 520px; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line); filter: saturate(.9); }
+.founder__copy h2 { margin-top: 14px; }
+.founder__quote { margin: clamp(20px, 2.4vw, 32px) 0 0; padding-left: 18px; border-left: 2px solid var(--burgundy-2); font-family: var(--font-display); font-size: clamp(19px, 1.7vw, 26px); line-height: 1.35; color: var(--ivory); max-width: 40ch; }
+.founder__sign { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.founder__copy > p:not(.eyebrow):not(.founder__sign) { margin-top: 16px; max-width: 60ch; color: rgb(var(--ivory-rgb) / .86); }
+.founder__copy a { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 800px) { .founder { grid-template-columns: 1fr; } .founder__photo img { max-width: 360px; } }
+
+.path { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 24px clamp(32px, 5vw, 96px); padding: clamp(56px, 7vw, 112px) var(--gutter); background: var(--black); border-top: 1px solid var(--line); }
+.path h2 { grid-column: 1 / -1; }
+.path__list { margin: 0; padding: 0; list-style: none; display: grid; gap: 0; }
+.path__list li { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 20px; padding: 20px 0; border-top: 1px solid var(--line); }
+.path__list time { grid-row: span 3; font-size: 13px; letter-spacing: .08em; color: var(--beige); font-variant-numeric: tabular-nums; }
+.path__list h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--ivory); }
+.path__list p { color: var(--muted); max-width: 56ch; }
+.path__list .link-arrow { justify-self: start; }
+.path__press { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-self: start; }
+.path__press figure { margin: 0; }
+.path__press img { display: block; width: 100%; height: auto; border: 1px solid var(--line); }
+@media (max-width: 900px) { .path { grid-template-columns: 1fr; } .path__press { max-width: 420px; } }
+@media (max-width: 560px) { .path__list li { grid-template-columns: 1fr; } .path__list time { grid-row: auto; } }
+
+.team__lead { grid-column: 1 / -1; max-width: 60ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+
+/* «О нас» — переходы по разделам: с 08.10 вкладка объединяет «Локации» и «Контакты». */
+.page-subnav { display: flex; gap: 8px; padding: 14px var(--gutter); background: var(--black-2); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.page-subnav::-webkit-scrollbar { display: none; }
+.page-subnav a { flex: 0 0 auto; display: inline-flex; align-items: center; min-height: 40px; padding: 0 14px; border: 1px solid var(--line); font-size: 14px; color: var(--ivory); white-space: nowrap; transition: border-color var(--t) var(--ease), background var(--t) var(--ease); }
+.page-subnav a:hover { border-color: rgb(var(--ivory-rgb) / .5); }
+/* v2: «Локации и контакты» — первым пунктом и с выделением (блок идёт сразу за переходами). */
+.page-subnav a:first-child { border-color: var(--burgundy-2); background: rgb(var(--burgundy-2-rgb) / .14); }
+.locations__lead { grid-column: 1 / -1; padding: 0 0 8px calc(clamp(18px, 2.4vw, 34px) + 1px); max-width: 64ch; font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+/* На телефоне все разделы видны сразу: строка переносится, а не уезжает за край. */
+@media (max-width: 760px) { .page-subnav { flex-wrap: wrap; overflow: visible; row-gap: 8px; } }
+/* Подвал на самых узких экранах — ровно по три пункта, без одиноких «Статей» во второй строке. */
+@media (max-width: 389px) { .footer__nav { display: grid; grid-template-columns: repeat(3, max-content); column-gap: 24px; justify-content: start; } }

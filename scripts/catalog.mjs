@@ -24,12 +24,16 @@ const shot=(id,size)=>`assets/shots/${id}${size==='s'?'-s':''}.webp`;
 // Подпись кнопки для экранного диктора: «Записаться: Очистка битума кузова».
 const forName=name=>`<span class="visually-hidden">: ${escape(name)}</span> <span aria-hidden="true">→</span>`;
 // Одно действие на позицию. Мойка (booking: yclients) — окно филиалов с этой работой
-// в корзине (ui.js → yclients.js; если онлайн её не продают, окно скажет «На месте
-// добавите»); остальное — «Заявка с фото» с этой работой (ui.js → request.js).
+// в корзине (ui.js → yclients.js); остальное — «Узнать цену» с этой работой (ui.js:
+// пока заявки с сайта не принимаются — окно с телефонами студий, потом — request.js).
+// v2 (план юзабилити 08.10): подпись «Узнать цену» вместо «Заявка с фото»; у подраздела
+// с onsite: true (продаётся только на месте, «Дополнительно на мойке») кнопки нет —
+// подпись «добавим при приёмке».
+export const ONSITE_LABEL='добавим при приёмке';
 const action=(group,name)=>group.booking==='yclients'
  ?`<button class="catalog__action" type="button" data-book data-book-context="${escape(name)}" data-yc-items="${escape(name)}">Записаться${forName(name)}</button>`
- :`<button class="catalog__action" type="button" data-request data-request-category="${escape(group.id)}" data-request-services="${escape(name)}">Заявка с фото${forName(name)}</button>`;
-const itemRow=(group,[name,price,note])=>`<li class="catalog__item" data-price-item="${escape(name)}"><div class="catalog__item-text"><p class="catalog__item-name">${escape(name)}</p>${note?`<p class="catalog__item-note">${escape(note)}</p>`:''}</div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceText(price)}</p>${action(group,name)}</li>`;
+ :`<button class="catalog__action" type="button" data-request data-request-category="${escape(group.id)}" data-request-services="${escape(name)}">Узнать цену${forName(name)}</button>`;
+const itemRow=(group,section,[name,price,note])=>`<li class="catalog__item" data-price-item="${escape(name)}"><div class="catalog__item-text"><p class="catalog__item-name">${escape(name)}</p>${note?`<p class="catalog__item-note">${escape(note)}</p>`:''}</div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceText(price)}</p>${section.onsite?`<p class="catalog__item-onsite">${ONSITE_LABEL}</p>`:action(group,name)}</li>`;
 const itemOf=(group,name)=>group.items.find(([n])=>n===name)??(()=>{throw new Error(`Подраздел ${group.id}: нет позиции «${name}» в items`);})();
 // Программы и пакеты мойки: в строке (summary) — название, короткое пояснение, время
 // и цена для выбранного кузова (js/catalog.js меняет её по data-prices); полный
@@ -42,12 +46,13 @@ const programRows=()=>`<fieldset class="body-types"><legend>Тип кузова<
 // Подраздел категории: заголовок h3 и позиции; accent — спокойно выделенный
 // (оклейка, ремонт стёкол). id подраздела — на обёртке: якорь встаёт на её край.
 const block=(group,section)=>`<div class="catalog__block${section.accent?' catalog__block--accent':''}" id="${escape(section.id)}">
-   <h3 class="catalog__subhead">${escape(section.title)}${section.programs?' <small>каждая следующая включает предыдущую</small>':''}</h3>
+   <h3 class="catalog__subhead">${escape(section.title)}${section.programs?' <small>каждая следующая включает предыдущую</small>':section.onsite?' <small>Записываться отдельно не&nbsp;нужно&nbsp;— скажите администратору, когда приедете на&nbsp;мойку</small>':''}</h3>
    <div class="catalog__block-body">
-    ${section.programs?programRows():`<ul class="catalog__items" role="list">${section.items.map(name=>itemRow(group,itemOf(group,name))).join('')}</ul>`}
+    ${section.programs?programRows():`<ul class="catalog__items" role="list">${section.items.map(name=>itemRow(group,section,itemOf(group,name))).join('')}</ul>`}
    </div>
   </div>`;
-const LEAD={yclients:'Запись онлайн — в выбранную студию.',request:'Пришлите заявку с фото — мастер оценит объём работ и назовёт стоимость.'};
+// v2 (план юзабилити 08.10): без «заявки с фото» — пока она не принимается, цену называют по телефону.
+const LEAD={yclients:'Запись онлайн — в выбранную студию.',request:'Стоимость для&nbsp;вашей машины назовёт администратор: нажмите «Узнать цену» у&nbsp;работы.'};
 
 // Полный каталог — services.html: четыре категории. Без JS переключатели — ссылки
 // на категории, панели идут подряд; js/catalog.js делает из них вкладки (WAI-ARIA tabs)
@@ -71,7 +76,7 @@ ${d.groups.map(group=>` <section class="catalog__panel" id="price-${escape(group
   <div><p class="eyebrow">Гараж услуг · 3D</p><h2 id="garage-teaser-title">Соберите уход на одной машине</h2><p>Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p></div>
   <a class="btn btn--ghost btn--ink" href="./#garage">Открыть 3D-гараж <span aria-hidden="true">→</span></a>
  </section>
- <section class="catalog__concierge" aria-labelledby="concierge-title"><div><p class="eyebrow" lang="en">INDIVIDUAL CARE</p><h2 id="concierge-title">Под вашу задачу.</h2><p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p></div><button class="btn btn--fill" type="button" data-membership="Индивидуальный уход">Обсудить уход <span aria-hidden="true">→</span></button></section>
+ <section class="catalog__concierge" aria-labelledby="concierge-title"><div><h2 id="concierge-title">Под вашу задачу.</h2><p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p></div><button class="btn btn--fill" type="button" data-membership="Индивидуальный уход">Обсудить уход <span aria-hidden="true">→</span></button></section>
 </div>
 `}
 
@@ -95,7 +100,7 @@ export function renderPreview(){
 ${d.groups.map((group,i)=>{
  const card=PREVIEW[group.id];
  if(!card)throw new Error(`Превью: нет кадра для категории ${group.id}`);
- return `   <a class="card card--${escape(group.id)}" href="services.html#price-${escape(group.id)}"><img src="${shot(card.shot)}" srcset="${shot(card.shot,'s')} 900w, ${shot(card.shot)} 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="${escape(card.alt)}" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>${number(i)}</span><span>${escape(group.title)}</span></span><span class="card__caption">${escape(group.desc)}<b class="card__price">${previewFrom(group)}</b></span></a>`;}).join('\n')}
+ return `   <a class="card card--${escape(group.id)}" href="services#price-${escape(group.id)}"><img src="${shot(card.shot)}" srcset="${shot(card.shot,'s')} 900w, ${shot(card.shot)} 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="${escape(card.alt)}" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>${number(i)}</span><span>${escape(group.title)}</span></span><span class="card__caption">${escape(group.desc)}<b class="card__price">${previewFrom(group)}</b></span></a>`;}).join('\n')}
   </div>
   `;
 }

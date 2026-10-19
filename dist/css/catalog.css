@@ -10,19 +10,25 @@
 .strip .card::after{background:linear-gradient(180deg,rgb(var(--black-rgb)/.65),transparent 38%,transparent 60%,rgb(var(--black-rgb)/.7))}
 .strip .card__caption{color:var(--ivory)}
 .catalog{padding:110px var(--gutter);background:var(--black-2);color:var(--ivory)}
-/* Отступ под шапку при переходе к якорю — scroll-padding-top у html (style.css).
-   У панели вкладки к нему добавляется scroll-margin-top на высоту вкладок: по ссылке
-   на категорию (#price-wash) вкладки остаются видны над ней. */
+/* Отступ при переходе к якорю — scroll-padding-top у html: в style.css на высоту шапки,
+   на странице с вкладками каталога (v2) — на шапку плюс липкий ряд вкладок, чтобы
+   #price-*, #program-* и подразделы не уезжали под них. */
+:root{--tab-h:56px;--tabs-pad:10px;--tabs-bar:calc(var(--tab-h) + var(--tabs-pad)*2 + 1px)}
+html:has(.catalog__tabs){scroll-padding-top:calc(var(--header-h) + var(--tabs-bar))}
 
 /* ---------- Вкладки категорий (js/catalog.js) ----------
    Без JS переключатели — ссылки на панели, все четыре панели идут подряд;
    с JS — tablist, видна одна панель. Цель нажатия — не меньше 44 px. */
-.catalog__list{--tab-h:56px;--tab-rows:1;--tabs-gap:8px;--tabs-after:clamp(28px,3.4vw,48px);max-width:1240px}
-.catalog__tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--tabs-gap);max-width:860px;margin-bottom:var(--tabs-after)}
+.catalog__list{--tabs-gap:8px;--tabs-after:clamp(28px,3.4vw,48px);max-width:1240px}
+/* v2 (план юзабилити 08.10): ряд вкладок липкий — под шапкой, пока на экране прайс.
+   Фон ряда — во всю ширину окна тенью (тень не даёт горизонтальной прокрутки, обрезка —
+   clip-path), снизу волосяная линия, как у шапки. */
+.catalog__tabs{position:sticky;top:var(--header-h);z-index:5;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--tabs-gap);max-width:860px;margin-bottom:calc(var(--tabs-after) - var(--tabs-pad));padding-block:var(--tabs-pad);background:var(--black-2);box-shadow:0 0 0 100vmax var(--black-2),0 1px 0 100vmax var(--line);clip-path:inset(0 -100vmax -1px)}
 .catalog__tab{display:flex;align-items:center;justify-content:center;height:var(--tab-h);padding:0 8px;border:1px solid var(--line);border-radius:var(--radius);font-size:16px;line-height:1.2;letter-spacing:.02em;color:var(--ivory);white-space:nowrap;cursor:pointer;user-select:none;-webkit-user-select:none;transition:border-color .2s,background .2s,color .2s}
 .catalog__tab:hover{border-color:rgb(var(--ivory-rgb)/.6)}
 .catalog__tab[aria-selected="true"]{background:var(--ivory);border-color:var(--ivory);color:var(--ink);font-weight:700}
-.catalog.is-tabs .catalog__panel{scroll-margin-top:calc(var(--tab-h)*var(--tab-rows) + var(--tabs-gap)*(var(--tab-rows) - 1) + var(--tabs-after) + 12px)}
+/* Вкладки над панелью уже учтены в scroll-padding-top — у панели только воздух. */
+.catalog.is-tabs .catalog__panel,.catalog__panel [id]{scroll-margin-top:12px}
 .catalog:not(.is-tabs) .catalog__panel+.catalog__panel{margin-top:clamp(48px,6vw,88px)}
 
 /* ---------- Панель категории: заголовок, подразделы, позиции ---------- */
@@ -33,36 +39,40 @@
 .catalog__panel-lead{max-width:60ch;font-size:15px;line-height:1.75;color:var(--muted)}
 .catalog__block{padding:clamp(26px,3vw,40px) 0;border-top:1px solid var(--line)}
 .catalog__subhead{font-family:var(--font-display);font-weight:700;font-size:clamp(20px,1.7vw,24px);line-height:1.2;color:var(--ivory)}
-.catalog__subhead small{display:block;margin-top:8px;font-family:var(--font-sans);font-weight:400;font-size:13px;line-height:1.5;color:var(--muted)}
+/* v2: подпись под заголовком подраздела — не мельче 14 px. */
+.catalog__subhead small{display:block;margin-top:8px;font-family:var(--font-sans);font-weight:400;font-size:14px;line-height:1.5;color:var(--muted)}
 /* Оклейка и ремонт стёкол: спокойная рамка и фон фирменного красного. */
 .catalog__block--accent{--accent-pad:clamp(16px,2.4vw,32px);padding-inline:var(--accent-pad);border:1px solid rgb(var(--burgundy-2-rgb)/.9);border-radius:var(--radius);background:rgb(var(--burgundy-2-rgb)/.16)}
 /* На широком экране рамка выходит в поле страницы: колонки совпадают с соседними подразделами. */
 @media(min-width:1024px){.catalog__block--accent{margin-inline:calc(-1*var(--accent-pad))}}
 .catalog__block--accent+.catalog__block{border-top:0}
 .catalog__items,.catalog__programs{list-style:none;margin:0;padding:0}
-/* Позиция: название и пояснение, цена, одно действие. */
+/* Позиция: название и пояснение, цена, одно действие.
+   v2 (план юзабилити 08.10): пояснения, подписи кузова, время и кнопки — не мельче 14 px. */
 .catalog__item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:8px 24px;padding:16px 0;border-bottom:1px solid rgb(var(--ivory-rgb)/.1)}
 .catalog__item:first-child{padding-top:0}
 .catalog__item:last-child{padding-bottom:0;border-bottom:0}
 .catalog__item-name{font-size:16px;line-height:1.45;color:var(--ivory)}
-.catalog__item-note{margin-top:4px;max-width:62ch;font-size:13px;line-height:1.6;color:var(--muted)}
+.catalog__item-note{margin-top:4px;max-width:62ch;font-size:14px;line-height:1.55;color:var(--muted)}
 .catalog__item-price{min-width:6.6em;text-align:right;font-size:15px;line-height:1.4;white-space:nowrap;font-variant-numeric:tabular-nums}
 .catalog__item-price--estimate{color:var(--muted)}
-.catalog__action{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid rgb(var(--ivory-rgb)/.5);border-radius:var(--radius);color:var(--ivory);font-size:13px;line-height:1.2;letter-spacing:.01em;white-space:nowrap;transition:border-color .2s,background .2s}
+.catalog__action{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid rgb(var(--ivory-rgb)/.5);border-radius:var(--radius);color:var(--ivory);font-size:14px;line-height:1.2;letter-spacing:.01em;white-space:nowrap;transition:border-color .2s,background .2s}
 .catalog__action:hover{border-color:var(--ivory);background:rgb(var(--ivory-rgb)/.08)}
 .catalog__action>[aria-hidden]{transition:transform var(--t) var(--ease)}
 .catalog__action:hover>[aria-hidden]{transform:translateX(3px)}
+/* v2: работа продаётся только на месте — вместо кнопки тихая подпись «добавим при приёмке» на её месте в строке. */
+.catalog__item-onsite{font-size:14px;line-height:1.4;color:var(--muted);white-space:nowrap}
 
 /* ---------- Мойка: тип кузова и программы ---------- */
 .body-types{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0 0 14px;min-width:0}
-.body-types legend{font-size:10px;letter-spacing:.15em;color:var(--muted);padding:0 0 15px}
+.body-types legend{font-size:14px;letter-spacing:.04em;color:var(--muted);padding:0 0 12px}
 .body-types label{position:relative;cursor:pointer}
 .body-types input{position:absolute;opacity:0;width:1px;height:1px}
 /* Чип типа кузова — цель 44px по высоте, кегль и рамка те же. */
-.body-types span{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--line);font-size:12px;transition:background .2s}
+.body-types span{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid var(--line);font-size:14px;transition:background .2s}
 .body-types input:checked+span{background:var(--burgundy);border-color:var(--beige);color:var(--ivory)}
 .body-types input:focus-visible+span{outline:2px solid var(--ivory);outline-offset:3px}
-.catalog__selection{font-size:11px;color:var(--muted);margin-bottom:8px}
+.catalog__selection{font-size:14px;color:var(--muted);margin-bottom:8px}
 /* Строка программы — <details id="program-i">: в summary название, пояснение, время,
    цена для кузова и «Подробнее» (состав — внутри); «Записаться» — рядом, вне summary
    (кнопка в кнопке недопустима). */
@@ -73,10 +83,10 @@
 .program__summary:focus-visible{outline-offset:2px}
 /* Слева название и под ним пояснение (как у позиций); время, цена и «Подробнее» — по центру строки. */
 .program__name{grid-area:1/1;font-size:16px;line-height:1.45}
-.program__note{grid-area:2/1;max-width:62ch;font-size:13px;line-height:1.6;color:var(--muted)}
-.program__time{grid-area:1/2/3/3;font-size:13px;color:var(--muted);white-space:nowrap}
+.program__note{grid-area:2/1;max-width:62ch;font-size:14px;line-height:1.55;color:var(--muted)}
+.program__time{grid-area:1/2/3/3;font-size:14px;color:var(--muted);white-space:nowrap}
 .program__price{grid-area:1/3/3/4;min-width:5.6em;text-align:right;font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.program__toggle{grid-area:1/4/3/5;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--beige);white-space:nowrap;transition:color .2s}
+.program__toggle{grid-area:1/4/3/5;display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--beige);white-space:nowrap;transition:color .2s}
 .program__toggle span{display:inline-block;font-size:18px;line-height:1;transition:transform .2s}
 .program__summary:hover .program__toggle{color:var(--ivory)}
 .program__details[open] .program__toggle span{transform:rotate(45deg)}
@@ -84,17 +94,17 @@
 .program>.catalog__action{margin-top:16px}
 .program__body{padding:2px 0 24px}
 .program-includes{padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:10px 22px;margin:6px 0 0}
-.program-includes li{font-size:13px;color:var(--ivory);line-height:1.6;position:relative;padding-left:14px}
+.program-includes li{font-size:14px;color:var(--ivory);line-height:1.55;position:relative;padding-left:14px}
 .program-includes li::before{content:'—';position:absolute;left:0;color:var(--muted)}
 .catalog__tag{display:inline-block;margin-left:8px;padding:1px 7px;border:1px solid rgb(var(--ivory-rgb)/.4);border-radius:999px;font:400 10px/1.5 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--ivory);vertical-align:middle}
 /* Работа продаётся только на месте — онлайн-записи на неё нет. */
 .catalog__onsite{display:inline-block;margin-left:8px;padding:2px 7px;border:1px solid var(--line);border-radius:999px;font:400 10px/1.4 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;vertical-align:middle}
-.catalog__note{margin-top:clamp(28px,3vw,40px);padding-top:20px;border-top:1px solid var(--line);font-size:12px;line-height:1.8;color:var(--muted)}
+.catalog__note{margin-top:clamp(28px,3vw,40px);padding-top:20px;border-top:1px solid var(--line);font-size:14px;line-height:1.7;color:var(--muted)}
 
 /* ---------- После прайса: гараж и «Под вашу задачу» (кремовая полоса — pages.css) ---------- */
 .catalog__concierge{margin-top:70px;border-top:1px solid var(--line);padding-top:50px;display:flex;align-items:center;justify-content:space-between;gap:40px}
 .catalog__concierge>div{max-width:64ch}
-.catalog__concierge p{font-size:13px;line-height:1.85;color:var(--muted)}
+.catalog__concierge p{font-size:14px;line-height:1.8;color:var(--muted)}
 .catalog__concierge>.btn{flex-shrink:0}
 
 /* ---------- «О нас» и локации ---------- */
@@ -103,9 +113,9 @@
 .visit-notes article{border-top:1px solid var(--line-ink);padding-top:28px}
 .visit-notes .eyebrow{color:var(--ink-soft);font-size:10px}
 .visit-notes h3{font-size:24px;margin:18px 0}
-.visit-notes p{font-size:13px;line-height:1.85;color:var(--ink-soft)}
-.visit-notes .link-arrow{margin-top:20px;font-size:12px}
-.location__detail{font-size:12px;line-height:1.8;color:var(--ink-soft);margin:16px 0}
+.visit-notes p{font-size:14px;line-height:1.8;color:var(--ink-soft)}
+.visit-notes .link-arrow{margin-top:20px;font-size:14px}
+.location__detail{font-size:14px;line-height:1.7;color:var(--ink-soft);margin:16px 0}
 /* Телефон — тоже цель нажатия: 44px по высоте, кегль прежний. */
 .location__phone{display:inline-flex;align-items:center;min-height:44px;font-size:14px;margin-bottom:6px}
 
@@ -126,7 +136,7 @@
 @media(max-width:599px){
  .catalog__item{grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px 16px}
  .catalog__item-price{min-width:0}
- .catalog__item>.catalog__action{grid-column:1/-1;justify-self:start}
+ .catalog__item>.catalog__action,.catalog__item>.catalog__item-onsite{grid-column:1/-1;justify-self:start}
  .program{grid-template-columns:minmax(0,1fr)}
  .program>.catalog__action{margin:0 0 18px;justify-self:start}
  .program__summary{grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;min-height:0;padding:16px 0 12px}
@@ -138,12 +148,16 @@
  .program__body{padding-bottom:16px}
  .program-includes{grid-template-columns:1fr}
 }
-/* Узкий телефон: четыре вкладки не помещаются в строку без обрезки — сетка 2×2
-   (кегль тот же). Переключатель кузова — тоже ровная сетка 2×2. */
-@media(max-width:479px){
- .catalog__list{--tab-rows:2;--tab-h:52px}
- .catalog__tabs{grid-template-columns:1fr 1fr}
+/* v2: телефон — четыре вкладки одной строкой (липкий ряд в две строки съедал бы экран):
+   ширина вкладки по подписи, 15 px и разрядка .01em вместо .02em — на 320 px подписи
+   с полями 6 px занимают 279 из 288 px. Высота — цель нажатия 44 px. */
+@media(max-width:599px){
+ :root{--tab-h:44px;--tabs-pad:8px}
+ .catalog__list{--tabs-gap:6px}
+ .catalog__tabs{display:flex}
+ .catalog__tab{flex:1 1 auto;padding:0 6px;font-size:15px;letter-spacing:.01em}
 }
+/* Переключатель кузова на узком телефоне — ровная сетка 2×2. */
 @media(max-width:430px){
  .body-types{display:grid;grid-template-columns:1fr 1fr;gap:6px}
  .body-types legend{grid-column:1/-1}

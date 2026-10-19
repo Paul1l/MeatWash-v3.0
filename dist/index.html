@@ -8,7 +8,7 @@
 <meta name="yandex-verification" content="58e9b738e3e02ac7">
 <meta name="mw-metrika" content="113253931">
 <!-- SHARED:analytics:END -->
-<title>MEATWASH — Car Care Club · Москва</title>
+<title>MEATWASH — мойка и детейлинг в Москве</title>
 <meta name="description" content="MEATWASH Car Care Club — премиальный детейлинг в Москве. Ручная мойка, химчистка салона, полировка, керамическая защита. Мясницкая и Технопарк.">
 <link rel="canonical" href="https://meatwash.ru/">
 <meta property="og:title" content="MEATWASH — Больше, чем мойка">
@@ -40,47 +40,51 @@
   <a class="brand" href="#top" aria-label="MEATWASH — на главную">
     <img class="brand__logo" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654">
   </a>
+  <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
+       «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
   <nav class="nav" aria-label="Основная навигация">
-    <a href="services.html">Услуги</a>
-    <a href="about.html">О нас</a>
-    <a href="articles.html">Статьи</a>
-    <a href="#locations">Локации</a>
-    <a href="#contacts">Контакты</a>
-    <button class="nav__next" type="button" data-scroll-next aria-label="Следующий раздел"><span class="nav__line"></span><span aria-hidden="true">→</span></button>
+    <a href="services">Услуги и цены</a>
+    <a href="wrap">Оклейка</a>
+    <a href="works">Наши работы</a>
+    <a href="auto">Продажа авто</a>
+    <a href="about">О нас</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
+<!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
+     ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html">Услуги</a><a href="about.html">О нас</a><a href="articles.html">Статьи</a><a href="#locations">Локации</a><a href="#contacts">Контакты</a>
-  <button class="btn btn--fill" type="button" data-book>Записаться</button>
+  <a href="services">Услуги и цены</a><a href="wrap">Оклейка</a><a href="works">Наши работы</a><a href="auto">Продажа авто</a><a href="about">О нас</a>
+  <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
+  <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
+    <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>
+    <a class="mobile-menu__studio" href="tel:+79300352325"><span class="mobile-menu__studio-name"><strong>Мясницкая</strong><span>Премиальная мойка</span></span><span class="mobile-menu__tel">+7 (930) 035-23-25</span></a>
+    <a class="mobile-menu__studio" href="tel:+79324916991"><span class="mobile-menu__studio-name"><strong>Технопарк</strong><span>Детейлинг-центр</span></span><span class="mobile-menu__tel">+7 (932) 491-69-91</span></a>
+  </div>
 </nav>
 <!-- SHARED:header:END -->
 
 <main id="top">
 
-<!-- ============ ПЕРВЫЙ ЭКРАН: статичная фотография, вход в «Гараж услуг» ============ -->
+<!-- ============ ПЕРВЫЙ ЭКРАН: статичная фотография, что это и где, запись ============ -->
+<!-- v2 (план юзабилити 08.10): над вордмарком — что это и где; под ним — одна строка:
+     на компьютере (≥901 px) что делаем и где студии, на телефоне — короткая, чтобы первый
+     экран целиком влез в 320×568. Главная кнопка — «Записаться» (бордовая, как везде);
+     вход в 3D-гараж здесь второстепенный, текстовой кнопкой; карточка гаража — в промоблоке ниже. -->
 <section class="hero" id="hero" aria-labelledby="hero-title">
   <div class="hero__media">
     <img class="hero__photo" src="assets/shots/cf-hero-clean.webp" srcset="assets/shots/cf-hero-clean-s.webp 900w, assets/shots/cf-hero-clean.webp 1600w" sizes="100vw" width="1600" height="894" alt="Бордовый Porsche 930 Turbo в клубном зале MEATWASH" fetchpriority="high" decoding="async">
   </div>
   <div class="hero__copy">
-    <p class="hero__eyebrow" lang="en">CAR CARE CLUB</p>
+    <p class="hero__eyebrow">Мойка и&nbsp;детейлинг&nbsp;· Москва</p>
     <h1 class="hero__title" id="hero-title">MEATWASH</h1>
-    <p class="hero__sub">Уход, который сохраняет ценность</p>
+    <p class="hero__sub"><span class="hero__sub-full">Ручная мойка, химчистка, полировка и&nbsp;плёнка. <span class="nowrap">Две студии&nbsp;— Мясницкая и&nbsp;Технопарк</span></span><span class="hero__sub-short">Мойка и&nbsp;детейлинг&nbsp;· Мясницкая и&nbsp;Технопарк</span></p>
     <div class="hero__actions">
       <button class="btn btn--fill hero__booking" type="button" data-book>Записаться</button>
-      <a class="hero__more" href="services.html">Услуги и цены <span aria-hidden="true">→</span></a>
+      <a class="hero__more" href="services">Услуги и цены <span aria-hidden="true">→</span></a>
+      <button class="hero__more hero__garage" type="button" data-garage-open>Открыть 3D-гараж <svg class="hero__garage-ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
     </div>
-  </div>
-  <!-- Вход в гараж. Фото — только превью: 3D (js/garage.js) грузится после нажатия. -->
-  <div class="garage-entry" role="group" aria-labelledby="garage-entry-title">
-    <img class="garage-entry__photo" src="assets/shots/cf-hero-dirty-s.webp" width="900" height="503" alt="" decoding="async">
-    <div class="garage-entry__body">
-      <h2 class="garage-entry__title" id="garage-entry-title">Гараж услуг <span class="garage-entry__badge">3D</span></h2>
-      <p class="garage-entry__text">Выберите услуги и рассмотрите автомобиль в 3D</p>
-    </div>
-    <button class="btn btn--light garage-cta garage-entry__btn" type="button" data-garage-open>Открыть 3D-гараж <svg class="garage-cta__ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
   </div>
 </section>
 
@@ -88,17 +92,17 @@
 <section class="services-preview" id="services" aria-labelledby="services-title">
   <div class="services-preview__head">
     <div><p class="eyebrow" lang="en">MEATWASH / CAR CARE</p><h2 id="services-title">Искусство ухода.<br>В деталях.</h2></div>
-    <p>Четыре раздела: мойка, детейлинг, защита и помощь — от регулярного ухода до ремонта стёкол. Мойку запишем онлайн в выбранную студию, по остальным работам пришлите заявку с фото.</p>
+    <p>Четыре раздела: мойка, детейлинг, защита и помощь&nbsp;— от регулярного ухода до ремонта стёкол. Мойку запишем онлайн в&nbsp;выбранную студию, цену остальных работ назовёт администратор.</p>
   </div>
   <!-- PREVIEW:START -->
   <div class="strip strip--4">
-   <a class="card card--wash" href="services.html#price-wash"><img src="assets/shots/cf-foam-crop.webp" srcset="assets/shots/cf-foam-crop-s.webp 900w, assets/shots/cf-foam-crop.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Спорткупе в активной пене на тёмном полу студии" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>01</span><span>Мойка</span></span><span class="card__caption">Регулярный уход и программы мойки.<b class="card__price">от 2 150 ₽</b></span></a>
-   <a class="card card--detailing" href="services.html#price-detailing"><img src="assets/shots/cf-interior-seat.webp" srcset="assets/shots/cf-interior-seat-s.webp 900w, assets/shots/cf-interior-seat.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Салон классического купе: руль и кожаные сиденья с тканевыми вставками" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>02</span><span>Детейлинг</span></span><span class="card__caption">Глубокая очистка и уход за салоном.<b class="card__price">от 500 ₽</b></span></a>
-   <a class="card card--protection" href="services.html#price-protection"><img src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Фара и переднее крыло бордового автомобиля крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>03</span><span>Защита</span></span><span class="card__caption">Полировка, покрытия и оклейка кузова.<b class="card__price">от 1 000 ₽</b></span></a>
-   <a class="card card--help" href="services.html#price-help"><img src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Скол на тёмно-бордовом лаке крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>04</span><span>Помощь</span></span><span class="card__caption">Устранение повреждений и подготовка к продаже.<b class="card__price">от 5 000 ₽</b></span></a>
+   <a class="card card--wash" href="services#price-wash"><img src="assets/shots/cf-foam-crop.webp" srcset="assets/shots/cf-foam-crop-s.webp 900w, assets/shots/cf-foam-crop.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Спорткупе в активной пене на тёмном полу студии" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>01</span><span>Мойка</span></span><span class="card__caption">Регулярный уход и программы мойки.<b class="card__price">от 2 150 ₽</b></span></a>
+   <a class="card card--detailing" href="services#price-detailing"><img src="assets/shots/cf-interior-seat.webp" srcset="assets/shots/cf-interior-seat-s.webp 900w, assets/shots/cf-interior-seat.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Салон классического купе: руль и кожаные сиденья с тканевыми вставками" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>02</span><span>Детейлинг</span></span><span class="card__caption">Глубокая очистка и уход за салоном.<b class="card__price">от 500 ₽</b></span></a>
+   <a class="card card--protection" href="services#price-protection"><img src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Фара и переднее крыло бордового автомобиля крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>03</span><span>Защита</span></span><span class="card__caption">Полировка, покрытия и оклейка кузова.<b class="card__price">от 1 000 ₽</b></span></a>
+   <a class="card card--help" href="services#price-help"><img src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Скол на тёмно-бордовом лаке крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>04</span><span>Помощь</span></span><span class="card__caption">Устранение повреждений и подготовка к продаже.<b class="card__price">от 5 000 ₽</b></span></a>
   </div>
   <!-- PREVIEW:END -->
-  <a class="link-arrow services-preview__all" href="services.html">Все услуги и цены <span aria-hidden="true">→</span></a>
+  <a class="link-arrow services-preview__all" href="services">Все услуги и цены <span aria-hidden="true">→</span></a>
 </section>
 
 <!-- ============ ГАРАЖ УСЛУГ: промоблок, второй вход в то же окно ============ -->
@@ -107,7 +111,6 @@
     <img src="assets/shots/cf-hero-dirty.webp" srcset="assets/shots/cf-hero-dirty-s.webp 900w, assets/shots/cf-hero-dirty.webp 1600w" sizes="(max-width: 900px) 100vw, 58vw" width="1600" height="894" alt="Фотография Porsche 930 в студии MEATWASH — превью гаража услуг" loading="lazy" decoding="async">
   </div>
   <div class="garage-promo__copy">
-    <p class="eyebrow" lang="en">SERVICE GARAGE · 3D</p>
     <h2 id="garage-promo-title">Гараж услуг</h2>
     <p class="garage-promo__lead">Выберите услуги и рассмотрите автомобиль в 3D</p>
     <ul class="garage-promo__points">
@@ -162,7 +165,7 @@
       </figcaption>
     </figure>
   </div>
-  <a class="link-arrow proof__more" href="services.html#price-list">Все работы и цены <span aria-hidden="true">→</span></a>
+  <a class="link-arrow proof__more" href="services">Все услуги и цены <span aria-hidden="true">→</span></a>
 </section>
 
 <section class="about" id="club" aria-labelledby="about-title">
@@ -172,7 +175,7 @@
   <div class="about__copy">
     <h2 id="about-title"><img class="about__logo" src="assets/brand/Main_Logo_black.svg" alt="MEATWASH Car Care Club" width="1480" height="1301" loading="lazy" decoding="async"></h2>
     <p>Ручной уход за автомобилем в Москве. Подбираем химию под покрытие, согласуем работы на приёмке и проверяем результат перед выдачей.</p>
-    <a class="btn btn--ghost btn--ink" href="about.html">Подробнее о клубе</a>
+    <a class="btn btn--ghost btn--ink" href="about">Подробнее о клубе</a>
   </div>
   <dl class="about__stats">
     <div><dt>5.0</dt><dd>Рейтинг на Яндекс Картах</dd></div>
@@ -266,20 +269,14 @@
   <div class="footer__row">
     <a class="brand" href="#top" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html">Услуги</a><a href="about.html">О нас</a><a href="articles.html">Статьи</a><a href="#locations">Локации</a><a href="#contacts">Контакты</a>
+      <a href="services">Услуги и цены</a><a href="wrap">Оклейка</a><a href="works">Наши работы</a><a href="auto">Продажа авто</a><a href="about">О нас</a><a href="articles">Статьи</a>
     </nav>
-    <div class="footer__social">
-      <button type="button" data-book aria-label="Онлайн-запись">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1" fill="none" stroke="currentColor"/><path d="M7 2v6M17 2v6M3 10h18M8 15h8" fill="none" stroke="currentColor"/></svg>
-      </button>
-      <a href="tel:+79300352325" aria-label="Позвонить">
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8.6 8.2c.4-.4 1-.4 1.3 0l1 1.3c.3.4.3.9 0 1.3l-.6.7c.6 1.1 1.5 2 2.6 2.6l.7-.6c.4-.3.9-.3 1.3 0l1.3 1c.4.3.4.9 0 1.3l-.7.7c-.6.6-1.5.7-2.3.4-2.5-1.1-4.5-3.1-5.6-5.6-.3-.8-.2-1.7.4-2.3z" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
-      </a>
-    </div>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
-  <!-- Пункт меню «Контакты» ведёт сюда: адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json).
-       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — главной. -->
+  <!-- Адреса, часы и телефоны — те же, что в карточках локаций (данные — meatwash-content.json). Пунктов «Локации» и
+       «Контакты» в меню нет с 08.10 (решение Влада): они живут на «О нас», в блоке «Локации и контакты».
+       «На карте» — к встроенной карте студии в блоке локаций: на главной и «О нас» — своей, на остальных — на «О нас».
+       v2: иконок календаря и трубки нет — запись рядом кнопкой, телефоны обеих студий здесь же с подписями. -->
   <div class="footer__contacts">
     <div class="footer__branch">
       <h3>Мясницкая</h3>
@@ -300,47 +297,55 @@
   </div>
   <div class="footer__base">
     <span>© 2026 Meatwash. Все права защищены.</span>
-    <span>Moscow, Russia</span>
+    <span>Москва</span>
     <span>Чистота. Стиль. Характер.</span>
   </div>
   <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
   <div class="footer__legal">
-    <a href="privacy.html">Политика обработки персональных данных</a>
-    <a href="consent.html">Согласие на обработку данных</a>
+    <a href="privacy">Политика обработки персональных данных</a>
+    <a href="consent">Согласие на обработку данных</a>
     <button type="button" data-consent-open hidden>Настройки cookie</button>
   </div>
+  <!-- По слову Влада 19.10: пометка про Meta в подвале всех страниц, на случай упоминания Instagram в текстах. -->
+  <p class="footer__note">Instagram принадлежит компании Meta, которая признана экстремистской организацией и&nbsp;запрещена на&nbsp;территории РФ.</p>
 </footer>
 <!-- SHARED:footer:END -->
 
 <!-- SHARED:dialogs:START -->
+<!-- Нижняя кнопка на телефоне — своя у страницы (поле cta в scripts/pages.mjs и src/content/pages.mjs):
+     запись на мойку, звонок в Технопарк на оклейке, вопрос о машине на продаже авто. -->
 <button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
 
 <!-- Запись: у Мясницкой и Технопарка разные компании в yclients,
-     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес. -->
-<dialog class="dialog" id="booking" aria-labelledby="booking-title">
+     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес.
+     То же окно без студий — разговор с администратором (js/ui.js, data-mode="talk"):
+     «Обсудить условия» клуба и «Узнать цену», пока заявки с сайта не принимаются
+     (site.requests.endpoint пуст) — тогда главное в окне телефоны, их блок всегда развёрнут. -->
+<dialog class="dialog" id="booking" aria-labelledby="booking-title" data-mode="book">
   <form method="dialog"><button class="dialog__close" aria-label="Закрыть">×</button></form>
-  <span class="eyebrow" lang="en">MEATWASH / CAR CARE CLUB</span>
   <!-- Начальный фокус — на заголовке: на ссылке филиала он выглядел выбором по умолчанию. -->
   <h2 id="booking-title" tabindex="-1" autofocus>Записаться</h2>
   <p class="dialog__context" id="booking-context" hidden></p>
-  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на вопросы и подберёт время.</p>
-  <p class="dialog__note" id="booking-yc-note" hidden></p>
-  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её онлайн-записи.</p>
+  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на&nbsp;вопросы и&nbsp;подберёт время.</p>
+  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и&nbsp;время&nbsp;— в&nbsp;её онлайн-записи.</p>
   <div class="dialog__branches">
-    <a class="dialog__branch" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>Мясницкая</strong><span>ул. Мясницкая, 11</span></a>
-    <a class="dialog__branch" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>Технопарк</strong><span>пр-т Андропова, 8, стр. 2</span></a>
+    <a class="dialog__branch" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>Мясницкая</strong><span class="dialog__branch-type">Премиальная мойка</span><span class="dialog__branch-hours">Пн–Пт 08:00–22:00<br>Сб–Вс 09:00–22:00</span><span>ул. Мясницкая, 11</span></a>
+    <a class="dialog__branch" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>Технопарк</strong><span class="dialog__branch-type">Детейлинг-центр</span><span class="dialog__branch-hours">Ежедневно 08:00–22:00</span><span>пр-т Андропова, 8, стр. 2</span></a>
   </div>
-  <!-- Мойка и другие работы выбраны вместе: остальное — заявкой с фото (js/request.js). -->
-  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Оставить заявку с фото <span aria-hidden="true">→</span></button></p>
+  <!-- Мойка и другие работы выбраны вместе (гараж): цену остального — «Узнать цену». -->
+  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену <span aria-hidden="true">→</span></button></p>
+  <p class="dialog__aside" id="booking-other">Химчистка, полировка, плёнка, ремонт&nbsp;— по&nbsp;телефону: администратор назовёт цену.</p>
+  <!-- Порядок телефонов меняет ui.js: про плёнку и защиту первым звонят в Технопарк. -->
   <div class="dialog__phones">
-    <a href="tel:+79300352325"><span>Мясницкая</span><strong>+7 (930) 035-23-25</strong></a>
-    <a href="tel:+79324916991"><span>Технопарк</span><strong>+7 (932) 491-69-91</strong></a>
+    <a href="tel:+79300352325" data-phone="myasnitskaya"><span>Мясницкая&nbsp;— мойка</span><strong>+7 (930) 035-23-25</strong></a>
+    <a href="tel:+79324916991" data-phone="technopark"><span>Технопарк&nbsp;— детейлинг и&nbsp;плёнка</span><strong>+7 (932) 491-69-91</strong></a>
   </div>
-  <p class="dialog__aside" id="booking-other">Детейлинг, оклейка, стёкла и другие работы, кроме мойки, — <button class="link-arrow" type="button" data-request>по заявке с фото <span aria-hidden="true">→</span></button></p>
 </dialog>
 
 <!-- Заявка с фото: всё, кроме мойки (детейлинг, оклейка, стёкла и другие работы).
-     Логика — js/request.js, грузится по первому нажатию «Оставить заявку». Отправка —
+     v2: открывается кнопками «Узнать цену», только когда приём включён (site.requests.endpoint
+     задан и сайт в hosts); до того те же кнопки открывают окно #booking с телефонами.
+     Логика — js/request.js, грузится по первому нажатию. Отправка —
      только на адрес site.requests.endpoint (meatwash-content.json; на meatwash.ru —
      api/request.php); пока его нет, форма не отправляет и не пишет «отправлено» —
      предлагает позвонить в студию. -->
@@ -376,7 +381,7 @@
       <label class="btn btn--ghost request__pick">Добавить фото<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple data-request-files aria-describedby="request-photos-rules request-photos-error"></label>
       <p class="request__error" id="request-photos-error" role="status" aria-live="polite" data-error-for="photos"></p>
     </div>
-    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request.html" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy.html" target="_blank" rel="noopener">Политике</a>.</span></label>
+    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy" target="_blank" rel="noopener">Политике</a>.</span></label>
     <p class="request__error" id="request-consent-error" data-error-for="consent"></p>
     <!-- Ловушка для спам-ботов (api/request.php отклоняет заявку, если поле заполнено):
          человек его не видит, Tab на него не попадает, скринридер его не читает. -->

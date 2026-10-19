@@ -2,17 +2,26 @@
   <a class="brand" href="{{top}}" aria-label="MEATWASH — на главную">
     <img class="brand__logo" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654">
   </a>
+  <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
+       «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
   <nav class="nav" aria-label="Основная навигация">
-    <a href="services.html"{{current:services}}>Услуги</a>
-    <a href="about.html"{{current:about}}>О нас</a>
-    <a href="articles.html"{{current:articles}}>Статьи</a>
-    <a href="{{home}}#locations">Локации</a>
-    <a href="{{home}}#contacts">Контакты</a>{{nav-next}}
+    <a href="services"{{current:services}}>Услуги и цены</a>
+    <a href="wrap"{{current:wrap}}>Оклейка</a>
+    <a href="works"{{current:works}}>Наши работы</a>
+    <a href="auto"{{current:auto}}>Продажа авто</a>
+    <a href="about"{{current:about}}>О нас</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
 </header>
+<!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
+     ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html"{{current:services}}>Услуги</a><a href="about.html"{{current:about}}>О нас</a><a href="articles.html"{{current:articles}}>Статьи</a><a href="{{home}}#locations">Локации</a><a href="{{home}}#contacts">Контакты</a>
-  <button class="btn btn--fill" type="button" data-book>Записаться</button>
+  <a href="services"{{current:services}}>Услуги и цены</a><a href="wrap"{{current:wrap}}>Оклейка</a><a href="works"{{current:works}}>Наши работы</a><a href="auto"{{current:auto}}>Продажа авто</a><a href="about"{{current:about}}>О нас</a>
+  <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
+  <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
+    <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>
+    <a class="mobile-menu__studio" href="tel:{{loc:myasnitskaya:tel}}"><span class="mobile-menu__studio-name"><strong>{{loc:myasnitskaya:name}}</strong><span>{{loc:myasnitskaya:type}}</span></span><span class="mobile-menu__tel">{{loc:myasnitskaya:phone}}</span></a>
+    <a class="mobile-menu__studio" href="tel:{{loc:technopark:tel}}"><span class="mobile-menu__studio-name"><strong>{{loc:technopark:name}}</strong><span>{{loc:technopark:type}}</span></span><span class="mobile-menu__tel">{{loc:technopark:phone}}</span></a>
+  </div>
 </nav>

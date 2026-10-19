@@ -32,7 +32,7 @@ const byId = (id) => ZONES.find((z) => z.id === id);
 const PICKED_KEY = 'mw:garage';
 const WEBGL_KEY = 'mw:webgl2';
 const GUARD_MS = 400;   // второй щелчок двойного клика по кнопке входа не закрывает окно
-const CATALOG = 'services.html#price-list';
+const CATALOG = 'services#price-list';
 const LATER = 'после оценки';   // цена работы, которую назовёт мастер (null в каталоге)
 // Вкладки — четыре категории каталога; готовых «наборов» нет: пакеты мойки —
 // настоящие позиции каталога, они во вкладке «Мойка».
@@ -171,9 +171,9 @@ export function setupGarage() {
           </div>
           <div class="garage__act">
             <button class="btn btn--fill garage__book" type="button" data-book data-garage-book>Записаться</button>
-            <button class="btn btn--ghost garage__request" type="button" data-request data-garage-request hidden>Заявка с фото</button>
+            <button class="btn btn--ghost garage__request" type="button" data-request data-garage-request hidden>Узнать цену</button>
           </div>
-          <p class="garage__split" data-garage-split hidden>Мойка — онлайн-запись в студию, остальные работы — заявкой с фото.</p>
+          <p class="garage__split" data-garage-split hidden>Мойка&nbsp;— онлайн-запись в&nbsp;студию, цену остальных работ назовёт администратор.</p>
           <!-- Лицензия модели CC BY 4.0 требует указать автора и что модель изменена — рядом с ней. -->
           <p class="garage__credit">3D-модель: <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener noreferrer">Karol Miklas</a>, <a href="https://creativecommons.org/licenses/by/4.0/deed.ru" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>, изменена</p>
         </div>
@@ -359,7 +359,7 @@ export function setupGarage() {
       totalEl.append(' ', more);
     }
   }
-  // Список выбранного (раскрывается по «Выбрано: N»): мойка и работы по заявке —
+  // Список выбранного (раскрывается по «Выбрано: N»): мойка и работы «Узнать цену» —
   // отдельными группами, если выбраны вместе: в YCLIENTS уходит только мойка.
   function renderPicked(body, wash, other) {
     const list = (ids) => {
@@ -377,7 +377,7 @@ export function setupGarage() {
     };
     const head = (text) => { const p = document.createElement('p'); p.className = 'garage__pickhead'; p.textContent = text; return p; };
     picksEl.replaceChildren(...(wash.length && other.length
-      ? [head('Мойка — онлайн-запись'), list(wash), head('По заявке с фото'), list(other)]
+      ? [head('Мойка\u00a0— онлайн-запись'), list(wash), head('Цену назовёт администратор'), list(other)]
       : [list(picked)]));
     noteEl.textContent = `Минимальные цены каталога${wash.length ? `, мойка — для кузова «${bodyName(body)}»` : ''}. Точную стоимость назовёт мастер.`;
   }
@@ -413,7 +413,9 @@ export function setupGarage() {
     summaryBtn.hidden = !picked.length;
     if (!picked.length) setSummary(false);
     // Два сценария: мойка — запись в YCLIENTS с выбором филиала, остальные
-    // работы — заявка с фото. Смешанный выбор не уходит в YCLIENTS целиком:
+    // работы — «Узнать цену» (v2, план юзабилити 08.10: одна подпись у всех входов;
+    // пока заявки с сайта не принимаются, ui.js откроет телефоны студий).
+    // Смешанный выбор не уходит в YCLIENTS целиком:
     // видны обе кнопки, и каждое окно напоминает о второй части.
     const wash = picked.filter((id) => isWash(byId(id))), other = picked.filter((id) => !isWash(byId(id)));
     renderPicked(body, wash, other);
@@ -428,7 +430,6 @@ export function setupGarage() {
     bookBtn.dataset.ycItems = '';
     bookBtn.dataset.requestServices = titles(other).join('|');
     requestBtn.hidden = !other.length;
-    requestBtn.textContent = wash.length ? 'Заявка с фото' : 'Отправить заявку с фото';
     requestBtn.dataset.requestServices = titles(other).join('|');
     if (wash.length) { requestBtn.dataset.washContext = bookBtn.dataset.bookContext; requestBtn.dataset.washPrograms = bookBtn.dataset.ycPrograms; }
     else { delete requestBtn.dataset.washContext; delete requestBtn.dataset.washPrograms; }
@@ -441,7 +442,7 @@ export function setupGarage() {
   function markOffline() {
     import('./yclients.js').then((yc) => yc.loadMap().then(() => {
       let offline = 0;
-      // Только мойка: остальные работы идут по заявке, YCLIENTS там не участвует.
+      // Только мойка: остальные работы — «Узнать цену», YCLIENTS там не участвует.
       for (const row of rows) {
         const zone = byId(row.dataset.row);
         if (!zone || !isWash(zone)) continue;
@@ -619,7 +620,7 @@ export function setupGarage() {
       (nextBtn || (summaryBtn.hidden ? bookBtn : summaryBtn)).focus({ preventScroll: true });
       return;
     }
-    // «Записаться на мойку» и «Заявка с фото»: гараж закрывается, затем общий
+    // «Записаться на мойку» и «Узнать цену»: гараж закрывается, затем общий
     // обработчик ui.js (data-book / data-request) открывает своё окно — окна не
     // накладываются, выбор остаётся в sessionStorage.
     if (control.matches('[data-garage-book]')) { goal('garage_book', { works: picked.filter((id) => isWash(byId(id))).length, sum: garageSum(picked.filter((id) => isWash(byId(id))), getBody()) }); close(); }

@@ -104,7 +104,7 @@
   pointer-events: none;
 }
 .ba__cap b { font: 400 clamp(16px, 1.5vw, 21px)/1.2 var(--font-display); }
-.ba__cap i { font-style: normal; color: var(--muted); font-size: clamp(12px, 1.05vw, 14px); }
+.ba__cap i { font-style: normal; color: var(--muted); font-size: 14px; }
 
 /* ---------- широкая полоса кадра ---------- */
 .band {

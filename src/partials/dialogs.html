@@ -1,31 +1,37 @@
-<button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>
+<!-- Нижняя кнопка на телефоне — своя у страницы (поле cta в scripts/pages.mjs и src/content/pages.mjs):
+     запись на мойку, звонок в Технопарк на оклейке, вопрос о машине на продаже авто. -->
+{{mobile-cta}}
 
 <!-- Запись: у Мясницкой и Технопарка разные компании в yclients,
-     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес. -->
-<dialog class="dialog" id="booking" aria-labelledby="booking-title">
+     поэтому ссылки ведут в свою онлайн-запись, а не на общий адрес.
+     То же окно без студий — разговор с администратором (js/ui.js, data-mode="talk"):
+     «Обсудить условия» клуба и «Узнать цену», пока заявки с сайта не принимаются
+     (site.requests.endpoint пуст) — тогда главное в окне телефоны, их блок всегда развёрнут. -->
+<dialog class="dialog" id="booking" aria-labelledby="booking-title" data-mode="book">
   <form method="dialog"><button class="dialog__close" aria-label="Закрыть">×</button></form>
-  <span class="eyebrow" lang="en">MEATWASH / CAR CARE CLUB</span>
   <!-- Начальный фокус — на заголовке: на ссылке филиала он выглядел выбором по умолчанию. -->
   <h2 id="booking-title" tabindex="-1" autofocus>Записаться</h2>
   <p class="dialog__context" id="booking-context" hidden></p>
-  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на вопросы и подберёт время.</p>
-  <p class="dialog__note" id="booking-yc-note" hidden></p>
-  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её онлайн-записи.</p>
+  <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на&nbsp;вопросы и&nbsp;подберёт время.</p>
+  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и&nbsp;время&nbsp;— в&nbsp;её онлайн-записи.</p>
   <div class="dialog__branches">
-    <a class="dialog__branch" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>{{loc:myasnitskaya:name}}</strong><span>{{loc:myasnitskaya:address}}</span></a>
-    <a class="dialog__branch" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>{{loc:technopark:name}}</strong><span>{{loc:technopark:address}}</span></a>
+    <a class="dialog__branch" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong>{{loc:myasnitskaya:name}}</strong><span class="dialog__branch-type">{{loc:myasnitskaya:type}}</span><span class="dialog__branch-hours">{{loc:myasnitskaya:hours}}</span><span>{{loc:myasnitskaya:address}}</span></a>
+    <a class="dialog__branch" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong>{{loc:technopark:name}}</strong><span class="dialog__branch-type">{{loc:technopark:type}}</span><span class="dialog__branch-hours">{{loc:technopark:hours}}</span><span>{{loc:technopark:address}}</span></a>
   </div>
-  <!-- Мойка и другие работы выбраны вместе: остальное — заявкой с фото (js/request.js). -->
-  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Оставить заявку с фото <span aria-hidden="true">→</span></button></p>
+  <!-- Мойка и другие работы выбраны вместе (гараж): цену остального — «Узнать цену». -->
+  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену <span aria-hidden="true">→</span></button></p>
+  <p class="dialog__aside" id="booking-other">Химчистка, полировка, плёнка, ремонт&nbsp;— по&nbsp;телефону: администратор назовёт цену.</p>
+  <!-- Порядок телефонов меняет ui.js: про плёнку и защиту первым звонят в Технопарк. -->
   <div class="dialog__phones">
-    <a href="tel:{{loc:myasnitskaya:tel}}"><span>{{loc:myasnitskaya:name}}</span><strong>{{loc:myasnitskaya:phone}}</strong></a>
-    <a href="tel:{{loc:technopark:tel}}"><span>{{loc:technopark:name}}</span><strong>{{loc:technopark:phone}}</strong></a>
+    <a href="tel:{{loc:myasnitskaya:tel}}" data-phone="myasnitskaya"><span>{{loc:myasnitskaya:name}}&nbsp;— мойка</span><strong>{{loc:myasnitskaya:phone}}</strong></a>
+    <a href="tel:{{loc:technopark:tel}}" data-phone="technopark"><span>{{loc:technopark:name}}&nbsp;— детейлинг и&nbsp;плёнка</span><strong>{{loc:technopark:phone}}</strong></a>
   </div>
-  <p class="dialog__aside" id="booking-other">Детейлинг, оклейка, стёкла и другие работы, кроме мойки, — <button class="link-arrow" type="button" data-request>по заявке с фото <span aria-hidden="true">→</span></button></p>
 </dialog>
 
 <!-- Заявка с фото: всё, кроме мойки (детейлинг, оклейка, стёкла и другие работы).
-     Логика — js/request.js, грузится по первому нажатию «Оставить заявку». Отправка —
+     v2: открывается кнопками «Узнать цену», только когда приём включён (site.requests.endpoint
+     задан и сайт в hosts); до того те же кнопки открывают окно #booking с телефонами.
+     Логика — js/request.js, грузится по первому нажатию. Отправка —
      только на адрес site.requests.endpoint (meatwash-content.json; на meatwash.ru —
      api/request.php); пока его нет, форма не отправляет и не пишет «отправлено» —
      предлагает позвонить в студию. -->
@@ -61,7 +67,7 @@
       <label class="btn btn--ghost request__pick">Добавить фото<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple data-request-files aria-describedby="request-photos-rules request-photos-error"></label>
       <p class="request__error" id="request-photos-error" role="status" aria-live="polite" data-error-for="photos"></p>
     </div>
-    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request.html" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy.html" target="_blank" rel="noopener">Политике</a>.</span></label>
+    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy" target="_blank" rel="noopener">Политике</a>.</span></label>
     <p class="request__error" id="request-consent-error" data-error-for="consent"></p>
     <!-- Ловушка для спам-ботов (api/request.php отклоняет заявку, если поле заполнено):
          человек его не видит, Tab на него не попадает, скринридер его не читает. -->

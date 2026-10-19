@@ -8,28 +8,39 @@
 // Подстановки в фрагментах:
 //   {{home}}             '' на главной, './' на остальных: href="{{home}}#locations"
 //   {{top}}              логотип: '#top' на главной, './' на остальных
-//   {{locations}}        '' на страницах с блоком локаций (главная, «О нас»), './' на остальных:
-//                        href="{{locations}}#map-technopark" — к карте студии на этой же странице или на главной
+//   {{locations}}        '' на страницах с блоком локаций (главная, «О нас»), 'about' на остальных:
+//                        href="{{locations}}#map-technopark" — к карте студии на этой же странице или на «О нас»
+//                        (v2, план юзабилити 08.10: контакты живут на «О нас», а не на главной)
 //   {{current:<page>}}   aria-current="page" на своей странице
 //   {{header-class}}     ' is-solid' на внутренних страницах
-//   {{nav-next}}         стрелка «следующий раздел» — только на главной
+//   {{mobile-cta}}       нижняя кнопка на телефоне — по полю cta страницы (MOBILE_CTA ниже)
 //   {{loc:<id>:<поле>}}  данные филиала из meatwash-content.json (экранируются)
 //   {{analytics:<webmaster|metrika>}}  мета-теги Яндекс Вебмастера и номер счётчика
 //                        Метрики из site.analytics в JSON; пусто — ничего (Метрику
 //                        загружает js/analytics.js только после согласия посетителя)
+//
+// Адреса страниц — без .html (решение 19.10): в ссылках services, about#map-…,
+// главная — ./ ; файлы в dist остаются services.html и т. д. На meatwash.ru /services
+// отдаёт services.html .htaccess, старые адреса *.html переадресуются (301) на новые.
+// Ссылки остаются относительными: сайт работает и в корне домена, и в подпапке GitHub Pages.
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content,escape} from './catalog.mjs';
 import {CONTENT} from '../src/content/pages.mjs';
 
 const root=new URL('../',import.meta.url);
+// Файл страницы → её адрес: 'services.html' → 'services', 'index.html' → '' (корень сайта).
+export const pageSlug=file=>file==='index.html'?'':file.replace(/\.html$/,'');
+// Относительная ссылка на страницу: 'services', главная — './'.
+export const pageUrl=file=>pageSlug(file)||'./';
 // Какие общие части есть на какой странице.
 // Страницы из src/content (статьи, Политика, Согласие) собирает scripts/content.mjs.
+// v2 (план юзабилити 08.10): на «О нас» блока записи нет — контакты на самой странице.
 export const PAGES={
- 'index.html':{id:'home',shared:['analytics','header','locations','membership','footer','dialogs']},
- 'services.html':{id:'services',shared:['analytics','header','book','footer','dialogs']},
- 'about.html':{id:'about',shared:['analytics','header','membership','locations','book','footer','dialogs']},
- ...Object.fromEntries(CONTENT.map(page=>[page.file,{id:page.id,shared:page.shared}])),
+ 'index.html':{id:'home',cta:'book',shared:['analytics','header','locations','membership','footer','dialogs']},
+ 'services.html':{id:'services',cta:'book',shared:['analytics','header','book','footer','dialogs']},
+ 'about.html':{id:'about',cta:'book',shared:['analytics','header','membership','locations','footer','dialogs']},
+ ...Object.fromEntries(CONTENT.map(page=>[page.file,{id:page.id,cta:page.cta,shared:page.shared}])),
 };
 // Код Вебмастера — латиница и цифры, счётчик Метрики — только цифры: иначе в разметку не пишем.
 const analytics=content.site?.analytics||{};
@@ -38,11 +49,18 @@ const ANALYTICS={
  metrika:()=>analytics.metrika?(/^\d+$/.test(String(analytics.metrika))?`<meta name="mw-metrika" content="${escape(analytics.metrika)}">`:fail('site.analytics.metrika')):'',
 };
 function fail(field){throw new Error(`Неверное значение ${field} в meatwash-content.json`);}
-const NAV_NEXT='\n    <button class="nav__next" type="button" data-scroll-next aria-label="Следующий раздел"><span class="nav__line"></span><span aria-hidden="true">→</span></button>';
+// Нижняя кнопка на телефоне (.mobile-cta, src/partials/dialogs.html) — главное действие страницы.
+// Класс один у кнопки и у ссылки: ui.js делает её inert под меню, CSS прячет при открытом окне.
+const loc=id=>content.locations.find(l=>l.id===id);
+const MOBILE_CTA={
+ book:()=>'<button class="btn btn--fill mobile-cta" type="button" data-book>Записаться</button>',
+ technopark:()=>`<a class="btn btn--fill mobile-cta" href="tel:${escape(loc('technopark').tel)}">Позвонить в Технопарк</a>`,
+ auto:()=>'<a class="btn btn--fill mobile-cta" href="https://t.me/otec_roman" target="_blank" rel="noopener">Спросить о машине<span class="visually-hidden"> в Telegram</span></a>',
+};
 
 const LOC_FIELDS={
  name:l=>escape(l.name),type:l=>escape(l.type),address:l=>escape(l.address),
- hours:l=>l.hours.map(escape).join('<br>'),
+ hours:l=>l.hours.map(escape).join('<br>'),floor:l=>escape(l.floor),
  phone:l=>escape(l.phone),tel:l=>escape(l.tel),booking:l=>escape(l.booking),
  map:l=>escape(l.map),
  card:l=>l.card.map(escape).join('<br>'),
@@ -56,10 +74,14 @@ export function renderPartial(template,page){
   switch(name){
    case 'home':return home?'':'./';
    case 'top':return home?'#top':'./';
-   case 'locations':return PAGES[page].shared.includes('locations')?'':'./';
+   case 'locations':return PAGES[page].shared.includes('locations')?'':pageUrl('about.html');
    case 'current':return a===id?' aria-current="page"':'';
    case 'header-class':return home?'':' is-solid';
-   case 'nav-next':return home?NAV_NEXT:'';
+   case 'mobile-cta':{
+    const cta=PAGES[page].cta;
+    if(!MOBILE_CTA[cta])throw new Error(`${page}: нет нижней кнопки cta «${cta}» (${token})`);
+    return MOBILE_CTA[cta]();
+   }
    case 'analytics':{
     if(!ANALYTICS[a])throw new Error(`Нет поля аналитики ${a} (${token})`);
     return ANALYTICS[a]();

@@ -1,5 +1,5 @@
 // npm run check — проверка сайта без браузера, для всех страниц dist:
-// ресурсы и якоря (в том числе межстраничные services.html#…), общие фрагменты
+// ресурсы и якоря (в том числе межстраничные services#…; ссылки на страницы и полные адреса https://meatwash.ru/… — без .html), общие фрагменты
 // (src/partials) и сгенерированный каталог совпадают с источниками, цены (каталог,
 // гараж — названия как в каталоге, суммы по каждому кузову, без повторного
 // начисления работ из программы мойки), первый экран без закреплённой сцены,
@@ -10,7 +10,7 @@ import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import assert from 'node:assert/strict';
-import {PAGES,renderPartial,readPartial,sharedBlock,wrap} from './pages.mjs';
+import {PAGES,renderPartial,readPartial,sharedBlock,wrap,pageSlug} from './pages.mjs';
 import {renderCatalog,renderPreview,renderData,between} from './catalog.mjs';
 import {renderContent,renderSitemap,renderYandexVerification,missingOperator} from './content.mjs';
 import {CONTENT} from '../src/content/pages.mjs';
@@ -31,8 +31,9 @@ for(const page of ALL_PAGES){
  html[page]=await readFile(resolve(dist,page),'utf8');
  ids[page]=new Set([...html[page].matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));
 }
-// Адрес страницы из ссылки: './' и '' — главная.
-const pageOf=path=>path===''||path==='./'||path==='.'?'index.html':path.replace(/^\.\//,'');
+// Страница из ссылки (адреса без .html, решение 19.10): './', '.' и '' — главная (index.html),
+// 'services' — dist/services.html. Путь без расширения в последней части — всегда страница.
+const pageOf=path=>{const name=path.replace(/^\.\//,'');return name===''||name==='.'?'index.html':/\.\w+$/.test(name.split('/').pop())?null:name+'.html';};
 
 for(const page of ALL_PAGES){
  const text=html[page];
@@ -42,14 +43,33 @@ for(const page of ALL_PAGES){
   if(/^(https?:|tel:|mailto:|data:)/.test(url))continue;
   const [path,hash]=url.split('#');
   if(path===''&&hash!==undefined){if(!ids[page].has(hash))fail(`${page}: нет якоря #${hash}`);continue;}
-  const target=pageOf(path.split('?')[0]);
-  if(target.endsWith('.html')){
+  const file=path.split('?')[0];
+  // На meatwash.ru адрес *.html переадресуется (301) на адрес без .html — ссылка внутри сайта
+  // сразу ведёт на конечный адрес: services, about#map-…, главная — ./ .
+  if(/\.html$/.test(file)){fail(`${page}: ссылка на страницу с .html — нужен адрес без расширения (${file.replace(/\.html$/,'')||'./'}): ${url}`);continue;}
+  // /index тоже переадресуется (301 на /): главная — только ./
+  if(/^(\.\/)?index$/.test(file)){fail(`${page}: ссылка на главную — ./ (не index): ${url}`);continue;}
+  const target=pageOf(file);
+  if(target){
    if(!ALL_PAGES.includes(target)){fail(`${page}: ссылка на несуществующую страницу ${url}`);continue;}
    // #garage на главной — команда открыть гараж (main.js), а не блок страницы.
    if(hash&&!ids[target].has(hash)&&!(target==='index.html'&&hash==='garage'))fail(`${page}: в ${target} нет якоря #${hash} (${url})`);
    continue;
   }
-  if(!await exists(resolve(dist,target)))fail(`${page}: нет файла ${url}`);
+  if(!await exists(resolve(dist,file.replace(/^\.\//,''))))fail(`${page}: нет файла ${url}`);
+ }
+ // Полные адреса сайта (canonical, og:*, JSON-LD — хлебные крошки, url, mainEntityOfPage —
+ // и текст): https://meatwash.ru без www; страница — без .html и только существующая,
+ // файл — есть в dist, якорь — есть на странице.
+ for(const [address] of text.matchAll(/https?:\/\/(?:www\.)?meatwash\.ru(?:\/[^"'\s<>\\]*)?/g)){
+  const url=address.replace(/[.,;:)]+$/,'');
+  if(!url.startsWith(SITE)&&url!==SITE.slice(0,-1)){fail(`${page}: адрес сайта — ${SITE}… (https, без www): ${url}`);continue;}
+  const [rest,hash]=url.slice(SITE.length).split('#'),path=rest.split('?')[0];
+  if(/\.html$/.test(path)&&!/^yandex_\w+\.html$/.test(path)){fail(`${page}: адрес страницы с .html — нужен ${SITE}${path.replace(/^index\.html$/,'').replace(/\.html$/,'')}: ${url}`);continue;}
+  if(/\.\w+$/.test(path)){if(!await exists(resolve(dist,path)))fail(`${page}: нет файла ${url}`);continue;}
+  const target=path===''?'index.html':path+'.html';
+  if(path==='index'||!ALL_PAGES.includes(target)){fail(`${page}: адрес несуществующей страницы ${url}${path==='index'?` — главная ${SITE}`:''}`);continue;}
+  if(hash&&!ids[target].has(hash))fail(`${page}: в ${target} нет якоря #${hash} (${url})`);
  }
  // url() в таблицах стилей страницы.
  for(const [,name] of text.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="css\/([^"]+)"/g)){
@@ -64,7 +84,7 @@ for(const page of ALL_PAGES){
 // ── Мета: свой title, description, один h1, canonical и og:url ────────────────
 const titles=new Set(),descriptions=new Set();
 for(const page of MAIN_PAGES){
- const text=html[page],url=SITE+(page==='index.html'?'':page);
+ const text=html[page],url=SITE+pageSlug(page);
  const title=text.match(/<title>([^<]+)<\/title>/)?.[1],description=text.match(/<meta name="description" content="([^"]+)"/)?.[1];
  assert(title&&description,`${page}: нет title или description`);
  assert(!titles.has(title)&&!descriptions.has(description),`${page}: title или description повторяет другую страницу`);
@@ -76,7 +96,8 @@ for(const page of MAIN_PAGES){
  for(const [,json] of text.matchAll(/<script type="application\/ld\+json">([^<]+)<\/script>/g))JSON.parse(json);
 }
 const sitemap=await readFile(resolve(dist,'sitemap.xml'),'utf8');
-for(const page of MAIN_PAGES)assert(sitemap.includes(`<loc>${SITE}${page==='index.html'?'':page}</loc>`),'sitemap.xml: нет '+page);
+for(const page of MAIN_PAGES)assert(sitemap.includes(`<loc>${SITE}${pageSlug(page)}</loc>`),'sitemap.xml: нет '+page);
+assert(!/\.html<\/loc>/.test(sitemap),'sitemap.xml: адреса страниц — без .html');
 
 // ── Общие фрагменты и сгенерированное ────────────────────────────────────────
 for(const page of MAIN_PAGES)for(const name of PAGES[page].shared){
@@ -123,6 +144,8 @@ for(const group of content.groups){
  for(const section of group.sections){
   assert(/^(programs|price-[a-z-]+)$/.test(section.id)&&section.title,`Подраздел без id или названия в ${group.id}`);
   assert(Boolean(section.programs)===(section.id==='programs')&&(!section.programs||group.id==='wash'),`Подраздел программ — только «programs» в «Мойке»`);
+  // v2: план юзабилити 08.10 — onsite («продаётся только на месте») — только у работ с онлайн-записью (мойка), не у программ.
+  assert(!section.onsite||(group.booking==='yclients'&&!section.programs),`Подраздел ${section.id}: onsite — только у работ мойки`);
   for(const name of section.items||[])sectionOf[name]=[group.id,section.id];
  }
 }
@@ -162,11 +185,14 @@ content.groups.forEach((group,gi)=>{
  group.sections.forEach((section,si)=>{
   const block=panel.slice(blocks[si].index,si+1<blocks.length?blocks[si+1].index:panel.length);
   assert(block.includes(`<h3 class="catalog__subhead">${escape(section.title)}`),`Подраздел ${section.id}: нет заголовка`);
+  // v2: план юзабилити 08.10 — подпись «Узнать цену» вместо «Заявка с фото»; у подраздела
+  // onsite (продаётся только на месте) вместо кнопки — подпись «добавим при приёмке».
   for(const name of section.items||[]){
    const [,price,about]=group.items.find(([n])=>n===name),n=escape(name);
-   const action=group.booking==='yclients'?`data-book data-book-context="${n}" data-yc-items="${n}">Записаться`:`data-request data-request-category="${group.id}" data-request-services="${n}">Заявка с фото`;
-   assert(block.includes(`<li class="catalog__item" data-price-item="${n}"><div class="catalog__item-text"><p class="catalog__item-name">${n}</p><p class="catalog__item-note">${escape(about)}</p></div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceLabel(price)}</p><button class="catalog__action" type="button" ${action}`),`Нет или устарела услуга «${name}» в подразделе ${section.id}`);
+   const action=section.onsite?`<p class="catalog__item-onsite">добавим при приёмке</p></li>`:`<button class="catalog__action" type="button" ${group.booking==='yclients'?`data-book data-book-context="${n}" data-yc-items="${n}">Записаться`:`data-request data-request-category="${group.id}" data-request-services="${n}">Узнать цену`}`;
+   assert(block.includes(`<li class="catalog__item" data-price-item="${n}"><div class="catalog__item-text"><p class="catalog__item-name">${n}</p><p class="catalog__item-note">${escape(about)}</p></div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceLabel(price)}</p>${action}`),`Нет или устарела услуга «${name}» в подразделе ${section.id}`);
   }
+  if(section.onsite)assert(!/data-book|data-request/.test(block),`Подраздел ${section.id}: работы на месте — без кнопок записи и «Узнать цену»`);
  });
  // Сценарий записи в категории: мойка — окно филиалов (data-book), остальное — заявка (data-request).
  if(group.booking==='yclients')assert(/data-book/.test(panel)&&!/data-request/.test(panel),`Категория ${group.id}: нужна запись в YCLIENTS, без заявки`);
@@ -183,7 +209,7 @@ assert(!/featured__card|class="categories"|>после осмотра</.test(ser
 // Прежние якоря (ссылки из статей, закладки, поиск) ведут в существующие места каталога.
 for(const id of ['price-list','price-wash','programs','program-0','program-4','price-interior','price-leather','price-components','price-film','price-polish','price-glass','price-bodywork'])assert(ids['services.html'].has(id),'services.html: пропал якорь #'+id);
 // Превью на главной: четыре карточки — по одной на категорию, в том же порядке.
-const cards=[...html['index.html'].matchAll(/<a class="card card--([a-z]+)" href="services\.html#price-\1">/g)].map(m=>m[1]);
+const cards=[...html['index.html'].matchAll(/<a class="card card--([a-z]+)" href="services#price-\1">/g)].map(m=>m[1]);
 assert.deepEqual(cards,content.groups.map(g=>g.id),'index.html: карточки превью не совпадают с четырьмя категориями');
 
 const config=await importDist(resolve(dist,'js/config.js'));
@@ -253,6 +279,13 @@ for(const filename of await readdir(resolve(dist,'js'))){
  const text=await readFile(resolve(dist,'js',filename),'utf8');
  const result=spawnSync(process.execPath,['--check','--input-type=module'],{input:text,encoding:'utf8'});
  if(result.status!==0)fail(`${filename}: ${result.stderr}`);
+ // Адреса страниц в скриптах — тоже без .html (решение 19.10) и относительные: 'services#price-list',
+ // не 'services.html#…' и не '/services' (с корня сайта не работает копия в папке GitHub Pages).
+ if(!/porsche3d/.test(filename))for(const [,prefix,name,ext] of text.matchAll(/['"`]((?:[^'"`\s]*\/)?)([\w-]+)(\.html)?(?=[#?'"`])/g)){
+  if(!ALL_PAGES.includes(name+'.html')||!ext&&!prefix.startsWith('/'))continue;
+  const address=pageSlug(name+'.html')||'./';
+  fail(ext?`${filename}: адрес страницы ${prefix}${name}.html — нужен без расширения (${address})`:`${filename}: адрес страницы ${prefix}${name} от корня сайта — нужен относительный (${address})`);
+ }
  for(const [,url] of text.matchAll(/(?:from\s*|import\()['"](\.[^'"]+)['"]/g))if(!await exists(resolve(dist,'js',url)))fail(`${filename}: нет модуля ${url}`);
 }
 const is3d=name=>/porsche3d/.test(name);
@@ -287,7 +320,7 @@ for(const page of MAIN_PAGES){
  assert(html[page].includes('<!-- SHARED:analytics:START -->'),`${page}: нет блока аналитики в <head>`);
  assert(!site.metrika===!html[page].includes(`<meta name="mw-metrika" content="${site.metrika}">`),`${page}: номер счётчика Метрики не совпадает с JSON`);
  assert(!site.webmaster===!html[page].includes(`<meta name="yandex-verification" content="${site.webmaster}">`),`${page}: код Вебмастера не совпадает с JSON`);
- assert(html[page].includes('href="privacy.html"'),`${page}: нет ссылки на Политику обработки персональных данных`);
+ assert(html[page].includes('href="privacy"'),`${page}: нет ссылки на Политику обработки персональных данных`);
 }
 // Клубная карта — ссылка на страницу оформления (wahelp), адрес — от владельца.
 const CLUB_CARD='https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e';
@@ -333,13 +366,14 @@ for(const location of content.locations){
  for(const page of MAIN_PAGES)assert(html[page].includes(`href="${location.booking}"`),`${page}: нет ссылки записи ${location.id}`);
  bookings.add(location.booking);
  assert(/^\d+$/.test(location.orgId)&&location.map.includes(`/${location.orgId}/`),`${location.id}: org id и ссылка на карточку не совпадают`);
- assert(new RegExp(`^https://yandex\\.ru/map-widget/v1/org/[a-z_]+/${location.orgId}/\\?ll=`).test(location.mapWidget),`${location.id}: mapWidget — не виджет карточки организации`);
+ assert(/^https:\/\/yandex\.ru\/map-widget\/v1\/\?ll=/.test(location.mapWidget)&&location.mapWidget.includes(`&pt=${location.lon}%2C${location.lat}%2Cpm2rdm`),`${location.id}: mapWidget — не карта с точкой студии`);
  assert(location.mapWidget.includes(`ll=${location.lon}%2C${location.lat}`)&&location.route.includes(`rtext=~${location.lat}%2C${location.lon}`),`${location.id}: координаты виджета и маршрута расходятся с lat/lon`);
  // Карта филиала — в его карточке на страницах с блоком локаций; «На карте» в подвале ведёт к ней.
  for(const page of MAIN_PAGES){
   const withLocations=PAGES[page]?.shared?.includes('locations');
   if(withLocations){const block=html[page].slice(html[page].indexOf(`id="map-${location.id}"`));assert(ids[page].has(`map-${location.id}`)&&/^id="[^"]+"[^>]*data-map-embed="/.test(block)&&block.startsWith(`id="map-${location.id}"`)&&block.slice(0,block.indexOf('</article>')).includes(`location__external" href="${location.map}"`),`${page}: нет встроенной карты ${location.id} (область, якорь, резервная ссылка на карточку организации)`);}
-  assert(new RegExp(`<a class="footer__map" href="${withLocations?'':'\\./'}#map-${location.id}"[^>]*data-map-link="${location.id}"`).test(html[page]),`${page}: «На карте» в подвале не ведёт к карте ${location.id}`);
+  // v2: план юзабилити 08.10 — без своего блока локаций «На карте» ведёт к карте на «О нас» (about#map-…), а не на главную.
+  assert(new RegExp(`<a class="footer__map" href="${withLocations?'':'about'}#map-${location.id}"[^>]*data-map-link="${location.id}"`).test(html[page]),`${page}: «На карте» в подвале не ведёт к карте ${location.id}`);
  }
 }
 assert.equal(bookings.size,content.locations.length,'У филиалов должны быть разные ссылки записи');
@@ -351,7 +385,7 @@ for(const page of MAIN_PAGES)for(const [url] of pageCode[page].matchAll(/https?:
 // отдельный документ; ни адресов ботов, ни токенов в коде страницы.
 for(const page of MAIN_PAGES.filter(p=>PAGES[p].shared.includes('dialogs'))){
  assert(ids[page].has('request'),`${page}: нет окна заявки #request`);
- assert(/<input type="checkbox" name="consent" required/.test(html[page])&&html[page].includes('href="consent-request.html"'),`${page}: в заявке нет обязательного согласия со ссылкой на consent-request.html`);
+ assert(/<input type="checkbox" name="consent" required/.test(html[page])&&html[page].includes('href="consent-request"'),`${page}: в заявке нет обязательного согласия со ссылкой на consent-request`);
  assert(!/api\.telegram\.org|bot\d{6,}:|[?&](token|apikey|api_key)=|Bearer\s/i.test(pageCode[page]),`${page}: в клиентском коде адрес бота или токен`);
 }
 const requestCode=await readFile(resolve(dist,'js/request.js'),'utf8');
@@ -388,4 +422,4 @@ if(missingOperator().length)notes.push(`реквизиты оператора в
 if(!site.metrika)notes.push('номер счётчика Яндекс Метрики (Метрика и уведомление о cookie выключены)');
 if(!site.webmaster)notes.push('код подтверждения Яндекс Вебмастера');
 if(notes.length)console.warn('ВНИМАНИЕ: не заполнено в site (meatwash-content.json) — '+notes.join('; ')+'.');
-console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки; мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — заявка с фото); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и встроенная карта обоих филиалов (iframe — только скриптом, «На карте» в подвале ведёт к карте), окна карты нет.`);
+console.log(`PASS: ${ALL_PAGES.length} страниц — ресурсы, якоря и межстраничные ссылки (адреса страниц без .html); мета и sitemap; общие фрагменты и каталог совпадают с источниками; ${content.groups.length} категории (${itemCount} позиция, мойка — запись в YCLIENTS, остальное — «Узнать цену»); цены каталога и гаража (названия как в каталоге, по ${content.bodyTypes.length} кузовам, ${programZones.filter(z=>z.package).length} пакета мойки, ${insideChecked} работ из программ и пакетов без повторного начисления); заявка: согласие обязательно, без токенов в коде; первый экран без сцены и GSAP, два входа в гараж; 3D только по нажатию (${[...lazy3d].join(', ')}); внутренние страницы без гаража и 3D; запись и встроенная карта обоих филиалов (iframe — только скриптом, «На карте» в подвале ведёт к карте), окна карты нет.`);

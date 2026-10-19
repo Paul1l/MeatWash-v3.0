@@ -12,37 +12,39 @@ body.menu-open { overflow:hidden; }
 .dialog::backdrop { backdrop-filter:none; }
 
 /* Портрет до 900px: запись — только в нижней кнопке (.mobile-cta), в hero её нет.
-   Первый экран — колонкой: фото с машиной, текст, вход в гараж; снизу место
-   под нижнюю кнопку. Фото забирает всё, что остаётся от экрана (не меньше
-   190px и не больше 62% высоты): композиция закончена на любой высоте. */
+   Первый экран — колонкой: фото с машиной, вордмарк, одна короткая строка, ссылки
+   «Услуги и цены» и «Открыть 3D-гараж»; снизу место под нижнюю кнопку. Фото забирает
+   всё, что остаётся от экрана (не меньше 190px и не больше 72% высоты; было 62%, пока
+   под текстом стояла карточка гаража): композиция закончена на любой высоте. Надпись над вордмарком здесь не нужна — короткая строка
+   под ним говорит то же («Мойка и детейлинг · Мясницкая и Технопарк»). */
 :root { --cta-zone:calc(46px + max(12px, env(safe-area-inset-bottom, 0px)) + 20px); }
 @media(max-width:900px) and (orientation:portrait) {
   .hero__booking { display:none; }
   .mobile-cta { bottom:max(12px,env(safe-area-inset-bottom)); height:46px; box-shadow:0 0 0 8px var(--black); }
   body:has(dialog[open]) .mobile-cta { visibility:hidden; }
   .hero { display:flex; flex-direction:column; padding:var(--header-h) 0 var(--cta-zone); }
-  .hero__media { position:relative; inset:auto; flex:1 0 190px; max-height:62svh; }
+  .hero__media { position:relative; inset:auto; flex:1 0 190px; max-height:72svh; }
   .hero__photo { object-position:41% 64%; }
   .hero__media::after { background:linear-gradient(0deg,var(--black) 0%,rgb(var(--black-rgb)/.62) 20%,rgb(var(--black-rgb)/0) 46%); }
   .hero__copy { position:relative; left:auto; bottom:auto; max-width:none; margin-top:-64px; padding:0 var(--gutter); }
-  .hero__eyebrow { margin-bottom:10px; }
+  .hero__eyebrow { display:none; }
   .hero__title { font-size:clamp(36px,10.4vw,65px); line-height:.95; }
   .hero__sub { margin-top:10px; font-size:15px; }
-  .hero__actions { margin-top:4px; }
+  .hero__actions { margin-top:4px; column-gap:22px; row-gap:0; }
 }
 @media(max-width:800px) and (orientation:portrait) {
   :root { --gutter:16px; }
   .header { background:var(--black); border-bottom:1px solid var(--line); }
   .about__copy { padding-bottom:24px; }
-  .location__meta { font-size:13px; }
   .about__stats dt { font-size:24px; }
 }
-/* Альбом до 900px и невысокие окна: фото на весь экран, текст и вход в гараж
-   ужимаются по высоте, кегль заголовка — от ширины. */
+/* Альбом до 900px и невысокие окна: фото на весь экран, текст и ссылки
+   ужимаются по высоте, кегль заголовка — от ширины. Под вордмарком — короткая строка,
+   надпись над ним её повторила бы. */
 @media(max-width:900px) and (orientation:landscape) {
   .hero__title { font-size:clamp(30px,6vw,48px); }
-  .hero__sub { font-size:14px; margin-top:8px; }
-  .hero__eyebrow { margin-bottom:8px; }
+  .hero__sub { font-size:15px; margin-top:8px; }
+  .hero__eyebrow { display:none; }
   .hero__actions { margin-top:8px; }
 }
 @media(orientation:landscape) and (max-height:500px) {

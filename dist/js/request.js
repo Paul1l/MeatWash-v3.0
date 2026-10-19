@@ -201,7 +201,7 @@ export function setupRequest(dialog, { show }) {
     body.append('services', services.join('\n'));
     for (const name of FIELDS) body.append(name, (form.elements[name] instanceof RadioNodeList ? form.elements[name].value : form.elements[name].value).trim());
     body.append('consent', 'yes');
-    body.append('consentDocument', new URL('consent-request.html', location.href).href);
+    body.append('consentDocument', new URL('consent-request', location.href).href);
     body.append('page', location.href);
     body.append('mw_extra', form.elements.mw_extra?.value || '');
     for (const { file } of photos) body.append('photos[]', file, file.name);
