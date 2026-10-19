@@ -221,6 +221,7 @@ a.card { display: block; }
 .footer__legal a:hover, .footer__legal button:hover { color: var(--ivory); }
 .footer__legal a[aria-current="page"] { color: var(--ivory); text-decoration: none; }
 .footer__legal button[hidden] { display: none; }
+.footer__note { margin-top: 6px; max-width: 72ch; font-size: clamp(11px, .82vw, 12px); line-height: 1.5; color: var(--muted); }
 
 /* ---------- Статьи: список ---------- */
 .articles { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: clamp(16px, 2vw, 28px); padding: clamp(28px, 4vw, 56px) var(--gutter) clamp(64px, 8vw, 120px); background: var(--black-2); }
