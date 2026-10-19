@@ -8,11 +8,10 @@
 # страницы, кроме главной, отвечают 404.
 
 AddDefaultCharset UTF-8
-# -MultiViews: адрес /services отдают только правила ниже. С MultiViews Apache
-# сам подбирает services.html и пишет в ответ Content-Location: services.html.
-# Если после заливки весь сайт отвечает 500 — хостинг не разрешает менять
-# MultiViews: уберите из строки «-MultiViews», правила работают и без этого.
-Options -Indexes -MultiViews
+# MultiViews на хостинге выключен (19.10: /services без правил ниже отвечал 404),
+# поэтому «-MultiViews» не пишем: если хостинг не разрешает менять эту опцию,
+# весь сайт ответил бы 500. Включат MultiViews — правила ниже работают и с ним.
+Options -Indexes
 DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>

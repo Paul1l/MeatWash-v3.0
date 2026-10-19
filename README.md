@@ -18,7 +18,7 @@ GitHub Actions публикует содержимое `dist` через `.githu
 
 1. Скачать с хостинга текущий `.htaccess` (для отката).
 2. Загрузить `server/htaccess.txt` как `.htaccess` и `server/404.html` как `404.html`. Старые страницы при этом работают: `/services.html` переадресуется на `/services`, и тот отдаёт файл.
-3. Сразу проверить: `curl -sI https://meatwash.ru/services` — 200; `curl -sI https://meatwash.ru/services.html` — 301, `Location: https://meatwash.ru/services`; `curl -sI http://meatwash.ru/services` — 301 ровно на `https://meatwash.ru/services`. Если весь сайт отвечает 500 — хостинг не разрешает менять MultiViews: убрать `-MultiViews` из строки `Options` (правила работают и без этого). Если браузер пишет «слишком много переадресаций» — вернуть файл из п. 1.
+3. Сразу проверить: `curl -sI https://meatwash.ru/services` — 200; `curl -sI https://meatwash.ru/services.html` — 301, `Location: https://meatwash.ru/services`; `curl -sI http://meatwash.ru/services` — 301 ровно на `https://meatwash.ru/services`. Если весь сайт отвечает 500 — вернуть файл из п. 1. Если браузер пишет «слишком много переадресаций» — вернуть файл из п. 1.
 4. Загрузить страницы (архив `github-pages`, см. выше) и повторить проверку п. 3, затем открыть главную и пройти по меню.
 
 Автоматическая выкладка на хостинг по FTP/SFTP из `pages.yml` была сделана и снята по решению владельца — коммит `d0350f6`, отменён в `ebc8c19` (вернуть: `git revert ebc8c19`).
