@@ -83,7 +83,7 @@ for (const page of [
     title: 'Продажа автомобилей — MEATWASH Auto',
     description: 'MEATWASH Auto: автомобили в продаже, продажа под реализацию, подготовка к продаже в наших студиях, подбор и покупка автомобиля под ключ в Москве.',
     headline: 'Продажа автомобилей', ogImage: 'assets/img/auto-lotus-1.webp',
-    shared: NO_BOOK, cta: 'auto',
+    shared: NO_BOOK, cta: 'auto', date: '2026-10-19',
     sitemap: { changefreq: 'weekly', priority: '0.7' },
   },
   {
@@ -91,7 +91,7 @@ for (const page of [
     title: 'Наши работы — MEATWASH Car Care Club',
     description: 'Работы MEATWASH: подготовка Lotus Eletre R к продаже, оклейка BMW M4 цветным полиуретаном, химчистка салона и полировка кузова в студиях в Москве.',
     headline: 'Наши работы', ogImage: 'assets/img/auto-lotus-4.webp',
-    shared: WITH_BOOK, cta: 'book',
+    shared: WITH_BOOK, cta: 'book', date: '2026-10-08',
     sitemap: { changefreq: 'monthly', priority: '0.6' },
   },
   {
@@ -99,14 +99,16 @@ for (const page of [
     title: 'Оклейка автомобиля полиуретаном — MEATWASH',
     description: 'Оклейка автомобиля защитной полиуретановой плёнкой в Москве: прозрачной или цветной, зоны риска, весь кузов, фары и лобовое стекло. Технопарк.',
     headline: 'Оклейка полиуретаном',
-    shared: NO_BOOK, cta: 'technopark',
+    shared: NO_BOOK, cta: 'technopark', date: '2026-10-08',
     sitemap: { changefreq: 'monthly', priority: '0.7' },
   },
 ]) CONTENT.push({ ...page, kind: 'landing', css: ['catalog.css'] });
 
-// Карта сайта: страницы ручной вёрстки и собранные здесь.
+// Карта сайта: страницы ручной вёрстки и собранные здесь. lastmod — дата последней
+// правки содержимого страницы (не общей шапки/подвала); у разделов выше — поле date,
+// без него берётся дата редакции документов (site.documentsDate).
 export const SITEMAP = [
-  { file: 'index.html', lastmod: '2026-10-01', changefreq: 'monthly', priority: '1.0' },
-  { file: 'services.html', lastmod: '2026-10-01', changefreq: 'monthly', priority: '0.9' },
-  { file: 'about.html', lastmod: '2026-10-01', changefreq: 'monthly', priority: '0.7' },
+  { file: 'index.html', lastmod: '2026-10-08', changefreq: 'monthly', priority: '1.0' },
+  { file: 'services.html', lastmod: '2026-10-08', changefreq: 'monthly', priority: '0.9' },
+  { file: 'about.html', lastmod: '2026-10-08', changefreq: 'monthly', priority: '0.7' },
 ];

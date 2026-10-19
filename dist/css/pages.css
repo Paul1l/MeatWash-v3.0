@@ -446,7 +446,10 @@ body.menu-open .consent { visibility: hidden; }
 @media (max-width: 900px) { .car { grid-template-columns: 1fr; } }
 
 /* «Уже продали» (19.10): сетка проданных машин — фото 3:2, название, плашка «Продан».
-   Кадры 532–534 px по высоте: aspect-ratio и cover выравнивают карточки в ряду. Без анимаций. */
+   Кадры 532–534 px по высоте: aspect-ratio и cover выравнивают карточки в ряду. Без анимаций.
+   Колонки 4 / 3 (≤1100) / 2 (≤560) под 14 карточек: последний ряд 2, 2 и полный — одной
+   карточки в ряду нет. При другом числе карточек проверить последний ряд (16 при 3 колонках
+   оставляют одну: тогда шаг 3 колонок убрать — 4 до ~700 px, ниже 2). */
 .sold { padding: clamp(48px, 6vw, 96px) var(--gutter); background: var(--black-2); border-top: 1px solid var(--line); }
 .sold h2 { font-size: clamp(30px, 3.4vw, 52px); }
 .sold__note { margin-top: 14px; max-width: 60ch; color: var(--muted); }
