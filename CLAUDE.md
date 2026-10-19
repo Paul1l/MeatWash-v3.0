@@ -290,11 +290,16 @@
 - Адреса страниц — без `.html` (решение 19.10): ссылки `services`, `about#map-…`, `consent-request`,
   главная — `./`; `canonical`, `og:url`, JSON-LD и `sitemap.xml` — `https://meatwash.ru/services`,
   главная — `https://meatwash.ru/`. Файлы в `dist` по-прежнему `services.html` и т. д. (`pageSlug`,
-  `pageUrl` в `scripts/pages.mjs`, `pageAddress` в `scripts/content.mjs`). На meatwash.ru `/services`
-  отдаёт `services.html` правило в `.htaccess` хостинга (файла нет в репозитории), старые `*.html` —
-  301 на адрес без расширения; `npm start` (`serve.cjs`) тоже открывает `/services`. `npm run check`
-  падает на ссылке на страницу с `.html` в разметке и в `dist/js`. Файл `yandex_<код>.html` остаётся
-  с расширением.
+  `pageUrl` в `scripts/pages.mjs`, `pageAddress` в `scripts/content.mjs`). На meatwash.ru
+  `/services` отдаёт `services.html` правило в `.htaccess` хостинга — в репозитории
+  `server/htaccess.txt` (рядом `server/404.html`), на хостинг загружается до страниц, порядок и
+  проверка `curl` — README, «Домен meatwash.ru»; правишь правила — прогони их на локальном Apache.
+  Старые `*.html`, `/services/`, `/index.html` — 301 на адрес без расширения одним переходом (и с
+  `http://`, и с `www`); `npm start` (`serve.cjs`) тоже открывает `/services`. `npm run check`
+  падает на ссылке на страницу с `.html` в разметке и в `dist/js`, на `index` вместо `./`, на адресе
+  страницы от корня (`/services`) в `dist/js` и на полном адресе `https://meatwash.ru/…` с `.html`,
+  с `www` или на несуществующую страницу (canonical, og, JSON-LD, текст). Файл `yandex_<код>.html`
+  остаётся с расширением.
 - На Windows `core.autocrlf=true`; `.gitattributes` держит текстовые файлы в LF.
 - `stamp-assets.mjs` при публикации ставит `?v=` только к CSS, JS и относительным import (в том
   числе к `import('./porsche3d.bundle.js')`). Пишет всегда в `dist` репозитория — локально запускать

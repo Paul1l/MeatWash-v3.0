@@ -14,11 +14,18 @@ GitHub Actions публикует содержимое `dist` через `.githu
 
 Что загружать: архив `github-pages` со страницы последнего запуска Actions → «Deploy Meatwash website» → Artifacts (внутри `artifact.tar` — `dist` с версиями `?v=` у CSS и JS и без лишних файлов; хранится сутки). Содержимое — в папку сайта на хостинге, с заменой файлов. Если залить `dist` из репозитория как есть — сайт работает, но после обновления посетители могут получать старые CSS и JS из кэша.
 
+Файлы хостинга вне `dist` — в папке `server/` репозитория: `server/htaccess.txt` загружается в корень сайта под именем `.htaccess`, `server/404.html` — как `404.html` (страница ошибки, её адреса — от корня сайта). Ссылки на сайте ведут на адреса без `.html` (`/services`), и отдаёт их только этот `.htaccess`: без него все страницы, кроме главной, отвечают 404. Поэтому порядок выкладки такой:
+
+1. Скачать с хостинга текущий `.htaccess` (для отката).
+2. Загрузить `server/htaccess.txt` как `.htaccess` и `server/404.html` как `404.html`. Старые страницы при этом работают: `/services.html` переадресуется на `/services`, и тот отдаёт файл.
+3. Сразу проверить: `curl -sI https://meatwash.ru/services` — 200; `curl -sI https://meatwash.ru/services.html` — 301, `Location: https://meatwash.ru/services`; `curl -sI http://meatwash.ru/services` — 301 ровно на `https://meatwash.ru/services`. Если весь сайт отвечает 500 — хостинг не разрешает менять MultiViews: убрать `-MultiViews` из строки `Options` (правила работают и без этого). Если браузер пишет «слишком много переадресаций» — вернуть файл из п. 1.
+4. Загрузить страницы (архив `github-pages`, см. выше) и повторить проверку п. 3, затем открыть главную и пройти по меню.
+
 Автоматическая выкладка на хостинг по FTP/SFTP из `pages.yml` была сделана и снята по решению владельца — коммит `d0350f6`, отменён в `ebc8c19` (вернуть: `git revert ebc8c19`).
 
 Яндекс Вебмастер: код подтверждения `58e9b738e3e02ac7` — в `site.analytics.webmaster`; `npm run build` ставит мета-тег `yandex-verification` на все страницы и создаёт файл `dist/yandex_58e9b738e3e02ac7.html` (способ «HTML-файл»), `npm run check` сверяет оба с JSON. Права подтвердятся, когда файл или страницы с мета-тегом окажутся на хостинге meatwash.ru. После — в Метрике у счётчика «Привязать к Вебмастеру».
 
-Адрес сайта в коде — `https://meatwash.ru/`: `canonical`, `og:url`, `og:image`, JSON-LD, `sitemap.xml`, `robots.txt`, Политика и Согласие (`SITE` в `scripts/content.mjs` и `scripts/check.mjs`). Внутренние ссылки относительные — сайт работает и в корне домена, и в папке GitHub Pages. Адреса страниц — без `.html`: `https://meatwash.ru/services`, в ссылках `services`, `about#map-…`, главная — `./` (файлы остаются `services.html` и т. д.; на meatwash.ru их отдаёт `.htaccess` хостинга, старые адреса `*.html` переадресуются на новые с кодом 301). Счётчик Метрики принимает данные только с `meatwash.ru` (фильтр в настройках счётчика): на адресе GitHub визиты не считаются.
+Адрес сайта в коде — `https://meatwash.ru/`: `canonical`, `og:url`, `og:image`, JSON-LD, `sitemap.xml`, `robots.txt`, Политика и Согласие (`SITE` в `scripts/content.mjs` и `scripts/check.mjs`). Внутренние ссылки относительные — сайт работает и в корне домена, и в папке GitHub Pages. Адреса страниц — без `.html`: `https://meatwash.ru/services`, в ссылках `services`, `about#map-…`, главная — `./` (файлы остаются `services.html` и т. д.; на meatwash.ru их отдаёт `.htaccess` хостинга — `server/htaccess.txt`, порядок выкладки выше; старые адреса `*.html`, `/services/` и `/index.html` переадресуются на новые с кодом 301 одним переходом, в том числе с `http://` и `www`). Счётчик Метрики принимает данные только с `meatwash.ru` (фильтр в настройках счётчика): на адресе GitHub визиты не считаются.
 
 ## Запуск
 
@@ -52,6 +59,7 @@ GitHub Actions публикует содержимое `dist` через `.githu
 - `dist/js/analytics.js` — уведомление о cookie, Яндекс Метрика только после согласия, цели.
 - `dist/js/request.js` — окно «Заявка с фото»; `dist/api/request.php` — приём заявки на хостинге meatwash.ru (почта и/или Telegram), `server/request-config.example.php` — образец его настроек (настоящие — вне папки сайта и вне репозитория).
 - `dist/robots.txt`, `dist/sitemap.xml` — индексация опубликованного адреса.
+- `server/htaccess.txt`, `server/404.html` — `.htaccess` и страница 404 корня сайта на хостинге meatwash.ru (адреса без `.html`, переадресации на https://meatwash.ru, кэш); загружаются отдельно от `dist`, см. «Домен meatwash.ru».
 - `serve.cjs` — локальный сервер, без зависимостей.
 - `scripts/check.mjs` — проверка синтаксиса, локальных ресурсов, ссылок, данных, цен и названий гаража; 3D только по нажатию.
 - `scripts/optimize-3d.mjs`, `scripts/bundle-3d.mjs`, `scripts/check-3d.mjs` — модели, бандл и их проверка (`npm run optimize-3d`, `bundle-3d`, `check:3d`).

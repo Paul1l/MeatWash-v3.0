@@ -1,5 +1,5 @@
 // npm run check — проверка сайта без браузера, для всех страниц dist:
-// ресурсы и якоря (в том числе межстраничные services#…; ссылки на страницы — без .html), общие фрагменты
+// ресурсы и якоря (в том числе межстраничные services#…; ссылки на страницы и полные адреса https://meatwash.ru/… — без .html), общие фрагменты
 // (src/partials) и сгенерированный каталог совпадают с источниками, цены (каталог,
 // гараж — названия как в каталоге, суммы по каждому кузову, без повторного
 // начисления работ из программы мойки), первый экран без закреплённой сцены,
@@ -47,6 +47,8 @@ for(const page of ALL_PAGES){
   // На meatwash.ru адрес *.html переадресуется (301) на адрес без .html — ссылка внутри сайта
   // сразу ведёт на конечный адрес: services, about#map-…, главная — ./ .
   if(/\.html$/.test(file)){fail(`${page}: ссылка на страницу с .html — нужен адрес без расширения (${file.replace(/\.html$/,'')||'./'}): ${url}`);continue;}
+  // /index тоже переадресуется (301 на /): главная — только ./
+  if(/^(\.\/)?index$/.test(file)){fail(`${page}: ссылка на главную — ./ (не index): ${url}`);continue;}
   const target=pageOf(file);
   if(target){
    if(!ALL_PAGES.includes(target)){fail(`${page}: ссылка на несуществующую страницу ${url}`);continue;}
@@ -55,6 +57,19 @@ for(const page of ALL_PAGES){
    continue;
   }
   if(!await exists(resolve(dist,file.replace(/^\.\//,''))))fail(`${page}: нет файла ${url}`);
+ }
+ // Полные адреса сайта (canonical, og:*, JSON-LD — хлебные крошки, url, mainEntityOfPage —
+ // и текст): https://meatwash.ru без www; страница — без .html и только существующая,
+ // файл — есть в dist, якорь — есть на странице.
+ for(const [address] of text.matchAll(/https?:\/\/(?:www\.)?meatwash\.ru(?:\/[^"'\s<>\\]*)?/g)){
+  const url=address.replace(/[.,;:)]+$/,'');
+  if(!url.startsWith(SITE)&&url!==SITE.slice(0,-1)){fail(`${page}: адрес сайта — ${SITE}… (https, без www): ${url}`);continue;}
+  const [rest,hash]=url.slice(SITE.length).split('#'),path=rest.split('?')[0];
+  if(/\.html$/.test(path)&&!/^yandex_\w+\.html$/.test(path)){fail(`${page}: адрес страницы с .html — нужен ${SITE}${path.replace(/^index\.html$/,'').replace(/\.html$/,'')}: ${url}`);continue;}
+  if(/\.\w+$/.test(path)){if(!await exists(resolve(dist,path)))fail(`${page}: нет файла ${url}`);continue;}
+  const target=path===''?'index.html':path+'.html';
+  if(path==='index'||!ALL_PAGES.includes(target)){fail(`${page}: адрес несуществующей страницы ${url}${path==='index'?` — главная ${SITE}`:''}`);continue;}
+  if(hash&&!ids[target].has(hash))fail(`${page}: в ${target} нет якоря #${hash} (${url})`);
  }
  // url() в таблицах стилей страницы.
  for(const [,name] of text.matchAll(/<link\b[^>]*rel="stylesheet"[^>]*href="css\/([^"]+)"/g)){
@@ -264,8 +279,13 @@ for(const filename of await readdir(resolve(dist,'js'))){
  const text=await readFile(resolve(dist,'js',filename),'utf8');
  const result=spawnSync(process.execPath,['--check','--input-type=module'],{input:text,encoding:'utf8'});
  if(result.status!==0)fail(`${filename}: ${result.stderr}`);
- // Адреса страниц в скриптах — тоже без .html (решение 19.10): 'services#price-list', не 'services.html#…'.
- if(!/porsche3d/.test(filename))for(const [,name] of text.matchAll(/['"`](?:\.\/)?([\w-]+)\.html(?=[#?'"`])/g))if(ALL_PAGES.includes(name+'.html'))fail(`${filename}: адрес страницы ${name}.html — нужен без расширения (${pageSlug(name+'.html')||'./'})`);
+ // Адреса страниц в скриптах — тоже без .html (решение 19.10) и относительные: 'services#price-list',
+ // не 'services.html#…' и не '/services' (с корня сайта не работает копия в папке GitHub Pages).
+ if(!/porsche3d/.test(filename))for(const [,prefix,name,ext] of text.matchAll(/['"`]((?:[^'"`\s]*\/)?)([\w-]+)(\.html)?(?=[#?'"`])/g)){
+  if(!ALL_PAGES.includes(name+'.html')||!ext&&!prefix.startsWith('/'))continue;
+  const address=pageSlug(name+'.html')||'./';
+  fail(ext?`${filename}: адрес страницы ${prefix}${name}.html — нужен без расширения (${address})`:`${filename}: адрес страницы ${prefix}${name} от корня сайта — нужен относительный (${address})`);
+ }
  for(const [,url] of text.matchAll(/(?:from\s*|import\()['"](\.[^'"]+)['"]/g))if(!await exists(resolve(dist,'js',url)))fail(`${filename}: нет модуля ${url}`);
 }
 const is3d=name=>/porsche3d/.test(name);
