@@ -5,11 +5,11 @@
   <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
        «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
   <nav class="nav" aria-label="Основная навигация">
-    <a href="services.html"{{current:services}}>Услуги и цены</a>
-    <a href="wrap.html"{{current:wrap}}>Оклейка</a>
-    <a href="works.html"{{current:works}}>Наши работы</a>
-    <a href="auto.html"{{current:auto}}>Продажа авто</a>
-    <a href="about.html"{{current:about}}>О нас</a>
+    <a href="services"{{current:services}}>Услуги и цены</a>
+    <a href="wrap"{{current:wrap}}>Оклейка</a>
+    <a href="works"{{current:works}}>Наши работы</a>
+    <a href="auto"{{current:auto}}>Продажа авто</a>
+    <a href="about"{{current:about}}>О нас</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
@@ -17,7 +17,7 @@
 <!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
      ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html"{{current:services}}>Услуги и цены</a><a href="wrap.html"{{current:wrap}}>Оклейка</a><a href="works.html"{{current:works}}>Наши работы</a><a href="auto.html"{{current:auto}}>Продажа авто</a><a href="about.html"{{current:about}}>О нас</a>
+  <a href="services"{{current:services}}>Услуги и цены</a><a href="wrap"{{current:wrap}}>Оклейка</a><a href="works"{{current:works}}>Наши работы</a><a href="auto"{{current:auto}}>Продажа авто</a><a href="about"{{current:about}}>О нас</a>
   <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
   <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
     <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>

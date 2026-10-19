@@ -43,11 +43,11 @@
   <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
        «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
   <nav class="nav" aria-label="Основная навигация">
-    <a href="services.html">Услуги и цены</a>
-    <a href="wrap.html">Оклейка</a>
-    <a href="works.html">Наши работы</a>
-    <a href="auto.html">Продажа авто</a>
-    <a href="about.html">О нас</a>
+    <a href="services">Услуги и цены</a>
+    <a href="wrap">Оклейка</a>
+    <a href="works">Наши работы</a>
+    <a href="auto">Продажа авто</a>
+    <a href="about">О нас</a>
   </nav>
   <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
   <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
@@ -55,7 +55,7 @@
 <!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
      ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
 <nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services.html">Услуги и цены</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html">О нас</a>
+  <a href="services">Услуги и цены</a><a href="wrap">Оклейка</a><a href="works">Наши работы</a><a href="auto">Продажа авто</a><a href="about">О нас</a>
   <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
   <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
     <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>
@@ -82,7 +82,7 @@
     <p class="hero__sub"><span class="hero__sub-full">Ручная мойка, химчистка, полировка и&nbsp;плёнка. <span class="nowrap">Две студии&nbsp;— Мясницкая и&nbsp;Технопарк</span></span><span class="hero__sub-short">Мойка и&nbsp;детейлинг&nbsp;· Мясницкая и&nbsp;Технопарк</span></p>
     <div class="hero__actions">
       <button class="btn btn--fill hero__booking" type="button" data-book>Записаться</button>
-      <a class="hero__more" href="services.html">Услуги и цены <span aria-hidden="true">→</span></a>
+      <a class="hero__more" href="services">Услуги и цены <span aria-hidden="true">→</span></a>
       <button class="hero__more hero__garage" type="button" data-garage-open>Открыть 3D-гараж <svg class="hero__garage-ico" viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M10 2.2 16.8 6v8L10 17.8 3.2 14V6z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><path d="M3.2 6 10 9.8 16.8 6M10 9.8v8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
     </div>
   </div>
@@ -96,13 +96,13 @@
   </div>
   <!-- PREVIEW:START -->
   <div class="strip strip--4">
-   <a class="card card--wash" href="services.html#price-wash"><img src="assets/shots/cf-foam-crop.webp" srcset="assets/shots/cf-foam-crop-s.webp 900w, assets/shots/cf-foam-crop.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Спорткупе в активной пене на тёмном полу студии" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>01</span><span>Мойка</span></span><span class="card__caption">Регулярный уход и программы мойки.<b class="card__price">от 2 150 ₽</b></span></a>
-   <a class="card card--detailing" href="services.html#price-detailing"><img src="assets/shots/cf-interior-seat.webp" srcset="assets/shots/cf-interior-seat-s.webp 900w, assets/shots/cf-interior-seat.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Салон классического купе: руль и кожаные сиденья с тканевыми вставками" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>02</span><span>Детейлинг</span></span><span class="card__caption">Глубокая очистка и уход за салоном.<b class="card__price">от 500 ₽</b></span></a>
-   <a class="card card--protection" href="services.html#price-protection"><img src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Фара и переднее крыло бордового автомобиля крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>03</span><span>Защита</span></span><span class="card__caption">Полировка, покрытия и оклейка кузова.<b class="card__price">от 1 000 ₽</b></span></a>
-   <a class="card card--help" href="services.html#price-help"><img src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Скол на тёмно-бордовом лаке крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>04</span><span>Помощь</span></span><span class="card__caption">Устранение повреждений и подготовка к продаже.<b class="card__price">от 5 000 ₽</b></span></a>
+   <a class="card card--wash" href="services#price-wash"><img src="assets/shots/cf-foam-crop.webp" srcset="assets/shots/cf-foam-crop-s.webp 900w, assets/shots/cf-foam-crop.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Спорткупе в активной пене на тёмном полу студии" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>01</span><span>Мойка</span></span><span class="card__caption">Регулярный уход и программы мойки.<b class="card__price">от 2 150 ₽</b></span></a>
+   <a class="card card--detailing" href="services#price-detailing"><img src="assets/shots/cf-interior-seat.webp" srcset="assets/shots/cf-interior-seat-s.webp 900w, assets/shots/cf-interior-seat.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Салон классического купе: руль и кожаные сиденья с тканевыми вставками" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>02</span><span>Детейлинг</span></span><span class="card__caption">Глубокая очистка и уход за салоном.<b class="card__price">от 500 ₽</b></span></a>
+   <a class="card card--protection" href="services#price-protection"><img src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Фара и переднее крыло бордового автомобиля крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>03</span><span>Защита</span></span><span class="card__caption">Полировка, покрытия и оклейка кузова.<b class="card__price">от 1 000 ₽</b></span></a>
+   <a class="card card--help" href="services#price-help"><img src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="Скол на тёмно-бордовом лаке крупным планом" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>04</span><span>Помощь</span></span><span class="card__caption">Устранение повреждений и подготовка к продаже.<b class="card__price">от 5 000 ₽</b></span></a>
   </div>
   <!-- PREVIEW:END -->
-  <a class="link-arrow services-preview__all" href="services.html">Все услуги и цены <span aria-hidden="true">→</span></a>
+  <a class="link-arrow services-preview__all" href="services">Все услуги и цены <span aria-hidden="true">→</span></a>
 </section>
 
 <!-- ============ ГАРАЖ УСЛУГ: промоблок, второй вход в то же окно ============ -->
@@ -165,7 +165,7 @@
       </figcaption>
     </figure>
   </div>
-  <a class="link-arrow proof__more" href="services.html">Все услуги и цены <span aria-hidden="true">→</span></a>
+  <a class="link-arrow proof__more" href="services">Все услуги и цены <span aria-hidden="true">→</span></a>
 </section>
 
 <section class="about" id="club" aria-labelledby="about-title">
@@ -175,7 +175,7 @@
   <div class="about__copy">
     <h2 id="about-title"><img class="about__logo" src="assets/brand/Main_Logo_black.svg" alt="MEATWASH Car Care Club" width="1480" height="1301" loading="lazy" decoding="async"></h2>
     <p>Ручной уход за автомобилем в Москве. Подбираем химию под покрытие, согласуем работы на приёмке и проверяем результат перед выдачей.</p>
-    <a class="btn btn--ghost btn--ink" href="about.html">Подробнее о клубе</a>
+    <a class="btn btn--ghost btn--ink" href="about">Подробнее о клубе</a>
   </div>
   <dl class="about__stats">
     <div><dt>5.0</dt><dd>Рейтинг на Яндекс Картах</dd></div>
@@ -269,7 +269,7 @@
   <div class="footer__row">
     <a class="brand" href="#top" aria-label="MEATWASH — на главную"><img class="brand__logo brand__logo--footer" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" loading="lazy" decoding="async"></a>
     <nav class="footer__nav" aria-label="Навигация в подвале">
-      <a href="services.html">Услуги и цены</a><a href="wrap.html">Оклейка</a><a href="works.html">Наши работы</a><a href="auto.html">Продажа авто</a><a href="about.html">О нас</a><a href="articles.html">Статьи</a>
+      <a href="services">Услуги и цены</a><a href="wrap">Оклейка</a><a href="works">Наши работы</a><a href="auto">Продажа авто</a><a href="about">О нас</a><a href="articles">Статьи</a>
     </nav>
     <button class="btn btn--fill" type="button" data-book>Записаться</button>
   </div>
@@ -302,8 +302,8 @@
   </div>
   <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
   <div class="footer__legal">
-    <a href="privacy.html">Политика обработки персональных данных</a>
-    <a href="consent.html">Согласие на обработку данных</a>
+    <a href="privacy">Политика обработки персональных данных</a>
+    <a href="consent">Согласие на обработку данных</a>
     <button type="button" data-consent-open hidden>Настройки cookie</button>
   </div>
   <!-- По слову Влада 19.10: пометка про Meta в подвале всех страниц, на случай упоминания Instagram в текстах. -->
@@ -381,7 +381,7 @@
       <label class="btn btn--ghost request__pick">Добавить фото<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" multiple data-request-files aria-describedby="request-photos-rules request-photos-error"></label>
       <p class="request__error" id="request-photos-error" role="status" aria-live="polite" data-error-for="photos"></p>
     </div>
-    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request.html" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy.html" target="_blank" rel="noopener">Политике</a>.</span></label>
+    <label class="request__consent"><input type="checkbox" name="consent" required aria-describedby="request-consent-error"><span>Даю <a href="consent-request" target="_blank" rel="noopener">согласие на обработку персональных данных</a> для ответа на заявку. Подробнее — в <a href="privacy" target="_blank" rel="noopener">Политике</a>.</span></label>
     <p class="request__error" id="request-consent-error" data-error-for="consent"></p>
     <!-- Ловушка для спам-ботов (api/request.php отклоняет заявку, если поле заполнено):
          человек его не видит, Tab на него не попадает, скринридер его не читает. -->

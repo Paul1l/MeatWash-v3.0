@@ -7,61 +7,61 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/services.html</loc>
+    <loc>https://meatwash.ru/services</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/about.html</loc>
+    <loc>https://meatwash.ru/about</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/articles.html</loc>
+    <loc>https://meatwash.ru/articles</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/article-avto-k-zime.html</loc>
+    <loc>https://meatwash.ru/article-avto-k-zime</loc>
     <lastmod>2026-10-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/privacy.html</loc>
+    <loc>https://meatwash.ru/privacy</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/consent.html</loc>
+    <loc>https://meatwash.ru/consent</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/consent-request.html</loc>
+    <loc>https://meatwash.ru/consent-request</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/auto.html</loc>
+    <loc>https://meatwash.ru/auto</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/works.html</loc>
+    <loc>https://meatwash.ru/works</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://meatwash.ru/wrap.html</loc>
+    <loc>https://meatwash.ru/wrap</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

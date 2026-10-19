@@ -32,7 +32,7 @@ const byId = (id) => ZONES.find((z) => z.id === id);
 const PICKED_KEY = 'mw:garage';
 const WEBGL_KEY = 'mw:webgl2';
 const GUARD_MS = 400;   // второй щелчок двойного клика по кнопке входа не закрывает окно
-const CATALOG = 'services.html#price-list';
+const CATALOG = 'services#price-list';
 const LATER = 'после оценки';   // цена работы, которую назовёт мастер (null в каталоге)
 // Вкладки — четыре категории каталога; готовых «наборов» нет: пакеты мойки —
 // настоящие позиции каталога, они во вкладке «Мойка».

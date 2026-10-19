@@ -18,7 +18,7 @@ GitHub Actions публикует содержимое `dist` через `.githu
 
 Яндекс Вебмастер: код подтверждения `58e9b738e3e02ac7` — в `site.analytics.webmaster`; `npm run build` ставит мета-тег `yandex-verification` на все страницы и создаёт файл `dist/yandex_58e9b738e3e02ac7.html` (способ «HTML-файл»), `npm run check` сверяет оба с JSON. Права подтвердятся, когда файл или страницы с мета-тегом окажутся на хостинге meatwash.ru. После — в Метрике у счётчика «Привязать к Вебмастеру».
 
-Адрес сайта в коде — `https://meatwash.ru/`: `canonical`, `og:url`, `og:image`, JSON-LD, `sitemap.xml`, `robots.txt`, Политика и Согласие (`SITE` в `scripts/content.mjs` и `scripts/check.mjs`). Внутренние ссылки относительные — сайт работает и в корне домена, и в папке GitHub Pages. Счётчик Метрики принимает данные только с `meatwash.ru` (фильтр в настройках счётчика): на адресе GitHub визиты не считаются.
+Адрес сайта в коде — `https://meatwash.ru/`: `canonical`, `og:url`, `og:image`, JSON-LD, `sitemap.xml`, `robots.txt`, Политика и Согласие (`SITE` в `scripts/content.mjs` и `scripts/check.mjs`). Внутренние ссылки относительные — сайт работает и в корне домена, и в папке GitHub Pages. Адреса страниц — без `.html`: `https://meatwash.ru/services`, в ссылках `services`, `about#map-…`, главная — `./` (файлы остаются `services.html` и т. д.; на meatwash.ru их отдаёт `.htaccess` хостинга, старые адреса `*.html` переадресуются на новые с кодом 301). Счётчик Метрики принимает данные только с `meatwash.ru` (фильтр в настройках счётчика): на адресе GitHub визиты не считаются.
 
 ## Запуск
 

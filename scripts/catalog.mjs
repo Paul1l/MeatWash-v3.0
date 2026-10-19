@@ -100,7 +100,7 @@ export function renderPreview(){
 ${d.groups.map((group,i)=>{
  const card=PREVIEW[group.id];
  if(!card)throw new Error(`Превью: нет кадра для категории ${group.id}`);
- return `   <a class="card card--${escape(group.id)}" href="services.html#price-${escape(group.id)}"><img src="${shot(card.shot)}" srcset="${shot(card.shot,'s')} 900w, ${shot(card.shot)} 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="${escape(card.alt)}" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>${number(i)}</span><span>${escape(group.title)}</span></span><span class="card__caption">${escape(group.desc)}<b class="card__price">${previewFrom(group)}</b></span></a>`;}).join('\n')}
+ return `   <a class="card card--${escape(group.id)}" href="services#price-${escape(group.id)}"><img src="${shot(card.shot)}" srcset="${shot(card.shot,'s')} 900w, ${shot(card.shot)} 1600w" sizes="(max-width: 900px) 50vw, 25vw" alt="${escape(card.alt)}" width="1600" height="894" loading="lazy" decoding="async"><span class="card__label"><span>${number(i)}</span><span>${escape(group.title)}</span></span><span class="card__caption">${escape(group.desc)}<b class="card__price">${previewFrom(group)}</b></span></a>`;}).join('\n')}
   </div>
   `;
 }

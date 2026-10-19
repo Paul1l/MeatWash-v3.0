@@ -247,7 +247,7 @@ export function setupUI() {
   dialog.addEventListener('close',syncLock,options);
  }
 
- // Прямой заход по адресу с якорем (services.html#price-polish, #programs внутри
+ // Прямой заход по адресу с якорем (services#price-polish, #programs внутри
  // «Мойки»): раскрыть <details> цели и все, в которые она вложена, и встать к ней
  // под шапкой. Браузер сам прокрутил к закрытому блоку до раскрытия; повторяем
  // после шрифтов — они меняют высоту строк.

@@ -20,7 +20,7 @@
     локаций с картами, блок записи `#book`, клубный блок `#membership` (главная и «О нас»), блок `analytics`
     в `<head>` (мета-теги Вебмастера и номера счётчика) — живут в `src/partials/*.html` и вставляются между маркерами
     `<!-- SHARED:<имя>:START/END -->` скриптом `npm run pages` (`scripts/pages.mjs`; там же список,
-    какая часть на какой странице, и подстановки `{{home}}`, `{{locations}}` — `''` на страницах с блоком локаций, `./` на остальных,
+    какая часть на какой странице, и подстановки `{{home}}` — `''` на главной, `./` на остальных, `{{locations}}` — `''` на страницах с блоком локаций, `about` на остальных,
     `{{current:…}}`, `{{loc:<id>:<поле>}}`);
   - каталог на `services.html` (`CATALOG`: переключатели и панели четырёх категорий с подразделами),
     превью на главной (`PREVIEW`: четыре карточки — по одной на категорию)
@@ -287,6 +287,14 @@
   Ссылки внутри сайта — только относительные: сайт работает и в корне домена, и на
   `paul1l.github.io/MeatWash-v3.0/`. Если адрес сменится — менять все. Счётчик Метрики принимает
   данные только с `meatwash.ru`.
+- Адреса страниц — без `.html` (решение 19.10): ссылки `services`, `about#map-…`, `consent-request`,
+  главная — `./`; `canonical`, `og:url`, JSON-LD и `sitemap.xml` — `https://meatwash.ru/services`,
+  главная — `https://meatwash.ru/`. Файлы в `dist` по-прежнему `services.html` и т. д. (`pageSlug`,
+  `pageUrl` в `scripts/pages.mjs`, `pageAddress` в `scripts/content.mjs`). На meatwash.ru `/services`
+  отдаёт `services.html` правило в `.htaccess` хостинга (файла нет в репозитории), старые `*.html` —
+  301 на адрес без расширения; `npm start` (`serve.cjs`) тоже открывает `/services`. `npm run check`
+  падает на ссылке на страницу с `.html` в разметке и в `dist/js`. Файл `yandex_<код>.html` остаётся
+  с расширением.
 - На Windows `core.autocrlf=true`; `.gitattributes` держит текстовые файлы в LF.
 - `stamp-assets.mjs` при публикации ставит `?v=` только к CSS, JS и относительным import (в том
   числе к `import('./porsche3d.bundle.js')`). Пишет всегда в `dist` репозитория — локально запускать

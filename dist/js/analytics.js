@@ -80,7 +80,7 @@ function showBanner(focus) {
     banner.className = 'consent';
     banner.setAttribute('aria-label', 'Согласие на cookie');
     banner.innerHTML = `
-      <p class="consent__text">Мы используем cookie и Яндекс Метрику с Вебвизором, чтобы считать посещения и улучшать сайт. Нажимая «Принять», вы даёте <a href="consent.html">согласие на обработку персональных данных</a>. Подробнее — в <a href="privacy.html">Политике</a>. Без согласия сайт работает полностью.</p>
+      <p class="consent__text">Мы используем cookie и Яндекс Метрику с Вебвизором, чтобы считать посещения и улучшать сайт. Нажимая «Принять», вы даёте <a href="consent">согласие на обработку персональных данных</a>. Подробнее — в <a href="privacy">Политике</a>. Без согласия сайт работает полностью.</p>
       <div class="consent__actions">
         <button class="btn btn--light consent__accept" type="button" data-consent="1">Принять</button>
         <button class="btn btn--ghost consent__decline" type="button" data-consent="0">Отказаться</button>

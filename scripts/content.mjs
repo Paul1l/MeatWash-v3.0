@@ -8,10 +8,12 @@ import {readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {content as d,escape,money} from './catalog.mjs';
 import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
-import {renderPartial,renderPage} from './pages.mjs';
+import {renderPartial,renderPage,pageSlug,pageUrl} from './pages.mjs';
 
 const root=new URL('../',import.meta.url);
 export const SITE='https://meatwash.ru/';
+// Полный адрес страницы для canonical, og:url, JSON-LD и sitemap: https://meatwash.ru/services, главная — https://meatwash.ru/.
+export const pageAddress=file=>SITE+pageSlug(file);
 const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 export const humanDate=iso=>{const [y,m,day]=iso.split('-').map(Number);return `${day} ${MONTHS[m-1]} ${y} г.`;};
 
@@ -63,7 +65,7 @@ const shot=(id,size)=>`assets/shots/${id}${size==='s'?'-s':''}.webp`;
 const json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
 
 function layout(page,{main,jsonLd,ogType='website',ogImage=SITE+'assets/img/og-club.webp'}){
- const url=SITE+page.file;
+ const url=pageAddress(page.file);
  return `<!doctype html>
 <html lang="ru">
 <head>
@@ -114,7 +116,7 @@ ${page.shared.includes('book')?'\n<!-- SHARED:book:START -->\n<!-- SHARED:book:E
 
 const crumbs=(...items)=>({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{name:'MEATWASH',item:SITE},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.name,item:x.item}))});
 const articleCard=(a,minutes)=>`  <article class="article-card">
-    <a class="article-card__link" href="${a.file}">
+    <a class="article-card__link" href="${pageUrl(a.file)}">
       <img class="article-card__img" src="${shot(a.image,'s')}" width="900" height="503" alt="" loading="lazy" decoding="async">
       <span class="article-card__body">
         <span class="article-card__meta"><time datetime="${a.date}">${humanDate(a.date)}</time> · ${minutes} мин чтения</span>
@@ -134,7 +136,7 @@ async function renderSkeleton(page){
   const cards=[];
   for(const a of ARTICLES)cards.push(articleCard(a,readingMinutes(await readBody(a.body))));
   return layout(page,{
-   jsonLd:[crumbs({name:'Статьи',item:SITE+page.file}),{'@context':'https://schema.org','@type':'CollectionPage',name:'Статьи MEATWASH',url:SITE+page.file,hasPart:ARTICLES.map(a=>({'@type':'Article',headline:a.headline,url:SITE+a.file,datePublished:a.date}))}],
+   jsonLd:[crumbs({name:'Статьи',item:pageAddress(page.file)}),{'@context':'https://schema.org','@type':'CollectionPage',name:'Статьи MEATWASH',url:pageAddress(page.file),hasPart:ARTICLES.map(a=>({'@type':'Article',headline:a.headline,url:pageAddress(a.file),datePublished:a.date}))}],
    main:`<section class="page-head articles-head" aria-labelledby="page-title">
   <p class="eyebrow" lang="en">MEATWASH / JOURNAL</p>
   <h1 id="page-title">Статьи</h1>
@@ -150,10 +152,10 @@ ${cards.join('\n')}
   const image=SITE+shot(page.image);
   return layout(page,{
    ogType:'article',ogImage:image,
-   jsonLd:[crumbs({name:'Статьи',item:SITE+'articles.html'},{name:page.headline,item:SITE+page.file}),{'@context':'https://schema.org','@type':'Article',headline:page.headline,description:page.description,image,datePublished:page.date,dateModified:page.date,inLanguage:'ru',mainEntityOfPage:SITE+page.file,author:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE},publisher:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE,logo:{'@type':'ImageObject',url:SITE+'assets/favicon-bull.png'}}}],
+   jsonLd:[crumbs({name:'Статьи',item:pageAddress('articles.html')},{name:page.headline,item:pageAddress(page.file)}),{'@context':'https://schema.org','@type':'Article',headline:page.headline,description:page.description,image,datePublished:page.date,dateModified:page.date,inLanguage:'ru',mainEntityOfPage:pageAddress(page.file),author:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE},publisher:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE,logo:{'@type':'ImageObject',url:SITE+'assets/favicon-bull.png'}}}],
    main:`<article class="article" aria-labelledby="page-title">
   <header class="article__head">
-    <nav class="article__crumbs" aria-label="Навигационная цепочка"><a href="articles.html">Статьи</a> <span aria-hidden="true">/</span></nav>
+    <nav class="article__crumbs" aria-label="Навигационная цепочка"><a href="${pageUrl('articles.html')}">Статьи</a> <span aria-hidden="true">/</span></nav>
     <h1 id="page-title">${escape(page.headline)}</h1>
     <p class="article__lead">${escape(page.lead)}</p>
     <p class="article__meta"><time datetime="${page.date}">${humanDate(page.date)}</time> · ${minutes} мин чтения</p>
@@ -172,13 +174,13 @@ ${body.trim()}
  if(page.kind==='landing'){
   return layout(page,{
    ogImage:page.ogImage?SITE+page.ogImage:undefined,
-   jsonLd:crumbs({name:page.headline,item:SITE+page.file}),
+   jsonLd:crumbs({name:page.headline,item:pageAddress(page.file)}),
    main:await readBody(page.body),
   });
  }
  const body=await readBody(page.body);
  return layout(page,{
-  jsonLd:crumbs({name:page.headline,item:SITE+page.file}),
+  jsonLd:crumbs({name:page.headline,item:pageAddress(page.file)}),
   main:`<article class="doc" aria-labelledby="page-title">
   <h1 id="page-title">${escape(page.headline)}</h1>
 ${body.trim()}
@@ -206,7 +208,7 @@ export function renderSitemap(){
  return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries.map(e=>`  <url>
-    <loc>${SITE}${e.file==='index.html'?'':e.file}</loc>
+    <loc>${pageAddress(e.file)}</loc>
     <lastmod>${e.lastmod}</lastmod>
     <changefreq>${e.changefreq}</changefreq>
     <priority>${e.priority}</priority>
