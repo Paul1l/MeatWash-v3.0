@@ -21,6 +21,7 @@ export function setupShell() {
   const wide = matchMedia('(min-width: 1000px)');
   const panels = [...drawer.querySelectorAll('section.drawer__panel[id]')];
   const items = [...drawer.querySelectorAll('.drawer__panel--root [aria-controls^="drawer-p-"]')];
+  const root = drawer.querySelector('.drawer__panel--root');
   const fallback = `drawer-p-${PANEL_OF_PAGE[document.body.dataset.page] || 'care'}`;
   const byId = (id) => panels.find((p) => p.id === id) || null;
   let current = null;      // открытый раздел (id панели) или null — корень
@@ -35,23 +36,26 @@ export function setupShell() {
   };
   const focus = (el) => el?.focus({ preventScroll: true });
 
+  // Фокус с клавиатуры — на элемент (видна рамка); после мыши — на саму панель
+  // (tabindex=-1, без рамки): Safari иначе рисует рамку на программном фокусе после клика.
   const openPanel = (id, viaKeyboard) => {
     current = id;
     delete drawer.dataset.moved;
     render();
+    const panel = byId(id);
     // Вглубь (телефон, планшет): фокус — на «←», чтение с экрана сразу слышит раздел.
-    if (!wide.matches) focus(byId(id)?.querySelector('[data-drawer-back]'));
-    else if (viaKeyboard) focus(byId(id)?.querySelector('a[href], button:not([hidden])'));
+    if (!wide.matches) focus(viaKeyboard ? panel?.querySelector('[data-drawer-back]') : panel);
+    else if (viaKeyboard) focus(panel?.querySelector('.drawer__body a[href], .drawer__body button'));
   };
-  const back = () => {
+  const back = (viaKeyboard) => {
     const from = current;
     current = null;
     drawer.dataset.moved = '';
     render();
-    focus(items.find((item) => item.getAttribute('aria-controls') === from) || items[0]);
+    focus(viaKeyboard ? items.find((item) => item.getAttribute('aria-controls') === from) || items[0] : root);
   };
 
-  const open = () => {
+  const open = (viaKeyboard) => {
     if (drawer.open) return;
     current = null;
     delete drawer.dataset.moved;
@@ -59,13 +63,13 @@ export function setupShell() {
     render();
     drawer.showModal();
     opener.setAttribute('aria-expanded', 'true');
-    // Первый пункт, а не «×»: с клавиатуры сразу идём по разделам.
-    focus(items[0]);
-    drawer.querySelector('.drawer__panel--root')?.scrollTo(0, 0);
+    // С клавиатуры — первый пункт, а не «×»: сразу идём по разделам. Мышью — корень шторки.
+    focus(viaKeyboard ? items[0] : root);
+    root?.scrollTo(0, 0);
   };
   const close = () => { if (drawer.open) drawer.close(); };
 
-  opener.addEventListener('click', open);
+  opener.addEventListener('click', (e) => open(e.detail === 0));
 
   drawer.addEventListener('close', () => {
     opener.setAttribute('aria-expanded', 'false');
@@ -104,7 +108,7 @@ export function setupShell() {
     if (downOutside && outside(e)) return close();
     const item = e.target.closest('button[aria-controls^="drawer-p-"]');
     if (item) return openPanel(item.getAttribute('aria-controls'), e.detail === 0);
-    if (e.target.closest('[data-drawer-back]')) return back();
+    if (e.target.closest('[data-drawer-back]')) return back(e.detail === 0);
     if (e.target.closest('[data-drawer-close]')) return close();
   });
 
@@ -120,7 +124,7 @@ export function setupShell() {
       focus(list[(i + (e.key === 'ArrowDown' ? 1 : list.length - 1)) % list.length]);
       return;
     }
-    if (e.key === 'ArrowLeft' && current && !wide.matches && byId(current)?.contains(e.target)) { e.preventDefault(); back(); }
+    if (e.key === 'ArrowLeft' && current && !wide.matches && byId(current)?.contains(e.target)) { e.preventDefault(); back(true); }
   });
 
   // Повернули планшет или растянули окно: раскладка панелей пересчитывается.

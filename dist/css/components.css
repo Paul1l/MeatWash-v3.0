@@ -160,7 +160,7 @@
 .anchor-tabs__track::-webkit-scrollbar { display: none; }
 .anchor-tabs__track > a, .anchor-tabs__tab {
   flex: none;
-  display: inline-flex; align-items: center;
+  display: block;
   min-height: 36px; padding: 6px 16px;
   border-radius: var(--r-xs);
   color: var(--on-muted); font: 400 var(--fs-base)/24px var(--sans); white-space: nowrap; text-decoration: none;
@@ -196,10 +196,10 @@
 .segmented > label { position: relative; display: block; cursor: pointer; }
 .segmented > label > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
 .segmented > label > span {
-  display: inline-flex; align-items: center; justify-content: center;
+  display: block;
   min-height: 36px; padding: 6px 16px;
   border-radius: var(--r-xs);
-  color: var(--on-muted); white-space: nowrap;
+  color: var(--on-muted); line-height: 24px; text-align: center; white-space: nowrap;
   transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
 }
 .segmented > label:hover > span { color: var(--on); background-color: var(--frost); }
@@ -395,7 +395,7 @@ a.card:hover, .card--link:hover { transform: scale(1.008); background-color: var
 .photo-card::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, var(--fade)) bottom / 100% 70% no-repeat; }
 .photo-card > h2, .photo-card > h3, .photo-card__title { font-size: var(--fs-xl); font-weight: 400; line-height: 1.31; letter-spacing: -.01em; }
 .photo-card > p { max-width: 48ch; opacity: .86; }
-.photo-card > .chips { order: -1; margin-bottom: auto; }
+.photo-card > .chips { position: absolute; top: var(--md); left: var(--md); right: var(--md); }
 a.photo-card:hover .photo-card__img { transform: scale(1.03); }
 a.photo-card:focus-visible { outline-offset: 4px; }
 @media (min-width: 760px) {
@@ -476,6 +476,7 @@ a.mosaic__item:hover img { transform: scale(1.03); }
 }
 .mosaic__open:hover { background: var(--red-ink); }
 .mosaic--bleed { border-radius: 0; }
+.mosaic--three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (min-width: 760px) {
   .mosaic { grid-template-columns: 2fr 1fr 1fr; grid-template-rows: repeat(2, minmax(0, 1fr)); aspect-ratio: 1436 / 541; }
   .mosaic__item img, .mosaic__item:first-child img { aspect-ratio: auto; }
@@ -515,7 +516,7 @@ a.mosaic__item:hover img { transform: scale(1.03); }
 @media (min-width: 760px) { .strip { grid-auto-columns: 78%; } .strip--tall { grid-auto-columns: 46%; } }
 
 /* ── Цифры (P07) и плитки-цифры (P20): только подтверждённые числа ─────────── */
-.counters { display: grid; gap: var(--lg) var(--md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
+.counters { display: grid; gap: var(--lg) var(--md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
 .counter { display: grid; align-content: start; gap: 6px; }
 .counter__value { font-size: var(--fs-4xl); font-weight: 300; line-height: 1.05; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
 .counter__unit { margin-left: .12em; font-size: var(--fs-lg); font-weight: 400; letter-spacing: 0; }
@@ -541,15 +542,17 @@ a.mosaic__item:hover img { transform: scale(1.03); }
 /* ── Ссылки-строки (P22): 76, фон --surface, радиус 6, «›» справа ────────── */
 .link-rows { display: grid; gap: 8px; }
 .link-rows a {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  min-height: 76px; padding: 16px 16px 16px 24px;
+  /* Блок, не flex: подпись со вложенными span остаётся одной строкой текста. */
+  position: relative; display: block;
+  min-height: 76px; padding: 26px 56px 26px 24px;
   border-radius: var(--r-2xs);
   background: var(--surface); color: var(--on);
-  font-weight: 600; text-decoration: none;
+  font-weight: 600; line-height: 24px; text-decoration: none;
   transition: background-color var(--t-fast) var(--ease);
 }
 .link-rows a::after {
-  content: ""; flex: none; width: 24px; height: 24px; background: currentColor;
+  content: ""; position: absolute; right: 16px; top: 50%; margin-top: -12px;
+  width: 24px; height: 24px; background: currentColor;
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.5 6l6 6-6 6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 24px no-repeat;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.5 6l6 6-6 6' fill='none' stroke='%23000' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 24px no-repeat;
   transition: transform .4s var(--ease);
