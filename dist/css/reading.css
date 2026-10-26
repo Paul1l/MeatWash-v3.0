@@ -181,7 +181,7 @@
 }
 @media (min-width: 1100px) {
   .article-card--l { aspect-ratio: auto; height: clamp(480px, 46vw, 800px); max-height: 82vh; min-height: 480px; }
-  .article-card--l::after { height: 64%; }
+  .article-card--l::after { height: 82%; }
   .article-card--l .article-card__body { width: min(100%, 52rem); }
 }
 .articles__grid { display: grid; gap: var(--md); margin-top: var(--md); }
