@@ -14,7 +14,7 @@
   <div class="hero-a__body">
     <h1 id="page-title">Мойка и детейлинг</h1>
     <p class="hero-a__lead">Четыре раздела: мойка, детейлинг, защита и помощь. Мойку запишем онлайн в выбранную студию, цену остальных работ назовёт администратор.</p>
-    <div class="hero-a__actions">
+    <div class="hero-a__actions actions">
       <button class="btn btn--primary" type="button" data-book>Записаться</button>
       <a class="btn btn--secondary" href="#catalog">Смотреть цены</a>
     </div>
@@ -28,7 +28,7 @@
     <h2 id="proof-title">Разницу видно, если её показать</h2>
     <p class="section-head__lead">Потяните шторку: слева деталь до работы, справа — после. Ракурс и свет одинаковые, меняется только состояние детали.</p>
   </header>
-  <div class="proof__grid col-ext">
+  <div class="ba-grid col-ext proof__grid">
     <figure class="ba proof__item" data-ba>
       <div class="ba__frame">
         <img class="ba__img" src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Фара после полировки: стекло прозрачное, виден отражатель" width="1600" height="900" loading="lazy" decoding="async">
@@ -40,8 +40,8 @@
         <span class="ba__tag ba__tag--a" aria-hidden="true">после</span>
       </div>
       <figcaption class="ba__cap">
-        <span class="ba__title">Полировка фар — {{price:Полировка фар}}</span>
-        <span class="ba__text">Мутный рассеиватель снова прозрачный: свет идёт на дорогу, а не рассеивается в пластике.</span>
+        <b>Полировка фар — {{price:Полировка фар}}</b>
+        <i>Мутный рассеиватель снова прозрачный: свет идёт на дорогу, а не рассеивается в пластике.</i>
         <span class="ba__note">Иллюстрация, не работа студии</span>
       </figcaption>
       <button class="link-arrow proof__ask" type="button" data-request data-request-category="protection" data-request-services="Полировка фар">Узнать цену<span class="sr">: полировка фар</span>{{icon:arrow-right}}</button>
@@ -57,8 +57,8 @@
         <span class="ba__tag ba__tag--a" aria-hidden="true">после</span>
       </div>
       <figcaption class="ba__cap">
-        <span class="ba__title">Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}</span>
-        <span class="ba__text">Отражение лампы идёт по крылу без разрыва — скол не читается ни под каким углом.</span>
+        <b>Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}</b>
+        <i>Отражение лампы идёт по крылу без разрыва — скол не читается ни под каким углом.</i>
         <span class="ba__note">Иллюстрация, не работа студии</span>
       </figcaption>
       <button class="link-arrow proof__ask" type="button" data-request data-request-category="help" data-request-services="Удаление сколов и подкраска">Узнать цену<span class="sr">: удаление сколов и подкраска</span>{{icon:arrow-right}}</button>
@@ -96,15 +96,15 @@
     <span class="teaser__body">
       <span class="teaser__title">Оклейка полиуретаном</span>
       <span class="teaser__text">Прозрачная или цветная плёнка — в Технопарке.</span>
-      <span class="teaser__cta">Подробнее{{icon:arrow-right}}</span>
+      <span class="teaser__cta">Подробнее{{icon:cta-arrow}}</span>
     </span>
   </a>
   <a class="teaser" href="works">
-    <img class="teaser__media" src="assets/img/services/works-interior-983.webp" srcset="assets/img/services/works-interior-640.webp 640w, assets/img/services/works-interior-983.webp 983w" sizes="(max-width: 899px) 100vw, 40vw" width="983" height="737" alt="" loading="lazy" decoding="async">
+    <img class="teaser__img" src="assets/img/services/works-interior-983.webp" srcset="assets/img/services/works-interior-640.webp 640w, assets/img/services/works-interior-983.webp 983w" sizes="(max-width: 899px) 100vw, 40vw" width="983" height="737" alt="" loading="lazy" decoding="async">
     <span class="teaser__body">
       <span class="teaser__title">Наши работы</span>
       <span class="teaser__text">Lotus Eletre R перед продажей, BMW M4 в цветной плёнке, химчистка и полировка.</span>
-      <span class="teaser__cta">Смотреть{{icon:arrow-right}}</span>
+      <span class="teaser__cta">Смотреть{{icon:cta-arrow}}</span>
     </span>
   </a>
 </nav>

@@ -5,7 +5,7 @@
      о правах (поправка 10). Оклеивают только в Технопарке — финальный блок со звонком туда,
      общего блока записи на мойку здесь нет. Надзаголовков и нумерации шагов нет (решение Влада). -->
 <section class="hero-c wrap-hero" aria-labelledby="page-title" data-page-bar-after>
-  <a class="back-link" href="services">{{icon:chevron-left}}Мойка и детейлинг</a>
+  <a class="back-link" href="services">{{icon:chevron-left}}<span>Мойка и детейлинг</span></a>
   <p class="hero-c__mark" aria-hidden="true" lang="en">PPF</p>
   <fieldset class="segmented wrap-hero__kind">
     <legend class="sr">Плёнка</legend>
@@ -14,15 +14,15 @@
   </fieldset>
   <h1 id="page-title">Оклейка полиуретаном</h1>
   <p class="chip wrap-hero__where">Только в Технопарке</p>
-  <div class="wrap-hero__lines" aria-live="polite">
+  <div class="hero-c__lead wrap-hero__lines" aria-live="polite">
     <p class="wrap-hero__line" data-kind="clear">Машина остаётся в заводском цвете, а лак — под защитой от сколов, песка и реагентов.</p>
     <p class="wrap-hero__line" data-kind="color">Новый цвет машины и та же защита: заводской лак остаётся под плёнкой.</p>
   </div>
   <p class="hero-c__price">Фары — {{price:Оклейка фар плёнкой}} · зоны риска и весь кузов — после осмотра</p>
-  <div class="hero-c__actions">
+  <div class="hero-c__actions actions">
     <button class="btn btn--primary" type="button" data-request data-request-category="protection" data-request-services="Оклейка плёнкой">Узнать цену</button>
     <a class="btn btn--secondary" href="tel:{{loc:technopark:tel}}">Позвонить в Технопарк</a>
-    <a class="btn btn--secondary" href="works">Наши работы</a>
+    <a class="btn btn--ghost" href="works">Наши работы</a>
   </div>
 </section>
 
@@ -40,7 +40,7 @@
     <h2 id="wrap-kind-title">Прозрачная или цветная</h2>
     <p class="section-head__lead">Полиуретан — прочная защитная плёнка, прозрачная или цветная. Прозрачная бережёт заводской лак от сколов, песка и реагентов. Цветная ещё и меняет цвет машины. Премиальные материалы и гарантия качества.</p>
   </header>
-  <div class="wrap-kinds col-basic">
+  <div class="cards cards--3 col-basic wrap-kinds">
     <article class="card wrap-kinds__item">
       <h3>Прозрачная плёнка</h3>
       <p>Машина остаётся в заводском цвете, а лак — под защитой от сколов, царапин и реагентов.</p>
@@ -63,7 +63,8 @@
     <h2 id="wrap-prices-title">Что оклеиваем</h2>
     <p class="section-head__lead">Цену для вашей машины назовёт администратор Технопарка.</p>
   </header>
-  <ul class="wrap-prices col-basic" role="list">
+  <div class="col-basic">
+  <ul class="cards wrap-prices" role="list">
     <li class="card wrap-price">
       <h3 class="wrap-price__name">Зоны риска</h3>
       <p>Капот, фары, бампер и пороги — сюда первыми летят камни и реагенты.</p>
@@ -89,37 +90,42 @@
       <button class="btn btn--secondary btn--compact" type="button" data-request data-request-category="protection" data-request-services="Бронирование лобового стекла">Узнать цену<span class="sr">: лобовое стекло</span></button>
     </li>
   </ul>
+  </div>
 </section>
 
 <section class="section" id="wrap-steps" aria-labelledby="wrap-steps-title">
   <header class="section-head">
     <h2 id="wrap-steps-title">Как проходит оклейка</h2>
   </header>
-  <ol class="steps col-basic">
-    <li class="steps__item card--outline">
+  <div class="col-basic">
+  <ol class="steps">
+    <li class="steps__item">
       <h3>Расчёт</h3>
       <p>Позвоните в Технопарк — администратор подскажет цену для вашей машины. Стоимость зон риска и всего кузова называем после осмотра.</p>
     </li>
-    <li class="steps__item card--outline">
+    <li class="steps__item">
       <h3>Подготовка</h3>
       <p>Моем и обезжириваем кузов. Если нужно — полируем перед плёнкой.</p>
     </li>
-    <li class="steps__item card--outline">
+    <li class="steps__item">
       <h3>Оклейка и выдача</h3>
       <p>Оклеиваем в студии и вместе с вами проверяем результат перед выдачей.</p>
     </li>
   </ol>
+  </div>
 </section>
 
 <section class="section section--tight wrap-more" aria-labelledby="wrap-more-title">
   <h2 class="sr" id="wrap-more-title">Ещё по теме</h2>
-  <ul class="link-rows col-title" role="list">
-    <li><a href="works#works-m4">Работа студии: BMW M4 в цветной плёнке{{icon:chevron-right}}</a></li>
-    <li><a href="services#price-protection">Все работы по защите кузова и цены{{icon:chevron-right}}</a></li>
+  <div class="col-title">
+  <ul class="link-rows" role="list">
+    <li><a href="works#works-m4">Работа студии: BMW M4 в цветной плёнке</a></li>
+    <li><a href="services#price-protection">Все работы по защите кузова и цены</a></li>
   </ul>
+  </div>
 </section>
 
-<section class="promo promo--solo col-ext" id="wrap-call" aria-labelledby="wrap-call-title">
+<section class="promo col-ext" id="wrap-call" aria-labelledby="wrap-call-title">
   <div class="promo__panel wrap-call">
     <div class="wrap-call__head">
       <h2 id="wrap-call-title">Узнать цену оклейки</h2>
