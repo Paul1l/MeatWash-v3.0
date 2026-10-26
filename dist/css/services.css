@@ -30,6 +30,11 @@ html:has(body[data-page="wrap"]) { scroll-padding-top: 76px; }
    ========================================================================== */
 body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
 
+/* Фото-обложки: заполняют рамку компонента (base.css даёт img height: auto). */
+:is(.hero-a__media, .promo__media, .mosaic figure, .zigzag__row figure) img, .teaser__media {
+  width: 100%; height: 100%; object-fit: cover;
+}
+
 /* ==========================================================================
    Каталог (§4.3)
    ========================================================================== */
@@ -143,9 +148,14 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
 .catalog__section--programs > * { margin-inline: var(--basic); }
 .catalog__section--programs > .programs { margin-inline: 0; }
 
-/* Кузов: переключатель (вид — .segmented, WP1) и строка о выбранных ценах. */
+/* Кузов: переключатель (вид — .segmented, WP1) и строка о выбранных ценах. На узком
+   экране четыре варианта не встают в ряд — сетка 2×2 на всю ширину колонки. */
 .body-types { margin-top: 0; margin-bottom: 0; }
-.catalog__selection { margin: 10px 0 0; font-size: 14px; color: var(--on-muted); }
+@media (max-width: 559px) {
+  .body-types.segmented { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .body-types.segmented span { text-align: center; }
+}
+.catalog__selection { margin-top: 10px; margin-bottom: 0; font-size: 14px; color: var(--on-muted); }
 
 /* Карточки программ (P02): пять в ряд по колонке wide от 1200 px, ниже — лента
    с прилипанием (кнопки внутри — фокус доходит с клавиатуры, лента прокручивается). */
@@ -187,6 +197,13 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
   transform: rotate(-45deg) translateY(-50%);
 }
 .program-card__book { width: 100%; }
+/* От 1200 px — общие строки у всех пяти карточек (subgrid): названия, цены, кнопки на одной линии. */
+@media (min-width: 1200px) {
+  .programs { row-gap: 0; }
+  .program-card { display: grid; grid-row: span 6; grid-template-rows: subgrid; row-gap: 12px; }
+  .program-card__name { min-height: 0; }
+  .program-card__includes { margin-top: 0; align-self: end; }
+}
 @media (max-width: 1199px) {
   .programs {
     display: flex; gap: var(--sm);
@@ -224,6 +241,7 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
 .compare:has([data-compare-only]:checked) tr[data-same] { display: none; }
 
 .compare__scroll {
+  position: relative; /* скрытые подписи (.sr, position: absolute) — внутри ленты, а не по странице */
   margin-top: var(--md);
   overflow-x: auto; overscroll-behavior-x: contain;
   scrollbar-width: thin; scrollbar-color: rgb(var(--fg-rgb) / .24) transparent;
@@ -244,11 +262,11 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
   vertical-align: bottom; padding-top: 0;
   font-size: 14px; font-weight: 600; line-height: 1.35;
   border-bottom-color: rgb(var(--on-rgb) / .3);
-  width: 15%;
+  width: 13.8%;
 }
 .compare__table th[scope="row"] {
   position: sticky; left: 0; z-index: 1;
-  width: 25%; padding-left: 0;
+  width: 31%; padding-left: 0;
   text-align: left; font-weight: 400;
   background: var(--page);
 }
@@ -354,7 +372,6 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
   font-size: var(--fs-xl); font-weight: 300; line-height: 1.31; letter-spacing: -.01em;
   color: var(--on); font-variant-numeric: tabular-nums;
 }
-.wrap-price__value::first-letter { text-transform: uppercase; }
 .wrap-price .btn { align-self: flex-start; min-height: 44px; padding: 10px 20px; }
 @media (max-width: 759px) { .wrap-prices { grid-template-columns: minmax(0, 1fr); } }
 
@@ -405,6 +422,11 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
 .works-m4__todo { margin: 0; max-width: 26ch; text-align: center; line-height: 1.6; }
 .works-m4__links { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm) var(--md); margin-top: var(--md); }
 
+/* «Оклейка» на телефоне: в панели страницы — только «Узнать цену»; позвонить — нижняя кнопка. */
+@media (max-width: 759px) {
+  body[data-page="wrap"] .page-bar__actions .btn--secondary { display: none; }
+}
+
 .works-ask { margin: var(--lg) 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: var(--fs-md); }
 
 
@@ -451,7 +473,7 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
     padding: calc(var(--header-h) + var(--lg)) var(--ext) var(--lg);
     background: var(--bg); color: var(--fg);
   }
-  @media (min-width: 760px) { .hero-a { min-height: calc(100vw * 9 / 21); } }
+  @media (min-width: 760px) { .hero-a { min-height: max(calc(100vw * 9 / 21), 32rem); } }
   .hero-a__media { position: absolute; inset: 0; z-index: -2; }
   .hero-a__media img { width: 100%; height: 100%; object-fit: cover; }
   .hero-a::before { content: ''; position: absolute; inset: 0 0 auto; z-index: -1; height: 148px; background: linear-gradient(180deg, var(--fade)); opacity: .9; }
@@ -459,7 +481,18 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
   .hero-a__body { display: grid; gap: var(--sm); max-width: 40rem; }
   .hero-a__lead { font-size: var(--fs-md); line-height: 1.42; max-width: 36rem; }
   .hero-a__actions { display: flex; flex-wrap: wrap; gap: var(--sm); margin-top: var(--xs); }
-  @media (max-width: 759px) { .hero-a__actions .btn { flex: 1 1 100%; } }
+  /* Телефон: фото 1:1, заголовок внизу на фото (P04 A, 390), лид и кнопки — под фото. */
+  @media (max-width: 759px) {
+    .hero-a { min-height: 0; padding: 0; grid-template-columns: var(--ext) minmax(0, 1fr) var(--ext); align-content: start; }
+    .hero-a { --hero-photo: min(100vw, max(78svh, 18rem)); }
+    .hero-a__media { position: relative; inset: auto; grid-column: 1 / -1; grid-row: 1; height: var(--hero-photo); }
+    .hero-a::after { inset: 0 0 auto; height: var(--hero-photo); background: linear-gradient(0deg, var(--bg), rgb(8 8 8 / 0) 24%), linear-gradient(0deg, var(--fade)); }
+    .hero-a__body { display: contents; }
+    .hero-a h1 { grid-column: 2; grid-row: 1; align-self: end; padding-bottom: var(--md); }
+    .hero-a__lead { grid-column: 2; }
+    .hero-a__actions { grid-column: 2; margin-top: var(--md); padding-bottom: var(--lg); }
+    .hero-a__actions .btn { flex: 1 1 100%; }
+  }
 
   /* Герой C — интро модели без фото: водяной знак, переключатель, H1, чип, цена, кнопки. */
   .hero-c {
@@ -549,7 +582,7 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
     border-radius: var(--r-xl); color: var(--fg); text-decoration: none;
   }
   .teaser__media { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; transition: transform var(--t-fast) var(--ease); }
-  .teaser:has(.teaser__media)::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgb(8 8 8 / .78), rgb(8 8 8 / .1) 75%); }
+  .teaser:has(.teaser__media)::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgb(8 8 8 / .8), rgb(8 8 8 / 0) 70%), linear-gradient(90deg, rgb(8 8 8 / .7), rgb(8 8 8 / 0) 70%); }
   @media (hover: hover) and (prefers-reduced-motion: no-preference) { .teaser:hover .teaser__media { transform: scale(1.03); } }
   .teaser__body { position: relative; z-index: 1; display: grid; gap: 8px; justify-items: start; max-width: 60%; padding: var(--lg); }
   .teaser__title { font-size: var(--fs-xl); font-weight: 400; line-height: 1.31; letter-spacing: -.01em; }
@@ -559,7 +592,7 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
   @media (max-width: 899px) {
     .teasers { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--xl); }
     .teasers--skewed > :nth-child(2n) { transform: none; }
-    .teaser { aspect-ratio: 4 / 3; }
+    .teaser { aspect-ratio: auto; min-height: 20rem; }
     .teaser__body { max-width: none; padding: var(--md); }
   }
 

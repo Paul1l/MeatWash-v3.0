@@ -1,4 +1,4 @@
-// Каталог на services.html (разметку собирает scripts/catalog.mjs):
+// Каталог на services.html (разметку собирает scripts/catalog.mjs, контракт §4.3 плана):
 // - четыре категории — вкладки WAI-ARIA (tablist/tab/tabpanel, стрелки, Home/End,
 //   roving tabindex). Без JS переключатели — ссылки, панели идут подряд: прячет их
 //   только этот модуль. Якоря (#price-film, #program-2, #price-help…) открывают
@@ -169,10 +169,26 @@ function setupBody(signal) {
   if (saved) render(saved);
 }
 
+// Сравнение программ (P04) на телефоне шире окна и листается вбок: тогда лента получает
+// tabindex="0" (листать с клавиатуры). Когда таблица помещается — убираем, чтобы
+// не было пустой остановки Tab (WP3, 27.10).
+function setupScrollRegions(signal) {
+  const regions = [...document.querySelectorAll('[data-scroll-region]')];
+  if (!regions.length || !('ResizeObserver' in window)) return;
+  const sync = (el) => {
+    if (el.scrollWidth > el.clientWidth + 1) el.setAttribute('tabindex', '0');
+    else if (document.activeElement !== el) el.removeAttribute('tabindex');
+  };
+  const observer = new ResizeObserver((entries) => entries.forEach((entry) => sync(entry.target)));
+  regions.forEach((el) => { sync(el); observer.observe(el); });
+  signal.addEventListener('abort', () => observer.disconnect());
+}
+
 export function setupCatalog() {
   const abort = new AbortController();
   setupTabs(abort.signal);
   setupBody(abort.signal);
+  setupScrollRegions(abort.signal);
   markOnSite();
   return () => abort.abort();
 }
