@@ -54,7 +54,7 @@ function card(car, index) {
       <ul class="strip${car.tall ? ' strip--tall' : ''}" tabindex="0" aria-label="Фотографии ${escape(car.title)} (${car.photos.length})">
         ${strip}
       </ul>
-      <span class="chip car-card__count" aria-hidden="true">${car.photos.length} фото</span>
+      <span class="chip chip--photo car-card__count" aria-hidden="true">${car.photos.length} фото</span>
     </div>
     <div class="car-card__body">
       <div class="car-card__head">
@@ -81,7 +81,7 @@ ${car.prepared ? `        <p class="car-card__prep"><b>Подготовили в
 export const renderSale = () => cars.forSale.map(card).join('\n');
 
 export function renderSold() {
-  return cars.sold.map((car) => `<li class="sold-card"><img src="${escape(car.src)}" width="${car.w}" height="${car.h}" alt="${escape(car.alt)}" loading="lazy" decoding="async"><h3 class="sold-card__name">${modelName(car.title)}</h3><span class="chip">Продан</span></li>`).join('\n');
+  return cars.sold.map((car) => `<li class="sold-card"><img src="${escape(car.src)}" width="${car.w}" height="${car.h}" alt="${escape(car.alt)}" loading="lazy" decoding="async"><h3 class="sold-card__name">${modelName(car.title)}</h3><span class="chip chip--photo">Продан</span></li>`).join('\n');
 }
 
 export const renderCarsDate = () => longDate(cars.pricesDate);
