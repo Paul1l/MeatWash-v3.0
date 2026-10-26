@@ -1,2 +1,336 @@
-/* reading.css — список статей, статья (содержание, липкий столбец, «Коротко»), документы (P30).
-   Владелец: WP2. Заготовка WP0 — пустая. */
+/* ==========================================================================
+   reading.css — страницы для чтения на «бумаге» (план §3.8–3.9, решение Влада 27.10):
+   список статей (P27 + P13), статья (P28: содержание, липкий столбец, «Коротко»),
+   документы (P30). Владелец: WP2. Разметку даёт scripts/reading.mjs.
+   Тема — data-theme="paper" на <html> (tokens.css): слоновая кость, текст --ink,
+   цвета компонентов — только из --on*. Шапка и подвал — shell.css (WP1).
+   Общие компоненты (hero-d, back-link, link-arrow, promo) WP1 стилизует в components.css;
+   здесь для них только запасной вид в :where() — нулевая специфичность, поэтому вид
+   WP1 всегда сильнее, а страница читается и до его сдачи.
+   ========================================================================== */
+
+/* ---------- Запасной вид общих компонентов (уступает components.css) ---------- */
+:where(.back-link) {
+  display: inline-flex; align-items: center; gap: 2px;
+  min-height: 44px; margin-left: -6px; padding-right: 6px;
+  font: 400 var(--fs-base)/1.5 var(--sans);
+  color: var(--on);
+  text-decoration: none;
+  transition: color var(--t-fast) var(--ease);
+}
+:where(.back-link) .icon { width: 20px; height: 20px; }
+:where(.back-link):hover { color: var(--on-red); }
+
+:where(.link-arrow) {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px;
+  font: 500 var(--fs-base)/1.5 var(--sans);
+  color: var(--on);
+  text-decoration: underline;
+  text-decoration-color: var(--on-line);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
+  transition: text-decoration-color var(--t-fast) var(--ease);
+}
+:where(.link-arrow) .icon { width: 20px; height: 20px; transition: transform .4s var(--ease-out); }
+:where(.link-arrow):hover { text-decoration-color: var(--on-red); }
+:where(.link-arrow):hover .icon { transform: translateX(3px); }
+
+:where(.hero-d) {
+  padding-block: var(--xl) var(--lg);
+  background: var(--surface);
+}
+:where(.hero-d) h1 {
+  margin: 0;
+  font: 300 var(--fs-2xl)/1.26 var(--sans);
+  letter-spacing: -.02em;
+}
+:where(.hero-d__lead) {
+  max-width: 34em;
+  margin: var(--sm) 0 0;
+  font: 400 var(--fs-lg)/1.36 var(--sans);
+  color: var(--on-muted);
+  text-wrap: pretty;
+}
+
+/* Промо P11: фото и панель бордо со слоновой костью. На бордо фокус — слоновой костью
+   (красный там 2,89:1, поправка 19). */
+:where(.promo) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 0;
+}
+:where(.promo__media) { position: relative; min-height: 240px; overflow: hidden; border-radius: var(--r-lg) var(--r-lg) 0 0; background: var(--ink); }
+:where(.promo__media) img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+:where(.promo__panel) {
+  --on: var(--fg); --on-rgb: var(--fg-rgb); --on-muted: rgb(var(--fg-rgb) / .78);
+  --on-line: rgb(var(--fg-rgb) / .32); --on-red: var(--fg); --focus: var(--fg);
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: var(--lg) var(--md);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  background: var(--oxblood);
+  color: var(--on);
+}
+:where(.promo__panel) h2 { margin: 0; font: 400 var(--fs-xl)/1.31 var(--sans); letter-spacing: -.01em; text-wrap: balance; }
+:where(.promo__panel) p { margin: var(--sm) 0 0; max-width: 34em; font: 400 var(--fs-base)/1.6 var(--sans); color: var(--on-muted); text-wrap: pretty; }
+:where(.promo__actions) { display: flex; flex-wrap: wrap; align-items: center; gap: var(--xs) var(--md); margin-top: var(--md); }
+@media (min-width: 760px) {
+  :where(.promo) { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
+  :where(.promo__media) { min-height: 0; border-radius: var(--r-lg) 0 0 var(--r-lg); }
+  :where(.promo__panel) { padding: var(--lg); border-radius: 0 var(--r-lg) var(--r-lg) 0; }
+}
+
+/* ---------- Общее для текста на «бумаге» ---------- */
+.article__body, .doc__body {
+  font: 400 var(--fs-base)/1.65 var(--sans);
+  color: var(--on);
+  font-variant-numeric: lining-nums;
+  hyphens: manual;
+}
+@media (min-width: 760px) {
+  .article__body, .doc__body { font-size: 1.0625rem; }
+}
+:is(.article__body, .doc__body) > * { margin-block: 0; }
+:is(.article__body, .doc__body) > * + * { margin-top: 1em; }
+:is(.article__body, .doc__body) p { text-wrap: pretty; }
+:is(.article__body, .doc__body) strong { font-weight: 600; }
+:is(.article__body, .doc__body) a:not(.btn):not(.link-arrow) {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--on-rgb) / .35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+  transition: text-decoration-color var(--t-fast) var(--ease);
+}
+:is(.article__body, .doc__body) a:not(.btn):not(.link-arrow):hover { text-decoration-color: var(--on-red); }
+/* Списки: вместо точки — короткая красная линия (красный — линии и акценты, §2.1). */
+:is(.article__body, .doc__body) ul,
+:is(.article__body, .doc__body) ol { padding: 0; list-style: none; }
+:is(.article__body, .doc__body) li { position: relative; padding-left: 1.5em; }
+:is(.article__body, .doc__body) li + li { margin-top: .55em; }
+:is(.article__body, .doc__body) ul > li::before {
+  content: ""; position: absolute; left: 0; top: calc(.82em - .75px);
+  width: .75em; height: 1.5px;
+  background: var(--on-red);
+}
+:is(.article__body, .doc__body) :is(h2, h3) { scroll-margin-top: var(--lg); }
+
+/* ---------- Список статей (P27, первая — P13 размер L) ---------- */
+.reading-hero { padding-top: var(--xl); }
+.articles { padding-block: var(--lg) var(--xl); }
+.article-card {
+  position: relative;
+  isolation: isolate;
+  display: flex; align-items: flex-end;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--ink);
+  color: var(--fg);
+}
+.article-card > img {
+  position: absolute; inset: 0; z-index: -2;
+  width: 100%; height: 100%; max-width: none;
+  object-fit: cover; object-position: 38% 62%;
+  transition: transform .8s var(--ease-out);
+}
+.article-card::after {
+  content: ""; position: absolute; inset: auto 0 0; z-index: -1;
+  height: 78%;
+  background: linear-gradient(0deg, var(--fade));
+  pointer-events: none;
+}
+.article-card:hover > img { transform: scale(1.03); }
+.article-card__body {
+  --on: var(--fg); --on-rgb: var(--fg-rgb); --focus: var(--fg);
+  display: grid; justify-items: start; gap: var(--sm);
+  width: 100%;
+  padding: var(--xl) var(--md) var(--md);
+}
+.article-card__meta { margin: 0; font: 400 var(--fs-sm)/1.55 var(--sans); color: rgb(var(--fg-rgb) / .82); }
+.article-card__title { margin: 0; max-width: 22em; font: 400 var(--fs-xl)/1.25 var(--sans); letter-spacing: -.015em; text-wrap: balance; }
+.article-card__link { color: inherit; text-decoration: none; }
+/* Вся карточка — одна ссылка: заголовок растянут на неё. */
+.article-card__link::after { content: ""; position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
+.article-card__link:focus-visible { outline: none; }
+.article-card:has(.article-card__link:focus-visible) { outline: 2px solid var(--focus); outline-offset: 4px; }
+.article-card__lead {
+  margin: 0; max-width: 40em;
+  font: 400 var(--fs-base)/1.55 var(--sans);
+  color: rgb(var(--fg-rgb) / .86);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden;
+}
+.article-card__more {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-top: var(--xs);
+  padding: 6px 10px 6px 16px;
+  border-radius: var(--r-xs);
+  font: 500 15px/24px var(--sans);
+  background: var(--frost-strong);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  transition: background-color .35s var(--ease);
+}
+.article-card__more .icon { width: 22px; height: 22px; transition: transform .6s var(--expo); }
+.article-card:hover .article-card__more { background-color: var(--red); }
+.article-card:hover .article-card__more .icon { transform: translateX(3px); }
+@media (min-width: 760px) {
+  .article-card--l { aspect-ratio: 3 / 2; }
+  .article-card__body { padding: var(--xl) var(--lg) var(--lg); }
+}
+@media (min-width: 1100px) {
+  .article-card--l { aspect-ratio: auto; height: clamp(480px, 46vw, 800px); max-height: 82vh; min-height: 480px; }
+  .article-card--l::after { height: 64%; }
+  .article-card--l .article-card__body { width: min(100%, 52rem); }
+}
+.articles__grid { display: grid; gap: var(--md); margin-top: var(--md); }
+@media (min-width: 760px) { .articles__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .articles__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* ---------- Статья (P28) ---------- */
+.article { padding-bottom: var(--xl); }
+.article__head { padding: var(--lg) var(--narrow) 0; }
+.article__head h1 {
+  margin: var(--sm) 0 0;
+  font: 300 var(--fs-2xl)/1.2 var(--sans);
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+.article__lead {
+  margin: var(--md) 0 0;
+  font: 400 var(--fs-md)/1.5 var(--sans);
+  text-wrap: pretty;
+}
+.article__meta { margin: var(--sm) 0 0; font: 400 var(--fs-sm)/1.55 var(--sans); color: var(--on-muted); }
+.article__hero { margin: var(--lg) 0 0; padding-inline: var(--basic); }
+.article__hero img {
+  display: block;
+  width: 100%; height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover; object-position: 40% 60%;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.article__layout { margin-top: var(--lg); }
+.article__body { padding-inline: var(--narrow); }
+
+/* Содержание: на телефоне и планшете — блоком над текстом; от 1100 px — липкий столбец справа. */
+.article__aside {
+  margin: 0 var(--narrow) var(--lg);
+  padding: var(--md);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.article__toc-title { margin: 0; font: 600 var(--fs-md)/1.42 var(--sans); letter-spacing: 0; }
+.article__toc ol { margin: var(--sm) 0 0; padding: 0; list-style: none; }
+.article__toc a {
+  display: block;
+  padding: 7px 0 7px 14px;
+  border-left: 1px solid var(--on-line);
+  font: 400 15px/1.45 var(--sans);
+  color: var(--on-muted);
+  text-decoration: none;
+  transition: color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.article__toc a:hover { color: var(--on); border-left-color: var(--on-red); }
+.article__book { display: none; }
+@media (min-width: 760px) and (max-width: 1099px) {
+  .article__toc ol { columns: 2; column-gap: var(--md); }
+  .article__toc li { break-inside: avoid; }
+}
+@media (min-width: 1100px) {
+  .article__layout {
+    display: grid;
+    grid-template-columns: var(--narrow) minmax(0, 1fr) var(--narrow);
+    align-items: start;
+  }
+  .article__body { grid-column: 2; grid-row: 1; padding-inline: 0; }
+  .article__aside {
+    grid-column: 3; grid-row: 1;
+    position: sticky; top: var(--lg);
+    margin: 0;
+    padding: 0 var(--wide) 0 var(--lg);
+    border-radius: 0;
+    background: none;
+  }
+  .article__aside > * { max-width: 320px; }
+  .article__book { display: inline-flex; width: 100%; margin-top: var(--md); }
+}
+
+/* Текст статьи */
+.article__body h2 { margin-top: var(--xl); font: 400 var(--fs-xl)/1.25 var(--sans); letter-spacing: -.015em; text-wrap: balance; }
+.article__body > h2:first-child { margin-top: 0; }
+.article__body h3 { margin-top: var(--lg); font: 600 var(--fs-md)/1.42 var(--sans); letter-spacing: 0; }
+.article__body :is(h2, h3) + * { margin-top: var(--sm); }
+
+/* Цены из каталога: строка — работа слева, «от N ₽» справа. */
+.article__body ul.article-prices { margin-top: var(--md); border-top: 1px solid var(--on-line); }
+.article__body .article-prices li {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--md);
+  margin: 0; padding: 12px 0;
+  border-bottom: 1px solid var(--on-line);
+  font-size: .94em; line-height: 1.45;
+}
+.article__body .article-prices li::before { content: none; }
+.article__body .article-prices b { flex: none; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Состав программы — галочки из линий (знака ✓ в Manrope нет). */
+.article__body ul.article-includes { margin-top: var(--md); }
+.article__body .article-includes li::before {
+  top: .38em; left: .2em;
+  width: .34em; height: .66em;
+  border: solid var(--on-red); border-width: 0 1.5px 1.5px 0;
+  background: none;
+  transform: rotate(45deg);
+}
+@media (min-width: 760px) {
+  .article__body ul.article-includes { columns: 2; column-gap: var(--md); }
+  .article__body .article-includes li { break-inside: avoid; }
+}
+
+.article__body .article-figure { margin: var(--lg) 0 0; }
+.article-figure img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--r-md); background: var(--surface); }
+.article-figure figcaption { margin-top: var(--sm); font: 400 var(--fs-sm)/1.55 var(--sans); color: var(--on-muted); }
+
+/* «Коротко» (P28 «Auf einen Blick»): серый блок с тремя этапами строками. */
+.article__body .article-brief {
+  margin-top: var(--xl);
+  padding: var(--md);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.article__body .article-brief h2 { margin: 0; }
+.article-plan { display: grid; margin-top: var(--md); }
+.article-plan > div { padding: var(--sm) 0; border-top: 1px solid var(--on-line); }
+.article-plan > div:last-child { padding-bottom: 0; }
+.article__body .article-plan h3 { margin: 0; font: 600 var(--fs-base)/1.5 var(--sans); }
+.article-plan ul { margin: 6px 0 0; font-size: .94em; }
+@media (min-width: 560px) {
+  .article__body .article-brief { padding: var(--lg); }
+  .article-plan > div { display: grid; grid-template-columns: 9em minmax(0, 1fr); gap: var(--md); padding: var(--md) 0; }
+  .article-plan ul { margin: 0; }
+}
+.article__body .article-note { margin-top: var(--lg); font: 400 var(--fs-sm)/1.55 var(--sans); color: var(--on-muted); }
+
+/* Промо записи под статьёй (#book-cta, P11). */
+.article-promo { margin-top: 0; padding-bottom: var(--xl); }
+.article-promo .promo__media { aspect-ratio: 16 / 10; min-height: 0; }
+@media (min-width: 760px) { .article-promo .promo__media { aspect-ratio: auto; min-height: 380px; } }
+
+/* ---------- Документы (P30) ---------- */
+.doc { padding-block: var(--xl) calc(1.5 * var(--xl)); }
+.doc__head { text-align: center; }
+.doc__head h1 {
+  margin: 0;
+  font: 300 var(--fs-3xl)/1.18 var(--sans);
+  letter-spacing: -.025em;
+  text-wrap: balance;
+}
+.doc__head .doc-meta { margin: var(--md) 0 0; font: 400 var(--fs-sm)/1.55 var(--sans); color: var(--on-muted); }
+.doc__body { margin-top: var(--xl); }
+.doc__body h2 { margin-top: var(--xl); font: 400 var(--fs-lg)/1.36 var(--sans); letter-spacing: -.01em; text-wrap: balance; }
+.doc__body > h2:first-child { margin-top: 0; }
+.doc__body h2 + * { margin-top: var(--md); }
+.doc__body p + p { margin-top: .9em; }
+.doc-todo { padding: 0 .3em; border-radius: 4px; background: #ffd84d; color: var(--ink); }
