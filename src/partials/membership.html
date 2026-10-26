@@ -1,16 +1,19 @@
-<!-- Клуб: карта — ссылка на страницу оформления клубной карты (wahelp, адрес дал владелец;
-     прямой ссылки на бота нет). «Обсудить условия» открывает окно записи в варианте разговора
-     с администратором (data-membership, js/ui.js): заголовок из атрибута и телефоны обеих студий. -->
-<section class="membership" id="membership" aria-labelledby="membership-title">
-  <div class="membership__card" data-reveal>
-    <a class="membership__link" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>
-      <img src="assets/img/club-card.webp" alt="" width="2100" height="1400" loading="lazy" decoding="async">
-      <span class="membership__hint">Оформить клубную карту <span aria-hidden="true">↗</span><span class="visually-hidden"> MEATWASH Car Care Club (откроется в новой вкладке)</span></span>
-    </a>
+<!-- Клуб (план §3.7 п. 11, паттерн P11 «фото | панель»). Владелец: WP5.
+     Ссылка на оформление клубной карты — страница wahelp (адрес дал владелец; прямой ссылки
+     на бота нет), класс membership__link и порядок атрибутов — контракт проверки, цель
+     club_card — по data-club-card. «Обсудить условия» открывает окно записи в варианте
+     разговора с администратором (data-membership, js/ui.js): заголовок из атрибута и телефоны
+     обеих студий. На карте в кадре — прежнее имя: это настоящая карта клуба. -->
+<section class="promo col-ext membership" id="membership" aria-labelledby="membership-title">
+  <div class="promo__media membership__media" data-reveal>
+    <img src="assets/img/club-card.webp" alt="Клубная карта постоянного клиента" width="2100" height="1400" loading="lazy" decoding="async">
   </div>
-  <div class="membership__copy">
-    <h2 id="membership-title">Больше, чем сервис</h2>
+  <div class="promo__panel membership__panel">
+    <h2 class="membership__title" id="membership-title">Больше, чем сервис</h2>
     <p>Подарочные сертификаты, уход за корпоративным автопарком и индивидуальные комплексы. Обсудим условия и подберём удобное время.</p>
-    <button class="btn btn--ink-fill" type="button" data-membership="Условия клуба">Обсудить условия <span class="btn__circle" aria-hidden="true">→</span></button>
+    <div class="membership__actions">
+      <a class="membership__link" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Оформить клубную карту{{icon:arrow-up-right}}<span class="sr"> <span lang="en">Meat Auto Car Care Club</span> (откроется в новой вкладке)</span></a>
+      <button class="btn btn--secondary membership__talk" type="button" data-membership="Условия клуба">Обсудить условия</button>
+    </div>
   </div>
 </section>
