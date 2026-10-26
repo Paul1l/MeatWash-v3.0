@@ -174,7 +174,9 @@ export function setupUI() {
  document.querySelectorAll('[data-request]').forEach(button=>button.setAttribute('aria-haspopup','dialog'));
 
  // Карты студий в карточках локаций (js/maps.js): модуль и iframe виджета — только
- // когда область карты подходит к экрану (запас 600 px). До этого, без скриптов
+ // когда область карты появляется на экране. Запаса нет (было 600 px, WP7 27.10): на «О нас»
+ // карты стоят сразу под героем, и с запасом виджет Яндекса (≈ 5 МБ, сторонние cookie и
+ // его собственная Метрика) грузился при открытии страницы, до прокрутки. До этого, без скриптов
  // и при ошибке в области — заглушка со ссылкой на карточку в Яндекс Картах.
  const mapBoxes=document.querySelectorAll('[data-map-embed]');
  let mapsLoading=null;
@@ -185,7 +187,7 @@ export function setupUI() {
    mapWatch.unobserve(entry.target);
    loadMaps().then(module=>module?.showMap(entry.target));
   }
- },{rootMargin:'600px 0px'}):null;
+ },{rootMargin:'0px'}):null;
  mapBoxes.forEach(box=>mapWatch?.observe(box));
 
  // Где на странице кнопка или ссылка — для параметров целей (telegram_click).
