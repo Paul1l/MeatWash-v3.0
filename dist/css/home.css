@@ -1,2 +1,455 @@
-/* home.css — главная (порт v2.css: герой, «Чем занимается Meat Auto», плитки, карусель; без токенов и подвала v2).
-   Владелец: WP2. Заготовка WP0 — пустая. */
+/* ==========================================================================
+   home.css — главная Meat Auto (план §3.1). Владелец: WP2.
+   Перенос утверждённой главной v2 (source/v2-design/v2.css, 625ce74) без изменений
+   вида: герой, «Чем занимается Meat Auto», четыре плитки, карусель на телефоне.
+   Из v2 убрано то, что теперь общее: токены (tokens.css), шрифт (@font-face в <head>),
+   шапка и подвал (shell.css, WP1), сброс и .sr (base.css).
+   Тема страницы — data-theme="home" на <html> (tokens.css): светлая страница; пока
+   направления на экране, body получает .is-dark (home.js) — и холст, и всё, что берёт
+   цвета из --on* (подвал, нижняя кнопка), меняют цвет за 1,2 s, как в v2.
+   ========================================================================== */
+
+/* ---------- Цвет страницы: светлая ↔ тёмная (ref CarRange__toDark) ---------- */
+[data-theme="home"] body {
+  transition: background-color 1.2s var(--ease-color), color 1.2s var(--ease-color);
+}
+[data-theme="home"] body.is-dark {
+  --page: var(--bg);
+  --on: var(--fg);
+  --on-rgb: var(--fg-rgb);
+  --on-muted: rgb(var(--fg-rgb) / .66);
+  --on-line: rgb(var(--fg-rgb) / .14);
+  --on-red: var(--red);
+  --surface: rgb(var(--fg-rgb) / .06);
+  --surface-2: rgb(var(--fg-rgb) / .10);
+  --line-field: rgb(var(--fg-rgb) / .40);
+  color-scheme: dark;
+}
+/* Первое состояние без перехода (перезагрузка посреди страницы). */
+body.no-tr, body.no-tr * { transition: none !important; }
+
+/* ---------- Герой: фото + «MEAT AUTO» и «Car Care Club», больше ничего ---------- */
+/* Заголовок внизу слева по колонке extended; его блок кончается на fluid-md + строка
+   прокрутки + строка кнопок выше низа (700 из 900 на 1440), шириной не больше половины. */
+.hero {
+  --hero-foot: calc(3 * var(--md) + 110px);
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  align-content: end;
+  justify-items: start;
+  padding: 0 var(--ext) var(--hero-foot);
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--bg);
+  color: var(--fg);
+}
+.hero__media, .hero__media img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.hero__media { z-index: -2; }
+.hero__media img { display: block; max-width: none; object-fit: cover; object-position: 72% 70%; }
+/* Нижнее затемнение только под строками прокрутки и кнопок (200 px на 1440). */
+.hero::after {
+  content: ""; position: absolute; inset: auto 0 0; z-index: -1;
+  height: var(--hero-foot);
+  background: linear-gradient(0deg, var(--fade));
+  pointer-events: none;
+}
+.hero__title {
+  --w: calc(var(--fs-hero) * 6);
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: calc(var(--fs-hero) * .16);
+  width: var(--w); max-width: 100%;
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: normal;
+  /* Подъём на 40 px только трансформацией: надпись видна с первого кадра (LCP). */
+  animation: home-rise-in 1.2s var(--ease-out) both;
+}
+@media (min-width: 760px) {
+  .hero__title { --w: min(calc(var(--fs-hero) * 6.3), calc((100vw - 2 * var(--ext) - var(--md)) / 2)); }
+}
+/* Имя — крупно, под ним дескриптор «Car Care Club» вектором из логотипа (Влад 22.10). */
+.hero__name {
+  display: block;
+  font-size: calc(var(--fs-hero) * 1.12);
+  font-weight: 300; letter-spacing: -.035em; line-height: .95;
+  text-transform: uppercase;
+  color: #fff;
+}
+.hero__script {
+  display: block;
+  width: 62%;
+  max-width: none;
+  height: auto;
+  aspect-ratio: 1231 / 198;
+  overflow: visible;
+  color: var(--fg);
+  /* Мягкое свечение дисплейного текста, как у эталона (0 0 12px, тёплый белый). */
+  filter: drop-shadow(0 0 14px rgb(255 226 214 / .28));
+}
+@media (max-width: 699px) {
+  .hero__media img { object-position: 80% 60%; }
+}
+@keyframes home-rise-in { from { transform: translateY(40px); } to { transform: none; } }
+
+/* ---------- Направления (ref: «Ihr Porsche Abenteuer beginnt jetzt.») ---------- */
+.dirs {
+  position: relative;
+  isolation: isolate;
+  width: 94vw; max-width: 1880px;
+  margin: 0 auto;
+  padding: var(--lg) 0;
+}
+/* Точечное поле под направлениями (сетка эталона), гаснет к краям секции и берёт
+   цвет текста страницы. Ширина — во весь экран: 94vw + 2 × 3vw (дальше 2000 px — по max-width). */
+.dirs::before {
+  content: ""; position: absolute; z-index: -1;
+  top: 0; bottom: 0;
+  left: min(-3vw, calc((1880px - 100vw) / 2));
+  right: min(-3vw, calc((1880px - 100vw) / 2));
+  background: radial-gradient(circle, rgb(var(--on-rgb) / .13) 1px, transparent 1.4px) 0 0 / 24px 24px;
+  -webkit-mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(transparent, #000 18%, #000 82%, transparent);
+  pointer-events: none;
+}
+.dirs__head {
+  padding: 0 0 var(--lg) var(--lg);
+  color: var(--on);
+  transition: color 1.2s var(--ease-color);
+}
+.dirs__heading {
+  max-width: 90vw;
+  margin: 0;
+  font: 300 clamp(2.15rem, 4.3vw + 1.2rem, 6.6rem)/1.02 var(--sans);
+  letter-spacing: -.035em;
+  color: var(--on);
+  text-wrap: balance;
+  transition: color 1.2s var(--ease-color);
+}
+/* Маска строки: каждая строка поднимается из своего блока (кривая expo, без отскока). */
+.ln { display: inline-block; overflow: clip; padding: .04em .06em .14em; margin: -.04em -.06em -.14em; vertical-align: top; }
+.ln__in { display: inline-block; }
+/* Заливка слов при прокрутке: слова светлеют, пока заголовок идёт вверх (--k — home.js, 0…1). */
+.wd { opacity: calc(.24 + .76 * var(--k, 1)); }
+.js .dirs__head:not(.is-in) .ln__in { transform: translateY(110%); }
+.dirs__head.is-in .ln__in { transition: transform 1.5s var(--expo); }
+.dirs__head.is-in .ln:nth-child(2) .ln__in { transition-delay: .09s; }
+
+.dirs__grid { margin: 0; padding: 0; list-style: none; }
+
+/* Направление = подпись + карточка. */
+.dir { position: relative; }
+.dir__title {
+  display: grid; justify-items: center;
+  margin: 0;
+  font: 400 clamp(25px, 1.4vw + 12px, 40px)/1.1 var(--sans);
+  letter-spacing: -.025em;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--fg);
+  pointer-events: none;
+}
+.dir__card {
+  --r: var(--r-tile);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: var(--r);
+  background: #000;
+  cursor: pointer;
+}
+.dir__img {
+  position: absolute; inset: 0; z-index: 1;
+  display: block;
+  width: 100%; height: 100%; max-width: none;
+  object-fit: cover;
+  object-position: var(--focus-xy, 50% 50%);
+  transition: transform 1.8s var(--expo);
+}
+.dir:hover .dir__img { transform: scale(1.035); }
+/* Появление: карточка открывается вверх от нижнего края, фото садится из лёгкого
+   увеличения; подпись и текст — следом (сдвиг по колонке). */
+.js .dir:not(.is-in) .dir__card { clip-path: inset(18% 0 0 0 round var(--r)); }
+.js .dir:not(.is-in) .dir__img { transform: scale(1.14); }
+.js .dir:not(.is-in) .dir__title,
+.js .dir:not(.is-in) .dir__content { opacity: 0; transform: translateY(24px); }
+.dir.is-in .dir__card { clip-path: inset(0 0 0 0 round var(--r)); transition: clip-path 1.5s var(--expo); }
+.dir.is-in .dir__img { transition: transform 1.8s var(--expo); }
+.dir.is-in .dir__title, .dir.is-in .dir__content { transition: opacity 1.2s .2s var(--expo), transform 1.4s .2s var(--expo); }
+@media (min-width: 760px) {
+  .dir.is-in:nth-child(even) .dir__card { transition-delay: .12s; }
+  .dir.is-in:nth-child(even) .dir__title, .dir.is-in:nth-child(even) .dir__content { transition-delay: .32s; }
+}
+/* Затемнения на плитке (ref: сверху 20 %, снизу 25 % на компьютере; снизу 70 % на телефоне).
+   Где плитка ниже, чем на 1366+, та же кривая занимает больше, одинаково на всех плитках:
+   сверху не меньше 110 px, снизу 36 % на 1100–1365 и 88 % / 62 % в планшетной раскладке. */
+.dir__card::before, .dir__card::after {
+  content: ""; position: absolute; left: 0; right: 0; z-index: 5;
+  pointer-events: none;
+}
+.dir__card::before { top: 0; height: max(24%, 150px); background: linear-gradient(180deg, var(--fade)); }
+.dir__card::after { bottom: 0; height: 25%; background: linear-gradient(0deg, var(--fade)); }
+
+/* Вся карточка — ссылка (скрытый дубль; в порядке Tab — только кнопка). */
+.dir__hit { position: absolute; inset: 0; z-index: 11; }
+
+.dir__content {
+  position: absolute; left: 0; bottom: 0; z-index: 13;
+  width: 100%;
+  pointer-events: none;
+  color: var(--fg);
+}
+.dir__tags { display: flex; flex-wrap: wrap; gap: var(--sm); margin: 0; padding: 0; list-style: none; }
+/* Чип на фото (ref: 14/21.75, frosted-strong + blur). Тёмная подложка держит 4,5:1
+   для слоновой кости над самым светлым фото (пена на плитке 1). */
+.dir__tags .chip {
+  display: inline-block;
+  min-height: 0;
+  padding: 4px 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  font: 400 13.5px/21.75px var(--sans);
+  white-space: nowrap;
+  color: var(--fg);
+  background: linear-gradient(var(--frost-strong), var(--frost-strong)), rgb(8 8 8 / .58);
+  box-shadow: inset 0 0 0 1px rgb(var(--fg-rgb) / .16);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+}
+/* Волосяная линия над текстом; по ней бежит красный, пока плитка активна. */
+.dir__body::before {
+  content: ""; display: block;
+  height: 1px; margin-bottom: var(--sm);
+  background: linear-gradient(var(--red), var(--red)) left / 0 100% no-repeat, rgb(var(--fg-rgb) / .26);
+  transition: background-size 1.1s var(--expo);
+}
+.dir:hover .dir__body::before, .dir:has(.dir__cta:focus-visible) .dir__body::before { background-size: 100% 100%; }
+.dir__desc { margin: 0; font: 400 15.5px/24px var(--sans); hyphens: none; text-wrap: pretty; }
+
+.dir__cta {
+  pointer-events: auto;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font: 500 15px/24px var(--sans);
+  color: var(--fg);
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.dir__arrow { display: block; flex: none; width: 24px; height: 24px; transition: transform .6s var(--expo); }
+.dir__cta:hover .dir__arrow { transform: translateX(3px); }
+
+/* Кнопки карусели на телефоне (ref p-carousel: пагинатор и пауза). */
+.dirs__controls { display: none; }
+
+/* ---------- Телефоны: карусель слайдов 85vw (ref, мобильная раскладка) ---------- */
+@media (max-width: 759px) {
+  .dirs { width: 100%; }
+  .dirs::before { left: 0; right: 0; }
+  .dirs__head { padding: 0 var(--lg) var(--lg); }
+  .dirs__heading { max-width: none; }
+  .dirs__grid {
+    display: flex; gap: var(--md);
+    padding: 0 7.5vw;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 7.5vw;
+    scrollbar-width: none;
+  }
+  .dirs__grid::-webkit-scrollbar { display: none; }
+  .dir { flex: 0 0 85vw; scroll-snap-align: center; scroll-snap-stop: always; }
+  /* Подпись — над слайдом, на странице. */
+  .dir__title {
+    margin: var(--md) auto;
+    font-size: clamp(25px, 7vw, 32px);
+    color: var(--on);
+    transition: color 1.2s var(--ease-color);
+  }
+  /* Высота слайда — как в v2; зона нижней кнопки (--cta-zone, shell.css) вычитается,
+     чтобы слайд с точками помещался над ней. */
+  .dir__card { height: 78vh; height: calc(78svh - var(--cta-zone, 0px)); max-height: 40em; min-height: 430px; }
+  .dir__card::before { display: none; }
+  .dir__card::after { height: 70%; }
+  .dir__content { padding: 0 var(--md) var(--md); }
+  .dir__desc { padding-top: var(--sm); }
+  .dir__cta {
+    width: 100%; min-height: 56px;
+    margin-top: var(--md);
+    padding: 16px 28px;
+    border-radius: var(--r-pill);
+    background: var(--fg); color: var(--bg);
+    transition: background-color .35s var(--ease), color .35s var(--ease);
+  }
+  .dir__cta:active { background: var(--red); color: var(--fg); }
+  .dir__cta .dir__arrow { display: none; }
+  .dir__cta:focus-visible { outline-offset: 3px; }
+
+  .js .dirs__controls {
+    display: flex; justify-content: center; align-items: center; gap: 6px;
+    margin-top: 15px;
+  }
+  .dirs__dots {
+    display: flex; align-items: center;
+    height: 40px; padding: 0 8px;
+    border-radius: 32px;
+    background: rgb(110 110 115 / .227);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  }
+  .dirs__dot {
+    appearance: none; -webkit-appearance: none;
+    display: grid; place-items: center;
+    height: 40px; margin: 0; padding: 0 7px;
+    border: 0; border-radius: 20px;
+    background: none;
+    cursor: pointer;
+  }
+  .dirs__dot span {
+    position: relative; overflow: hidden;
+    display: block; width: 10px; height: 10px;
+    border-radius: 5px;
+    background: rgb(var(--on-rgb) / .3);
+    transition: width .4s var(--ease), background-color 1.2s var(--ease-color);
+  }
+  .dirs__dot[aria-current="true"] span { width: 35px; }
+  .dirs__dot span::after {
+    content: ""; position: absolute; inset: 0;
+    border-radius: inherit;
+    background: var(--red);
+    transform: scaleX(0); transform-origin: left center;
+  }
+  .dirs__dot[aria-current="true"] span::after { animation: dot-progress 9.5s var(--ease-out) both paused; }
+  .dirs__controls.is-playing .dirs__dot[aria-current="true"] span::after { animation-play-state: running; }
+  .dirs__dot.is-restart span::after { animation: none; }
+  .dirs__play {
+    appearance: none; -webkit-appearance: none;
+    position: relative;
+    display: grid; place-items: center;
+    width: 44px; height: 44px; margin: 0; padding: 0;
+    border: 0; border-radius: 50%;
+    background: none;
+    color: var(--on);
+    cursor: pointer;
+    transition: color 1.2s var(--ease-color);
+  }
+  .dirs__play::before {
+    content: ""; position: absolute; inset: 2px;
+    border-radius: 50%;
+    background: rgb(110 110 115 / .227);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  }
+  .dirs__play svg { position: relative; width: 24px; height: 24px; }
+  .dirs__play .i-play, .dirs__play[data-state="paused"] .i-pause { display: none; }
+  .dirs__play[data-state="paused"] .i-play { display: block; }
+}
+@media (max-width: 390px) { .dir__card { height: 74vh; height: calc(74svh - var(--cta-zone, 0px)); } }
+@media (max-width: 375px) { .dir__card { height: 72vh; height: calc(72svh - var(--cta-zone, 0px)); } }
+/* Уже 360 px слайд узок для самого длинного чипа в 14 px. */
+@media (max-width: 359px) { .dir__tags .chip { font-size: 13px; padding-inline: 10px; } }
+
+@keyframes dot-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---------- Компьютер и планшет: плитки 2 × 2 ---------- */
+@media (min-width: 760px) {
+  .dirs__grid {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: var(--md);
+    padding-top: var(--md);
+  }
+  .dir {
+    width: calc(50% - 1.5 * var(--md));
+    height: 45vw;
+    transition: width .6s var(--ease-out);
+  }
+  .dir:nth-child(odd) { margin-left: var(--md); }
+  .dir:nth-child(even) { margin-right: var(--md); }
+  /* Подпись: по центру, на fluid-md ниже верха плитки, строка 36 px. */
+  .dir__title {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 6;
+    margin: var(--md) auto;
+    padding: 0 var(--md);
+  }
+  .dir__card { position: absolute; inset: 0; }
+  .dir__content {
+    display: grid; grid-template-columns: 1fr auto; align-items: end; gap: var(--md);
+    margin: var(--md) 0;
+    padding: 0 var(--md);
+  }
+  .dir__tags { margin-bottom: var(--sm); }
+  /* Две строки в запасе: чипы и первые строки в ряду стоят ровно. */
+  .dir__desc { margin-right: 12px; min-height: 48px; }
+
+  /* В покое — круглая кнопка со стрелкой (ref p-link-pure, hide-label, compact). */
+  .dir__cta { padding: calc(.6 * var(--xs)); }
+  .dir__cta::before {
+    content: ""; position: absolute; inset: -2px; z-index: -1;
+    border-radius: var(--r-pill);
+    background: var(--frost);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    transition: background-color .35s var(--ease), border-radius .6s var(--expo);
+  }
+  .dir__cta:hover::before { background-color: var(--red); }
+  .dir__cta:focus-visible { outline: none; }
+  .dir__cta:focus-visible::before { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .dir__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+@media (min-width: 1300px) { .dir { height: calc(7vh + 39vw); } }
+@media (min-width: 1760px) { .dir { height: calc(51vh + 10vw); max-height: 54em; } }
+/* Три строки в запасе там, где длинному тексту они нужны (1100–1365 px, покой и наведение). */
+@media (min-width: 1100px) and (max-width: 1365px) { .dir__desc { min-height: 72px; } .dir__card::after { height: 36%; } }
+
+/* Активная плитка (≥ 1100 px, мышь): капсула с подписью сразу; двигаются только
+   ширины ряда, 55 / 45 за 0,6 s. */
+@media (min-width: 1100px) and (hover: hover) {
+  .dir:nth-child(odd):hover { width: calc(55% - 1.5 * var(--md)); }
+  .dir:nth-child(odd):hover + .dir { width: calc(45% - 1.5 * var(--md)); }
+  .dir:nth-child(even):hover { width: calc(55% - 1.5 * var(--md)); }
+  .dir:nth-child(odd):has(+ .dir:hover) { width: calc(45% - 1.5 * var(--md)); }
+  .dir:hover .dir__desc { margin-right: 8px; }
+  .dir:hover .dir__cta { padding: calc(.6 * var(--xs)) calc(.9 * var(--xs)) calc(.6 * var(--xs)) var(--sm); }
+  .dir:hover .dir__cta::before { border-radius: var(--r-xs); }
+  .dir:hover .dir__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+}
+/* Фокус с клавиатуры = то же состояние, что наведение (ref 5.3). */
+@media (min-width: 1100px) {
+  .dir:nth-child(odd):has(.dir__cta:focus-visible) { width: calc(55% - 1.5 * var(--md)); }
+  .dir:nth-child(odd):has(.dir__cta:focus-visible) + .dir { width: calc(45% - 1.5 * var(--md)); }
+  .dir:nth-child(even):has(.dir__cta:focus-visible) { width: calc(55% - 1.5 * var(--md)); }
+  .dir:nth-child(odd):has(+ .dir .dir__cta:focus-visible) { width: calc(45% - 1.5 * var(--md)); }
+  .dir:has(.dir__cta:focus-visible) .dir__desc { margin-right: 8px; }
+  .dir .dir__cta:focus-visible { padding: calc(.6 * var(--xs)) calc(.9 * var(--xs)) calc(.6 * var(--xs)) var(--sm); }
+  .dir .dir__cta:focus-visible::before { border-radius: var(--r-xs); }
+  .dir .dir__cta:focus-visible .dir__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+}
+/* Планшеты и узкие окна (760–1099 px) и сенсорные экраны: у каждой кнопки подпись
+   под текстом, текст занимает всю ширину плитки, при наведении ничего не перестраивается. */
+@media (min-width: 760px) and (max-width: 1099px), (min-width: 760px) and (hover: none) {
+  .dir__content { grid-template-columns: 1fr; gap: var(--sm); }
+  .dir__desc { margin-right: 0; min-height: 72px; }
+  .dir__cta { justify-self: start; padding: calc(.6 * var(--xs)) calc(.9 * var(--xs)) calc(.6 * var(--xs)) var(--sm); }
+  .dir__cta::before { border-radius: var(--r-xs); background: var(--frost-strong); }
+  .dir__label { position: static; width: auto; height: auto; overflow: visible; clip-path: none; }
+  .dir__card::after { height: 62%; }
+}
+@media (min-width: 760px) and (max-width: 999px) { .dir__card::after { height: 88%; } }
+@media (min-width: 1024px) and (max-width: 1099px), (min-width: 1024px) and (hover: none) {
+  .dir__desc { min-height: 48px; }
+}
+
+/* ---------- Меньше движения: конечные состояния без переходов ---------- */
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="home"] body, .hero__title, .dirs *, .dirs *::before, .dirs *::after {
+    animation: none !important; transition: none !important;
+  }
+  .js .dirs__head:not(.is-in) .ln__in,
+  .js .dir:not(.is-in) .dir__title, .js .dir:not(.is-in) .dir__content,
+  .js .dir:not(.is-in) .dir__img { opacity: 1; transform: none; }
+  .js .dir:not(.is-in) .dir__card { clip-path: none; }
+  .dir:hover .dir__img { transform: none; }
+  .wd { opacity: 1; }
+  .dirs__play { display: none !important; }
+}
