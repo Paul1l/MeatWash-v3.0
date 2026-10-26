@@ -40,8 +40,8 @@ export function modelName(title) {
   }).join('');
 }
 
-// Текст из JSON: экранировать, слова через дефис («800-вольтовая», «23-дюймовые») не рвать.
-const text = (value) => escape(value).replace(/[\p{L}\d]+(?:-[\p{L}\d]+)+/gu, (w) => `<span class="nw">${w}</span>`);
+// Текст из JSON: экранировать, слова через дефис и диапазоны («800-вольтовая», «0–100») не рвать.
+const text = (value) => escape(value).replace(/[\p{L}\d]+(?:[-–][\p{L}\d]+)+/gu, (w) => `<span class="nw">${w}</span>`);
 
 const photo = (p, eager) => `<li><img src="${escape(p.src)}" width="${p.w}" height="${p.h}" alt="${escape(p.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"></li>`;
 
