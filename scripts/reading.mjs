@@ -6,6 +6,7 @@
 // promo, link-arrow, btn, col-*); вид страниц — dist/css/reading.css.
 import {escape} from './catalog.mjs';
 import {pageUrl, humanDate, icon} from './pages.mjs';
+import {ARTICLES} from '../src/content/pages.mjs';
 
 export const shot = (id, size) => `assets/shots/${id}${size === 's' ? '-s' : ''}.webp`;
 // Время чтения — по числу слов (≈180 слов в минуту), без разметки.
@@ -27,12 +28,12 @@ const img = (id, {sizes, alt = '', lazy = true, priority = false}) =>
   `<img src="${shot(id)}" srcset="${shot(id, 's')} 900w, ${shot(id)} 1600w" sizes="${sizes}" width="1600" height="894" alt="${escape(alt)}"${lazy ? ' loading="lazy"' : ''}${priority ? ' fetchpriority="high"' : ''} decoding="async">`;
 
 // Карточка статьи (P13 «текст на фото»): вся карточка — одна ссылка (заголовок растянут
-// на карточку), заголовок — h2 списка. Размер l — первая статья крупно, s — сетка (P27).
-const articleCard = (a, minutes, size) => `  <article class="photo-card photo-card--${size} article-card article-card--${size}">
+// на карточку), заголовок — h2 списка (h3 в «Ещё статьи»). Размер l — первая статья крупно, s — сетка (P27).
+const articleCard = (a, minutes, size, h = 'h2') => `  <article class="photo-card photo-card--${size} article-card article-card--${size}">
     ${img(a.image, {sizes: size === 'l' ? '(max-width: 759px) 100vw, 82vw' : '(max-width: 759px) 100vw, (max-width: 1099px) 50vw, 30vw'})}
     <div class="photo-card__body article-card__body">
-      <p class="article-card__meta"><time datetime="${a.date}">${humanDate(a.date)}</time> · ${minutes} мин чтения</p>
-      <h2 class="photo-card__title article-card__title"><a class="article-card__link" href="${pageUrl(a.file)}">${escape(a.headline)}</a></h2>
+      <p class="article-card__meta"><time datetime="${a.date}">${humanDate(a.date)}</time>${minutes ? ` · ${minutes} мин чтения` : ''}</p>
+      <${h} class="photo-card__title article-card__title"><a class="article-card__link" href="${pageUrl(a.file)}">${escape(a.headline)}</a></${h}>
       <p class="article-card__lead">${escape(a.lead)}</p>
       <span class="article-card__more" aria-hidden="true">Читать${icon('arrow-right')}</span>
     </div>
@@ -52,6 +53,15 @@ ${rest.length ? `  <div class="articles__grid">\n${rest.map((a) => articleCard(a
 </section>`;
 }
 
+// «Ещё статьи» под статьёй (P28 «Weitere Artikel»): до трёх других статей карточками s.
+// Пока статья одна, блока нет (план §3.8).
+export const renderMore = (others) => others.length ? `<section class="section more-articles col-wide" aria-labelledby="more-title">
+  <h2 class="more-articles__title" id="more-title">Ещё статьи</h2>
+  <div class="articles__grid">
+${others.slice(0, 3).map((a) => articleCard(a, 0, 's', 'h3')).join('\n')}
+  </div>
+</section>` : '';
+
 // Статья (P28): «← Статьи» вместо крошек (BreadcrumbList остаётся в JSON-LD), H1, лид,
 // дата и минуты чтения, большое фото; тело в колонке --narrow; от 1100 px справа липкий
 // столбец «Содержание» (h2[id] без data-toc="no") и «Записаться», уже — содержание блоком
@@ -59,6 +69,7 @@ ${rest.length ? `  <div class="articles__grid">\n${rest.map((a) => articleCard(a
 export function renderArticle(page, body, minutes) {
   const [text, after] = splitArticle(body);
   const items = toc(text);
+  const more = renderMore(ARTICLES.filter((a) => a.id !== page.id));
   return `<article class="article" aria-labelledby="page-title">
   <header class="article__head">
     <a class="back-link" href="${pageUrl('articles.html')}">${icon('chevron-left')}Статьи</a>
@@ -81,7 +92,7 @@ export function renderArticle(page, body, minutes) {
 ${text.trim()}
     </div>
   </div>
-</article>${after.trim() ? `\n${after.trim()}` : ''}`;
+</article>${after.trim() ? `\n${after.trim()}` : ''}${more ? `\n${more}` : ''}`;
 }
 
 // Документ (P30): H1 --fs-3xl по колонке --basic, текст по --narrow, разделы --fs-lg.

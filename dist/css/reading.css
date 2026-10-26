@@ -188,6 +188,11 @@
 @media (min-width: 760px) { .articles__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 1100px) { .articles__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
+/* «Ещё статьи» под статьёй — появится со второй статьёй. */
+.more-articles { padding-block: 0 var(--xl); }
+.more-articles__title { margin: 0 0 var(--md); font: 300 var(--fs-2xl)/1.26 var(--sans); letter-spacing: -.02em; }
+.article-card--s .article-card__title { font-size: var(--fs-lg); }
+
 /* ---------- Статья (P28) ---------- */
 .article { padding-bottom: var(--xl); }
 .article__head { padding: var(--lg) var(--narrow) 0; }
