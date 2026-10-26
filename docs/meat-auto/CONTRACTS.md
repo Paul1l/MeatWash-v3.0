@@ -9,18 +9,20 @@
 ```
 npm ci
 npm run build          # catalog (js/data.js) → content (все 13 страниц + sitemap) → pages (общие части)
-npm run check          # каркас: свежесть сборки, ссылки, якоря, мета, контракты §4.9, ключи корзины
-npm run check:release  # то же, но пометки «нужно от клиента», старое имя, нет og, ↗ ✓ — ошибки
+npm run check          # scripts/check.mjs: сборка, ссылки, якоря, мета, §4.9, каталог по смыслу, машины, бренд, гараж
+npm run check:release  # то же, но пометки «нужно от клиента», реквизиты, нет og — ошибки (боевой пакет)
 npm run check:3d       # бандл и модели 3D-гаража
 npm start              # http://127.0.0.1:4173, адреса без .html (/services, /import, /kit); PORT=… — другой порт
 npm run img -- <исходник> assets/img/<страница>/hero-{w}.webp --aspect 21:9 --focus 0.6,0.5 --widths 900,1600
 npm run font           # пересобрать подмножество Manrope (docs/meat-auto/fonts.md)
+node scripts/preview-pack.mjs --out ../meat-auto-preview   # пакет превью (docs/meat-auto/PREVIEW.md)
+python3 scripts/qa/run.py [--preview URL --forwarded-proto https]   # приёмка §6.4 в браузере
 ```
 
 `dist/*.html`, `dist/sitemap.xml`, `dist/js/data.js` — результат сборки, руками не править. В PR их можно не
 включать (план §6.1): CI (`.github/workflows/check.yml`) сам делает `build` → `check` → `check:3d` на каждый push
-и на PR в `meat-auto`. Прежняя проверка — `npm run check:legacy` (на новой разметке падает; её переписывает WP7
-и переносит туда `scripts/check-scaffold.mjs`).
+и на PR в `meat-auto`. Проверки каркаса WP0 и нужное из прежней проверки сведены в `scripts/check.mjs` (WP7).
+
 
 Браузер для проверок — только Playwright и его Chromium/WebKit, запросы к `mc.yandex.ru` обрывать. Снимки — не в git
 (`scratchpad/shots/<пакет>/`).
@@ -38,7 +40,7 @@ npm run font           # пересобрать подмножество Manrope
 | **WP4** привоз, покупка и продажа | `scripts/cars.mjs`, `src/data/cars.json` (WP0 →); `src/content/auto.html`, `import.html` (WP0 →); `dist/css/auto.css`; `dist/assets/img/import/*` |
 | **WP5** о нас и студии | `src/content/about.html` (WP0 →); `src/partials/locations.html`, `membership.html`; `dist/css/about.css`; `dist/js/maps.js`; `dist/assets/img/about/*` |
 | **WP6** запись, окна, согласие, документы | `src/partials/dialogs.html`, `book.html`, `analytics.html`; `dist/css/dialogs.css`; `dist/js/ui.js`, `analytics.js`, `request.js`, `yclients.js`, `body.js`; `dist/assets/yclients.json`; `src/content/privacy.html`, `consent.html`, `consent-request.html` |
-| **WP7** проверки, сведение, выкладка | `scripts/check.mjs`, `check-scaffold.mjs`, `stamp-assets.mjs`, `prune-deploy.mjs`, `preview-pack.mjs`, `scripts/qa/**`; интегратор (WP0 →): `src/content/pages.mjs`, `scripts/content.mjs`, `pages.mjs`, `typo.mjs`, `img.mjs`, `dist/js/site.js`, `dist/assets/meatwash-content.json` (цены, `site.documentsDate`), `package.json`, `.github/workflows/check.yml`, `docs/meat-auto/*`; сгенерированные `dist/*.html`, `sitemap.xml`, `js/data.js` |
+| **WP7** проверки, сведение, выкладка | `scripts/check.mjs`, `stamp-assets.mjs`, `prune-deploy.mjs`, `preview-pack.mjs`, `scripts/qa/**`; интегратор (WP0 →): `src/content/pages.mjs`, `scripts/content.mjs`, `pages.mjs`, `typo.mjs`, `img.mjs`, `dist/js/site.js`, `dist/assets/meatwash-content.json` (цены, `site.documentsDate`), `package.json`, `.github/workflows/check.yml`, `docs/meat-auto/*`; сгенерированные `dist/*.html`, `sitemap.xml`, `js/data.js` |
 | никто (только чтение) | `source/v2-design/**` — утверждённая главная из `625ce74`, исходник для обрезок; `server/htaccess.txt` (прод); старые `dist/js/main.js`, `page.js`, `dist/css/style.css`, `cinematic.css`, `pages.css`, `catalog.css`, `proof.css`, шрифты Arsenal, `manrope.woff2/.ttf`, логотипы `Horizontal_*`, `Main_*` — страницы их не подключают, из выкладки их убирает WP7 |
 
 ## Сборка страниц: что уже работает
@@ -170,3 +172,23 @@ npm run font           # пересобрать подмножество Manrope
 - Метрика на превью выключена по умолчанию (`preview-pack --no-metrika`, WP7); мета счётчика в `dist` остаётся.
 - `site.documentsDate` (сейчас 2026-10-02) и `lastmod` в реестре выставляет WP7 при сведении.
 - Материалы Porsche (`redesign/ref/`, замеры) в репозиторий и пакет не кладём.
+
+## Сведение WP7 (27.10.2026)
+
+Ветки `wp1`…`wp6` слиты в `meat-auto` по очереди без конфликтов; сгенерированное пересобрано отдельным коммитом.
+Правки в чужих файлах при сведении (минимальные):
+
+- `dist/css/auto.css` (WP4), `dist/css/about.css` (WP5) — удалены временные слои `wp4-fallback` и `wp5-fallback`.
+  Вне слоёв оставлены правила, которые слои давали страницам: форма панели «RU» на `/import` (4:3, радиус),
+  цвет текста бордовой панели связи; удалена строка-заплатка героя A на `/import` (WP1 исправил у себя).
+- `src/content/about.html`, `import.html` — у `.hero-a__actions` добавлен класс `actions` (контракт WP1).
+- `dist/css/about.css` — клубный блок на 320 px был шире экрана на 22 px (фото 4:3 с `min-height: 240px` растягивало
+  колонку); колонка — `minmax(0, 1fr)`, до 760 px без `min-height`.
+- `dist/js/ui.js` (WP6) — карты студий грузятся, когда появляются на экране (было с запасом 600 px): на «О нас» они
+  сразу под героем, и виджет Яндекса (≈ 5 МБ, сторонние cookie, его Метрика) грузился при открытии страницы.
+- `src/content/pages.mjs` — `date` страниц и `site.documentsDate` — 2026-10-27 (новая редакция документов WP6);
+  удалены совместимые экспорты `CONTENT` и `SITEMAP` старой проверки.
+
+Новое у WP7: `scripts/check.mjs` (+ `--release`), `stamp-assets.mjs [папка]` (и `url()` шрифтов в CSS),
+`prune-deploy.mjs` (список Meat Auto; гараж остаётся), `preview-pack.mjs`, `scripts/qa/*` (приёмка §6.4,
+`serve-preview.sh` — пакет в локальном Apache). Порядок выкладки превью — `docs/meat-auto/PREVIEW.md`.

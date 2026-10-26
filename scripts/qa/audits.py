@@ -13,6 +13,7 @@ from common import Context, load, ROOT
 
 LH_PAGES = ['', 'services', 'auto', 'about', 'article-avto-k-zime']
 LH_VERSION = os.environ.get('LIGHTHOUSE_VERSION', '12.8.2')
+RUNS = int(os.environ.get('LIGHTHOUSE_RUNS', '3'))
 
 
 def lighthouse(chrome, base, out, res, *, headers=None, seo_base=None):
@@ -32,22 +33,26 @@ def lighthouse(chrome, base, out, res, *, headers=None, seo_base=None):
         audits = data['audits']
         return score, audits
 
+    # Медиана трёх прогонов (так советует сам Lighthouse): у симулированного LCP разброс до 1 с.
+    med = lambda xs: sorted(xs)[len(xs) // 2]
     for p in LH_PAGES:
-        score, a = run(f'{base}/{p}', p or 'home', ['performance', 'accessibility', 'best-practices'])
-        lcp = a['largest-contentful-paint']['numericValue'] / 1000
-        cls = a['cumulative-layout-shift']['numericValue']
+        runs = [run(f'{base}/{p}', f"{p or 'home'}-{i}", ['performance', 'accessibility', 'best-practices']) for i in range(RUNS)]
+        score = {k: med([r[0][k] for r in runs]) for k in runs[0][0]}
+        lcps = [r[1]['largest-contentful-paint']['numericValue'] / 1000 for r in runs]
+        lcp, cls = med(lcps), med([r[1]['cumulative-layout-shift']['numericValue'] for r in runs])
+        a = runs[[x for x in lcps].index(lcp)][1]
         seo = None
         if seo_base:
             s2, _ = run(f'{seo_base}/{p}', (p or 'home') + '-seo', ['seo'])
             seo = s2['seo']
         good = score['performance'] >= 85 and score['accessibility'] >= 95 and score['best-practices'] >= 95 and lcp <= 2.5 and cls <= 0.05 and (seo is None or seo >= 95)
         ok &= good
-        row = f"/{p}: P {score['performance']} · A {score['accessibility']} · BP {score['best-practices']}" + (f' · SEO {seo}' if seo is not None else '') + f' · LCP {lcp:.2f} s · CLS {cls:.3f}'
+        row = f"/{p}: P {score['performance']} · A {score['accessibility']} · BP {score['best-practices']}" + (f' · SEO {seo}' if seo is not None else '') + f' · LCP {lcp:.2f} s ({"/".join(f"{x:.2f}" for x in lcps)}) · CLS {cls:.3f}'
         rows.append(row)
         if not good:
             fails = [f"{k}: {v['title']} ({v.get('displayValue', '')})" for k, v in a.items() if v.get('score') is not None and v['score'] < 0.9 and v.get('scoreDisplayMode') in ('binary', 'numeric', 'metricSavings')]
             details.append(row + ' — ' + '; '.join(fails[:8]))
-    res.add('9', 'Lighthouse (мобильный)', ok, ' | '.join(rows), details)
+    res.add('9', f'Lighthouse (мобильный, медиана {RUNS} прогонов)', ok, ' | '.join(rows), details)
 
 
 CONTRAST_JS = r"""() => {

@@ -54,6 +54,9 @@ const dirty = git('status', '--porcelain', '--untracked-files=no', '--', 'dist',
 const node = (script, ...a) => execFileSync(process.execPath, [resolve(root, 'scripts', script), ...a], {cwd: root, encoding: 'utf8'});
 const problems = [];
 
+// Список прошлой выкладки читаем до сборки: новый manifest может лечь по тому же пути.
+const before = previous ? (await readFile(resolve(previous), 'utf8')).split('\n').filter(Boolean) : null;
+
 // 1. Копия, отсев, сжатие CSS
 await rm(out, {recursive: true, force: true});
 await mkdir(dirname(out), {recursive: true});
@@ -203,8 +206,7 @@ if (/meatwash\.ru\/(?!\w)/.test(await readFile(resolve(out, 'robots.txt'), 'utf8
 const manifest = `${out}.manifest.txt`;
 await writeFile(manifest, all.join('\n') + '\n');
 let stale = [];
-if (previous) {
-  const before = (await readFile(resolve(previous), 'utf8')).split('\n').filter(Boolean);
+if (before) {
   const now = new Set(all);
   stale = before.filter((f) => !now.has(f));
 }
