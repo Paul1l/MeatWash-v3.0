@@ -25,6 +25,8 @@
 <meta property="og:locale" content="ru_RU">
 <meta property="og:url" content="https://meatwash.ru/kit">
 <meta property="og:image" content="https://meatwash.ru/assets/img/og-meat-auto.webp">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/manrope-vf.woff2?v=8d909079" as="font" type="font/woff2" crossorigin>
 <style>@font-face{font-family:'Manrope';src:url('assets/fonts/manrope-vf.woff2?v=8d909079') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}</style>
@@ -46,116 +48,749 @@
 <a class="skip-link" href="#main">Перейти к&nbsp;содержанию</a>
 
 <!-- SHARED:header:START -->
-<!-- Шапка и меню-шторка (план §1.3, §1.5, §2.8). Владелец: WP1.
-     Заготовка WP0: разметка по контракту §2.8 и все ссылки шторки, чтобы якоря на других
-     страницах проверялись с первого дня. Ссылки внутри сайта к якорю — через подстановку
-     to:<id> (на своей странице это «#якорь», на чужой — «about#якорь»). Пункта «Русификация»
-     нет до ответа Романа (поправка критика 6). Иконки — подстановка icon:<имя> (спрайт
-     assets/brand/sprite.svg). В комментариях фигурные скобки подстановок не писать: сборка
-     их подставит или упадёт. -->
+<!-- Шапка и меню-шторка (план §1.3, §1.5, §2.8; паттерн Porsche 3.1–3.2). Владелец: WP1.
+     Шапка: «Меню» слева, белый бык по центру, «Записаться» справа (решение Влада 27.10).
+     Не липкая ни на одной странице; over — поверх фото со скримом сверху, solid — тёмная полоса
+     (и на «бумаге»: белый бык на слоновой кости не виден).
+     Шторка — модальный dialog в слоновой кости: от 1000 px две панели по 468 px (корень + раздел),
+     ниже — одна панель с переходом вглубь («←», название раздела по центру, «×»). Поведение —
+     js/shell.js; html.is-locked шторка не ставит (поправка 21): прокрутку держит правило
+     html:has(dialog:modal) в base.css. Ссылки к якорю — через подстановку to:<id>. Пункта
+     «Русификация» нет до ответа Романа (поправка 6). В комментариях фигурные скобки подстановок
+     не писать: сборка их подставит или упадёт. -->
 <header class="site-header site-header--solid" id="top">
   <div class="site-header__bar">
-    <button class="site-header__menu" id="drawer-open" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-menu"/></svg><span>Меню</span></button>
-    <a class="site-header__logo" href="./" aria-label="Meat Auto — на главную"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg></a>
+    <button class="site-header__menu" id="drawer-open" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-menu"/></svg><span class="site-header__menu-label">Меню</span></button>
+    <a class="site-header__logo" href="./" aria-label="Meat Auto — на главную"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-bull"/></svg></a>
     <button class="site-header__book btn btn--compact btn--secondary" type="button" data-book>Записаться</button>
   </div>
 </header>
 
-<dialog class="drawer" id="drawer" aria-label="Меню">
+<dialog class="drawer scheme-light" id="drawer" aria-label="Меню">
   <div class="drawer__panels">
-    <nav class="drawer__panel drawer__panel--root" aria-label="Разделы сайта">
-      <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-close"/></svg></button>
-      <ul class="drawer__list">
-        <li><button class="drawer__item" type="button" aria-controls="drawer-p-care" aria-expanded="false">Мойка и&nbsp;детейлинг<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-right"/></svg></button></li>
-        <li><button class="drawer__item" type="button" aria-controls="drawer-p-import" aria-expanded="false">Привоз авто <span class="nw">из-за</span> рубежа<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-right"/></svg></button></li>
-        <li><button class="drawer__item" type="button" aria-controls="drawer-p-auto" aria-expanded="false">Покупка и&nbsp;продажа<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-right"/></svg></button></li>
-        <li><button class="drawer__item" type="button" aria-controls="drawer-p-about" aria-expanded="false">О&nbsp;нас<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-right"/></svg></button></li>
-        <li><a class="drawer__item" href="articles">Статьи</a></li>
-        <li><button class="drawer__item" type="button" aria-controls="drawer-p-contacts" aria-expanded="false">Контакты<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-right"/></svg></button></li>
-      </ul>
+    <nav class="drawer__panel drawer__panel--root" aria-label="Разделы сайта" tabindex="-1">
+      <div class="drawer__bar">
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
+      </div>
+      <div class="drawer__body">
+        <ul class="drawer__list">
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-care" aria-expanded="false"><span>Мойка и&nbsp;детейлинг</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-import" aria-expanded="false"><span>Привоз авто <span class="nw">из-за</span> рубежа</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-auto" aria-expanded="false"><span>Покупка и&nbsp;продажа</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-about" aria-expanded="false"><span>О&nbsp;нас</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+          <li><a class="drawer__item" href="articles"><span>Статьи</span></a></li>
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-contacts" aria-expanded="false"><span>Контакты</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+        </ul>
+      </div>
       <div class="drawer__foot">
-        <button class="btn btn--primary" type="button" data-book>Записаться</button>
-        <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Telegram<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a>
+        <button class="btn btn--primary btn--block" type="button" data-book>Записаться</button>
+        <a class="drawer__row drawer__row--tg" href="https://t.me/otec_roman" target="_blank" rel="noopener"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-telegram"/></svg><span>Написать в&nbsp;Telegram</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a>
       </div>
     </nav>
 
-    <section class="drawer__panel" id="drawer-p-care" aria-labelledby="drawer-p-care-title" hidden>
-      <button class="drawer__back" type="button" data-drawer-back><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-left"/></svg><span>Назад</span></button>
-      <h2 class="drawer__title" id="drawer-p-care-title">Мойка и&nbsp;детейлинг</h2>
-      <div class="drawer__tiles">
-        <a class="drawer__tile" href="services#price-wash"><span class="drawer__tile-name">Мойка</span><span class="chip">от&nbsp;2&nbsp;150&nbsp;₽</span></a>
-        <a class="drawer__tile" href="services#price-detailing"><span class="drawer__tile-name">Детейлинг</span><span class="chip">от&nbsp;500&nbsp;₽</span></a>
-        <a class="drawer__tile" href="services#price-protection"><span class="drawer__tile-name">Защита</span><span class="chip">от&nbsp;1&nbsp;000&nbsp;₽</span></a>
-        <a class="drawer__tile" href="services#price-help"><span class="drawer__tile-name">Помощь</span><span class="chip">от&nbsp;5&nbsp;000&nbsp;₽</span></a>
+    <section class="drawer__panel" id="drawer-p-care" aria-labelledby="drawer-p-care-title" tabindex="-1" hidden>
+      <div class="drawer__bar">
+        <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
+        <h2 class="drawer__title" id="drawer-p-care-title">Мойка и&nbsp;детейлинг</h2>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
       </div>
-      <ul class="drawer__links">
-        <li><a class="link-arrow" href="services">Все&nbsp;услуги и&nbsp;цены<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="wrap">Оклейка полиуретаном<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="works">Наши работы<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-      </ul>
-    </section>
-
-    <section class="drawer__panel" id="drawer-p-import" aria-labelledby="drawer-p-import-title" hidden>
-      <button class="drawer__back" type="button" data-drawer-back><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-left"/></svg><span>Назад</span></button>
-      <h2 class="drawer__title" id="drawer-p-import-title">Привоз авто <span class="nw">из-за</span> рубежа</h2>
-      <ul class="drawer__links">
-        <li><a class="link-arrow" href="import">Как&nbsp;мы&nbsp;работаем<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Обсудить привоз в&nbsp;Telegram<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
-      </ul>
-    </section>
-
-    <section class="drawer__panel" id="drawer-p-auto" aria-labelledby="drawer-p-auto-title" hidden>
-      <button class="drawer__back" type="button" data-drawer-back><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-left"/></svg><span>Назад</span></button>
-      <h2 class="drawer__title" id="drawer-p-auto-title">Покупка и&nbsp;продажа</h2>
-      <ul class="drawer__links">
-        <li><a class="link-arrow" href="auto#for-sale">Сейчас в&nbsp;продаже (2)<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="auto#sold">Уже продали (16)<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="auto#sell">Продать машину<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал MEAT AUTO<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a></li>
-      </ul>
-    </section>
-
-    <section class="drawer__panel" id="drawer-p-about" aria-labelledby="drawer-p-about-title" hidden>
-      <button class="drawer__back" type="button" data-drawer-back><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-left"/></svg><span>Назад</span></button>
-      <h2 class="drawer__title" id="drawer-p-about-title">О&nbsp;нас</h2>
-      <ul class="drawer__links">
-        <li><a class="link-arrow" href="about#visit-locations">Студии и&nbsp;контакты<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="about#founder">Кто мы<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="about#club">Подход<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="about#path">Наш путь<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="about#team">Команда<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-        <li><a class="link-arrow" href="about#membership">Клубная карта<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a></li>
-      </ul>
-    </section>
-
-    <section class="drawer__panel" id="drawer-p-contacts" aria-labelledby="drawer-p-contacts-title" hidden>
-      <button class="drawer__back" type="button" data-drawer-back><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-left"/></svg><span>Назад</span></button>
-      <h2 class="drawer__title" id="drawer-p-contacts-title">Контакты</h2>
-      <div class="drawer__studio">
-        <h3>Мясницкая</h3>
-        <p>Премиальная мойка<br>ул. Мясницкая, 11<br>Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</p>
-        <p><a href="tel:+79300352325"><span class="nw">+7 (930) 035-23-25</span></a></p>
-        <p><a class="link-arrow" href="about#map-myasnitskaya">На&nbsp;карте<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a> <a class="link-arrow" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer">Записаться<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr">: Мясницкая (откроется в&nbsp;новой вкладке)</span></a></p>
+      <div class="drawer__body">
+        <div class="drawer__tiles">
+          <a class="drawer__tile" href="services#price-wash"><span class="drawer__tile-media"><img src="assets/img/menu/wash-400.webp" alt="" width="400" height="300" loading="lazy" decoding="async"></span><span class="drawer__tile-name">Мойка</span><span class="chip">от&nbsp;2&nbsp;150&nbsp;₽</span></a>
+          <a class="drawer__tile" href="services#price-detailing"><span class="drawer__tile-media"><img src="assets/img/menu/detailing-400.webp" alt="" width="400" height="300" loading="lazy" decoding="async"></span><span class="drawer__tile-name">Детейлинг</span><span class="chip">от&nbsp;500&nbsp;₽</span></a>
+          <a class="drawer__tile" href="services#price-protection"><span class="drawer__tile-media"><img src="assets/img/menu/protection-400.webp" alt="" width="400" height="300" loading="lazy" decoding="async"></span><span class="drawer__tile-name">Защита</span><span class="chip">от&nbsp;1&nbsp;000&nbsp;₽</span></a>
+          <a class="drawer__tile" href="services#price-help"><span class="drawer__tile-media"><img src="assets/img/menu/help-400.webp" alt="" width="400" height="300" loading="lazy" decoding="async"></span><span class="drawer__tile-name">Помощь</span><span class="chip">от&nbsp;5&nbsp;000&nbsp;₽</span></a>
+        </div>
+        <ul class="drawer__links">
+          <li><a class="drawer__link" href="services">Услуги и&nbsp;цены</a></li>
+          <li><a class="drawer__link" href="wrap">Оклейка полиуретаном</a></li>
+          <li><a class="drawer__link" href="works">Наши работы</a></li>
+        </ul>
       </div>
-      <div class="drawer__studio">
-        <h3>Технопарк</h3>
-        <p>Детейлинг-центр<br>пр-т&nbsp;Андропова, 8, стр. 2<br>Ежедневно 08:00–22:00</p>
-        <p><a href="tel:+79324916991"><span class="nw">+7 (932) 491-69-91</span></a></p>
-        <p><a class="link-arrow" href="about#map-technopark">На&nbsp;карте<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a> <a class="link-arrow" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer">Записаться<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr">: Технопарк (откроется в&nbsp;новой вкладке)</span></a></p>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-import" aria-labelledby="drawer-p-import-title" tabindex="-1" hidden>
+      <div class="drawer__bar">
+        <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
+        <h2 class="drawer__title" id="drawer-p-import-title">Привоз авто <span class="nw">из-за</span> рубежа</h2>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
+      </div>
+      <div class="drawer__body">
+        <ul class="drawer__links">
+          <li><a class="drawer__link" href="import">Как&nbsp;мы&nbsp;работаем</a></li>
+          <li><a class="drawer__link" href="https://t.me/otec_roman" target="_blank" rel="noopener">Обсудить привоз в&nbsp;Telegram<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-auto" aria-labelledby="drawer-p-auto-title" tabindex="-1" hidden>
+      <div class="drawer__bar">
+        <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
+        <h2 class="drawer__title" id="drawer-p-auto-title">Покупка и&nbsp;продажа</h2>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
+      </div>
+      <div class="drawer__body">
+        <ul class="drawer__links">
+          <li><a class="drawer__link" href="auto#for-sale">Сейчас в&nbsp;продаже<span class="drawer__count">2</span></a></li>
+          <li><a class="drawer__link" href="auto#sold">Уже продали<span class="drawer__count">16</span></a></li>
+          <li><a class="drawer__link" href="auto#sell">Продать машину</a></li>
+          <li><a class="drawer__link" href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener"><span>Канал <span lang="en">MEAT AUTO</span></span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-about" aria-labelledby="drawer-p-about-title" tabindex="-1" hidden>
+      <div class="drawer__bar">
+        <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
+        <h2 class="drawer__title" id="drawer-p-about-title">О&nbsp;нас</h2>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
+      </div>
+      <div class="drawer__body">
+        <ul class="drawer__links">
+          <li><a class="drawer__link" href="about">О&nbsp;компании</a></li>
+          <li><a class="drawer__link" href="about#visit-locations">Студии и&nbsp;контакты</a></li>
+          <li><a class="drawer__link" href="about#founder">Кто мы</a></li>
+          <li><a class="drawer__link" href="about#club">Подход</a></li>
+          <li><a class="drawer__link" href="about#path">Наш путь</a></li>
+          <li><a class="drawer__link" href="about#team">Команда</a></li>
+          <li><a class="drawer__link" href="about#membership">Клубная карта</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-contacts" aria-labelledby="drawer-p-contacts-title" tabindex="-1" hidden>
+      <div class="drawer__bar">
+        <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
+        <h2 class="drawer__title" id="drawer-p-contacts-title">Контакты</h2>
+        <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
+      </div>
+      <div class="drawer__body">
+        <div class="drawer__studio">
+          <h3 class="drawer__studio-name">Мясницкая</h3>
+          <p class="drawer__studio-type">Премиальная мойка</p>
+          <p>ул. Мясницкая, 11<br>Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</p>
+          <ul class="drawer__rows">
+            <li><a class="drawer__row" href="tel:+79300352325"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span class="nw">+7 (930) 035-23-25</span></a></li>
+            <li><a class="drawer__row" href="about#map-myasnitskaya"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-pin"/></svg><span>На&nbsp;карте</span></a></li>
+            <li><a class="drawer__row" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span>Записаться онлайн</span><span class="sr">: Мясницкая (откроется в&nbsp;новой вкладке)</span></a></li>
+          </ul>
+        </div>
+        <div class="drawer__studio">
+          <h3 class="drawer__studio-name">Технопарк</h3>
+          <p class="drawer__studio-type">Детейлинг-центр</p>
+          <p>пр-т&nbsp;Андропова, 8, стр. 2<br>Ежедневно 08:00–22:00</p>
+          <ul class="drawer__rows">
+            <li><a class="drawer__row" href="tel:+79324916991"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span class="nw">+7 (932) 491-69-91</span></a></li>
+            <li><a class="drawer__row" href="about#map-technopark"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-pin"/></svg><span>На&nbsp;карте</span></a></li>
+            <li><a class="drawer__row" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span>Записаться онлайн</span><span class="sr">: Технопарк (откроется в&nbsp;новой вкладке)</span></a></li>
+          </ul>
+        </div>
       </div>
     </section>
   </div>
+  <button class="drawer__close drawer__close--float" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
 </dialog>
 <!-- SHARED:header:END -->
 
 <main id="main">
 <!-- Набор компонентов (план §2.8): все компоненты во всех вариантах — на нём WP7 проверяет
      переполнение и контраст до появления страниц. Владелец: WP1. Нет в sitemap, robots noindex,
-     в пакет превью и на meatwash.ru не выкладывается. -->
+     в пакет превью и на meatwash.ru не выкладывается. Тексты — с нынешнего сайта и из JSON
+     (ничего не выдумано), цены и счётчики — подстановками. Один H1; заголовки героев A, B, C, E
+     здесь — h2 с классом hero-*__title (на страницах это H1). -->
+<style>
+  /* Только для набора: подписи образцов, плашки цветов, схемы. На страницах не нужно. */
+  .kit-label { margin-top: var(--md); color: var(--on-muted); font-size: var(--fs-xs); letter-spacing: .04em; }
+  .kit-label:first-child { margin-top: 0; }
+  .kit-scale > p:not(.kit-label) { margin-top: 4px; }
+  .kit-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sm); margin-top: var(--lg); }
+  .kit-swatches li { display: grid; gap: 2px; font-size: var(--fs-sm); }
+  .kit-swatches li::before { content: ""; height: 72px; margin-bottom: 8px; border-radius: var(--r-sm); background: var(--sw); box-shadow: inset 0 0 0 1px var(--on-line); }
+  .kit-swatches span { color: var(--on-muted); }
+  .kit-schemes { display: grid; gap: var(--md); }
+  @media (min-width: 1000px) { .kit-schemes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kit-scheme { position: relative; isolation: isolate; overflow: hidden; display: grid; align-content: start; gap: var(--md); padding: var(--md); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--on-line); }
+  .kit-scheme__title { font-size: var(--fs-md); font-weight: 600; }
+  .kit-scheme--photo { color: var(--fg); min-height: 320px; align-content: end; }
+  .kit-scheme__img { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; }
+  .kit-scheme--photo::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, var(--fade)) bottom / 100% 80% no-repeat; }
+  .kit-form { display: grid; gap: var(--md); }
+  .kit-form__grid { display: grid; gap: var(--md); }
+  @media (min-width: 760px) { .kit-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kit-form__checks { display: grid; gap: 12px; }
+  .kit-gap { margin-top: var(--md); }
+  .kit-pagebar { padding-block: var(--lg); }
+  .kit-pagebar .kit-label { margin-bottom: var(--sm); }
+  .kit-photo-cards { display: grid; gap: var(--md); }
+  @media (min-width: 1000px) { .kit-photo-cards { grid-template-columns: 819fr 649fr 479fr; align-items: end; } }
+</style>
 <section class="hero-d col-wide" aria-labelledby="page-title">
+  <a class="back-link" href="./"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-left"/></svg><span>На&nbsp;главную</span></a>
   <h1 id="page-title">Набор компонентов</h1>
-  <p class="hero-d__lead">Служебная страница дизайн-системы <span lang="en">Meat Auto</span>.</p>
+  <p class="hero-d__lead">Служебная страница дизайн-системы <span lang="en">Meat Auto</span>: все&nbsp;компоненты во&nbsp;всех вариантах&nbsp;— для&nbsp;проверки переполнения и&nbsp;контраста.</p>
+  <div class="hero-d__aside">
+    <span class="chip">Manrope 200–800</span>
+    <span class="chip">Тёмная · бумага · бордо</span>
+    <a class="btn btn--secondary btn--compact" href="#kit-heroes">К&nbsp;героям</a>
+  </div>
 </section>
+
+<nav class="anchor-tabs" data-anchor-tabs aria-label="Разделы набора">
+  <div class="anchor-tabs__track">
+    <a class="anchor-tabs__tab" href="#kit-base">Основа</a>
+    <a class="anchor-tabs__tab" href="#kit-actions">Кнопки и&nbsp;ссылки</a>
+    <a class="anchor-tabs__tab" href="#kit-fields">Поля</a>
+    <a class="anchor-tabs__tab" href="#kit-heroes">Герои</a>
+    <a class="anchor-tabs__tab" href="#kit-blocks">Секции</a>
+    <a class="anchor-tabs__tab" href="#kit-media">Медиа</a>
+    <a class="anchor-tabs__tab" href="#kit-numbers">Цифры и&nbsp;списки</a>
+  </div>
+</nav>
+
+<!-- ── Основа: шкала и цвета ─────────────────────────────────────────────── -->
+<section class="section" id="kit-base" aria-labelledby="kit-base-title">
+  <header class="section-head">
+    <h2 id="kit-base-title">Шрифт и&nbsp;цвет</h2>
+    <p class="section-head__lead">Один шрифт&nbsp;— Manrope, вариативный 200–800. Крупные заголовки&nbsp;— 300, подзаголовки&nbsp;— 400, мелкие заголовки&nbsp;— 600.</p>
+  </header>
+  <div class="col-basic kit-scale">
+    <p class="kit-label">4xl · 300</p><p class="t-4xl">Уход, который сохраняет ценность</p>
+    <p class="kit-label">3xl · 300&nbsp;— H1</p><p class="t-3xl">Мойка и&nbsp;детейлинг</p>
+    <p class="kit-label">2xl · 300&nbsp;— H2</p><p class="t-2xl">Привоз авто <span class="nw">из-за</span> рубежа</p>
+    <p class="kit-label">xl&nbsp;· 400</p><p class="t-xl">Больше, чем&nbsp;сервис</p>
+    <p class="kit-label">lg&nbsp;· 400&nbsp;— H3</p><p class="t-lg">Покупка и&nbsp;продажа авто</p>
+    <p class="kit-label">md&nbsp;· 400</p><p class="t-md">Две студии в&nbsp;Москве: адреса, часы работы, телефоны и&nbsp;онлайн-запись.</p>
+    <p class="kit-label">base · 400</p><p>Мясницкая&nbsp;— премиальная мойка, Технопарк&nbsp;— детейлинг-центр полного цикла. Мойка от&nbsp;2&nbsp;150&nbsp;₽, 30&nbsp;минут.</p>
+    <p class="kit-label">sm&nbsp;· 400</p><p class="t-sm t-muted">Стоимость зависит от&nbsp;типа кузова и&nbsp;состояния автомобиля. Итоговый объём и&nbsp;цену согласуем перед работой. Не&nbsp;является публичной офертой.</p>
+    <p class="kit-label">Пометка</p><p>Так выглядит <span class="todo" data-no-typo>пометка «нужно от клиента»</span>&nbsp;— только на&nbsp;страницах привоза и&nbsp;работ.</p>
+  </div>
+  <ul class="col-basic kit-swatches" aria-label="Цвета">
+    <li style="--sw: var(--bg)"><b>Холст</b><span>#080808</span></li>
+    <li style="--sw: var(--fg)"><b>Слоновая кость</b><span>#f1ebe0</span></li>
+    <li style="--sw: var(--fg-2)"><b>Вторая панель</b><span>#e6dfd3</span></li>
+    <li style="--sw: var(--oxblood)"><b>Бордо</b><span>#5c1219</span></li>
+    <li style="--sw: var(--red)"><b>Красный</b><span>#e2231a&nbsp;— линии, фокус</span></li>
+    <li style="--sw: var(--red-ink)"><b>Красный на&nbsp;светлом</b><span>#c0150f</span></li>
+  </ul>
+</section>
+
+<!-- ── Кнопки, ссылки, чипы: на тёмном, на «бумаге», на бордо ─────────────── -->
+<section class="section" id="kit-actions" aria-labelledby="kit-actions-title">
+  <header class="section-head">
+    <h2 id="kit-actions-title">Кнопки, ссылки и&nbsp;чипы</h2>
+    <p class="section-head__lead">Одни и&nbsp;те&nbsp;же классы на&nbsp;тёмном холсте, на&nbsp;«бумаге» и&nbsp;на&nbsp;бордо: цвета&nbsp;— из&nbsp;схемы блока.</p>
+  </header>
+  <div class="col-ext kit-schemes">
+    <div class="kit-scheme">
+      <h3 class="kit-scheme__title">Тёмный холст</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services">Услуги и&nbsp;цены</a>
+        <a class="btn btn--ghost" href="works">Наши работы</a>
+      </div>
+      <div class="actions">
+        <button class="btn btn--secondary btn--compact" type="button" data-book>Записаться</button>
+        <a class="btn btn--primary btn--compact" href="tel:+79324916991"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg>Позвонить в&nbsp;Технопарк</a>
+        <button class="btn btn--primary btn--compact" type="button" disabled>Недоступно</button>
+      </div>
+      <div class="actions">
+        <a class="pill-cta" href="services"><span>Услуги и&nbsp;цены</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></a>
+        <a class="link-arrow" href="wrap">Подробнее об&nbsp;оклейке<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
+        <a class="link-arrow" href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал <span lang="en">MEAT AUTO</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a>
+      </div>
+      <div class="actions">
+        <a class="back-link" href="services"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-left"/></svg><span>Мойка и&nbsp;детейлинг</span></a>
+        <p>Текст со&nbsp;<a href="privacy">ссылкой на&nbsp;Политику</a> внутри абзаца.</p>
+      </div>
+      <ul class="chips">
+        <li class="chip">30&nbsp;минут</li>
+        <li class="chip chip--solid">2023</li>
+        <li class="chip">от&nbsp;500&nbsp;₽</li>
+        <li class="chip chip--check"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-check"/></svg>Химчистка салона</li>
+      </ul>
+      <button class="btn btn--primary btn--block" type="button" data-book>Записаться&nbsp;— на&nbsp;всю ширину</button>
+    </div>
+    <div class="kit-scheme scheme-light">
+      <h3 class="kit-scheme__title">Бумага (статьи и&nbsp;документы, шторка)</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services">Услуги и&nbsp;цены</a>
+        <a class="btn btn--ghost" href="articles">Все&nbsp;статьи</a>
+      </div>
+      <div class="actions">
+        <a class="pill-cta" href="services#programs"><span>Программы мойки</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></a>
+        <a class="link-arrow" href="services">Все&nbsp;услуги и&nbsp;цены<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
+      </div>
+      <p>Подробнее&nbsp;— в&nbsp;<a href="privacy">Политике обработки персональных данных</a>.</p>
+      <ul class="chips">
+        <li class="chip">60&nbsp;минут</li>
+        <li class="chip chip--solid">Седан</li>
+        <li class="chip chip--check"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-check"/></svg>Мойка дисков и&nbsp;колёсных арок</li>
+      </ul>
+    </div>
+    <div class="kit-scheme scheme-oxblood">
+      <h3 class="kit-scheme__title">Бордо (промо, цитата)</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-membership="Условия клуба">Обсудить условия</button>
+        <a class="btn btn--secondary" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a>
+      </div>
+      <div class="actions">
+        <a class="link-arrow" href="about#membership">Больше, чем&nbsp;сервис<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
+        <span class="chip">Фокус здесь&nbsp;— слоновой костью</span>
+      </div>
+    </div>
+    <div class="kit-scheme kit-scheme--photo">
+      <img class="kit-scheme__img" src="assets/img/auto-lotus-3.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3 class="kit-scheme__title">На&nbsp;фото</h3>
+      <ul class="chips">
+        <li class="chip chip--photo">Мойка · химчистка · полировка · ремонт</li>
+        <li class="chip chip--photo">Уже продали 16&nbsp;машин</li>
+      </ul>
+      <div class="actions">
+        <a class="pill-cta" href="auto"><span>Смотреть машины</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></a>
+        <a class="btn btn--secondary btn--compact" href="auto#lotus-eletre">Lotus Eletre R</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Поля и переключатели ──────────────────────────────────────────────── -->
+<section class="section" id="kit-fields" aria-labelledby="kit-fields-title">
+  <header class="section-head">
+    <h2 id="kit-fields-title">Поля и&nbsp;переключатели</h2>
+    <p class="section-head__lead">Поля&nbsp;— на&nbsp;будущее (заявка с&nbsp;фото, привоз). Переключатель&nbsp;— кузов на&nbsp;«Услугах», «Прозрачная / Цветная» на&nbsp;«Оклейке».</p>
+  </header>
+  <div class="col-title kit-form">
+    <fieldset class="segmented">
+      <legend class="sr">Тип кузова</legend>
+      <label><input type="radio" name="kit-body" value="0" checked><span>Седан</span></label>
+      <label><input type="radio" name="kit-body" value="1"><span>Кроссовер</span></label>
+      <label><input type="radio" name="kit-body" value="2"><span>Внедорожник</span></label>
+      <label><input type="radio" name="kit-body" value="3"><span>Микроавтобус</span></label>
+    </fieldset>
+    <div class="kit-form__grid">
+      <div class="field">
+        <label class="field__label" for="kit-name">Имя</label>
+        <input class="field__input" id="kit-name" type="text" autocomplete="off" placeholder="Как к вам обращаться">
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-phone">Телефон</label>
+        <input class="field__input" id="kit-phone" type="tel" autocomplete="off" aria-invalid="true" aria-describedby="kit-phone-error" value="+7 930">
+        <p class="field__error" id="kit-phone-error">Проверьте номер: не&nbsp;хватает цифр.</p>
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-studio">Студия</label>
+        <select class="field__input" id="kit-studio">
+          <option>Мясницкая</option>
+          <option>Технопарк</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-car">Марка и&nbsp;модель</label>
+        <input class="field__input" id="kit-car" type="text" autocomplete="off">
+        <p class="field__hint">Например, Lotus Eletre R.</p>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field__label" for="kit-text">Что&nbsp;сделать</label>
+      <textarea class="field__input" id="kit-text" rows="4"></textarea>
+    </div>
+    <div class="kit-form__checks">
+      <label class="check"><input type="checkbox" checked><span>Даю <a href="consent-request">согласие на&nbsp;обработку персональных данных</a></span></label>
+      <label class="check"><input type="checkbox"><span>Нужна полировка</span></label>
+      <label class="check"><input type="radio" name="kit-film" checked><span>Прозрачная плёнка</span></label>
+      <label class="check"><input type="radio" name="kit-film"><span>Цветная плёнка</span></label>
+    </div>
+  </div>
+</section>
+
+<!-- ── Герои ─────────────────────────────────────────────────────────────── -->
+<div id="kit-heroes">
+  <section class="hero-a" aria-labelledby="kit-hero-a">
+    <picture class="hero-a__media">
+      <source media="(max-width: 759px)" srcset="assets/shots/cf-rq-wet-s.webp">
+      <img src="assets/shots/cf-rq-wet.webp" alt="Иллюстрация: заднее крыло Porsche в каплях воды" width="1600" height="900" loading="lazy" decoding="async">
+    </picture>
+    <div class="hero-a__body">
+      <h2 class="hero-a__title t-3xl" id="kit-hero-a">Мойка и&nbsp;детейлинг</h2>
+      <p class="hero-a__lead">Четыре раздела: мойка, детейлинг, защита и&nbsp;помощь. Мойку запишем онлайн в&nbsp;выбранную студию, цену остальных работ назовёт администратор.</p>
+      <div class="hero-a__actions actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services#catalog">Смотреть цены</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero-b" aria-labelledby="kit-hero-b">
+    <picture class="hero-b__media"><img src="assets/shots/cf-hood-crop.webp" alt="" width="1600" height="900" loading="lazy" decoding="async"></picture>
+    <h2 class="hero-b__title" id="kit-hero-b">Машина уезжает такой, какой её&nbsp;задумали на&nbsp;заводе</h2>
+    <p class="hero-b__lead">Подбираем химию под&nbsp;покрытие, согласуем работы на&nbsp;приёмке и&nbsp;проверяем результат перед выдачей.</p>
+    <div class="hero-b__actions actions">
+      <a class="btn btn--primary" href="about">О&nbsp;компании</a>
+    </div>
+  </section>
+
+  <section class="hero-c" aria-labelledby="kit-hero-c">
+    <a class="back-link" href="services"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-left"/></svg><span>Мойка и&nbsp;детейлинг</span></a>
+    <p class="hero-c__mark" aria-hidden="true" lang="en">PPF</p>
+    <fieldset class="segmented">
+      <legend class="sr">Плёнка</legend>
+      <label><input type="radio" name="kit-wrap" checked><span>Прозрачная</span></label>
+      <label><input type="radio" name="kit-wrap"><span>Цветная</span></label>
+    </fieldset>
+    <h2 class="hero-c__title t-3xl" id="kit-hero-c">Оклейка полиуретаном</h2>
+    <p class="hero-c__lead">Полиуретан&nbsp;— прочная защитная плёнка, прозрачная или&nbsp;цветная. Прозрачная бережёт заводской лак от&nbsp;сколов, песка и&nbsp;реагентов.</p>
+    <span class="chip">Фары&nbsp;— от&nbsp;10&nbsp;000&nbsp;₽</span>
+    <p class="hero-c__price">Зоны риска и&nbsp;весь кузов&nbsp;— стоимость после оценки</p>
+    <div class="hero-c__actions actions">
+      <button class="btn btn--primary" type="button" data-request data-request-category="protection" data-request-services="Оклейка фар плёнкой">Узнать цену</button>
+      <a class="btn btn--secondary" href="tel:+79324916991">Позвонить в&nbsp;Технопарк</a>
+      <a class="btn btn--ghost" href="works">Наши работы</a>
+    </div>
+  </section>
+
+  <section class="hero-e" aria-labelledby="kit-hero-e">
+    <h2 class="hero-e__title t-3xl" id="kit-hero-e">Купить или&nbsp;продать&nbsp;— напишите</h2>
+    <p class="hero-e__lead">Или&nbsp;позвоните в&nbsp;студию на&nbsp;Мясницкой <a href="tel:+79300352325"><span class="nw">+7 (930) 035-23-25</span></a>.</p>
+    <div class="hero-e__actions actions">
+      <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram<span class="sr"> (откроется в&nbsp;новой вкладке)</span></a>
+    </div>
+  </section>
+
+  <div class="kit-pagebar col-ext">
+    <p class="kit-label">Панель страницы (P06)&nbsp;— на&nbsp;странице въезжает после героя, полоса прогресса красная</p>
+    <div class="page-bar is-shown" style="position: relative; inset: auto; translate: none; z-index: 0">
+      <p class="page-bar__title">Оклейка полиуретаном</p>
+      <div class="page-bar__actions">
+        <button class="btn btn--primary btn--compact" type="button" data-request data-request-category="protection" data-request-services="Оклейка фар плёнкой">Узнать цену</button>
+        <a href="tel:+79324916991">Позвонить</a>
+      </div>
+      <span class="page-bar__progress" style="--progress: .42"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Секции: заголовки, карточки, зигзаг, промо, тизеры, аккордеоны ─────── -->
+<section class="section" id="kit-blocks" aria-labelledby="kit-blocks-title">
+  <header class="section-head">
+    <h2 id="kit-blocks-title">Перед визитом</h2>
+    <p class="section-head__lead">Заголовок секции по&nbsp;центру колонки «title», под&nbsp;ним&nbsp;— три карточки.</p>
+  </header>
+  <div class="col-ext cards cards--3">
+    <article class="card">
+      <h3>Первый визит</h3>
+      <p>Новым клиентам&nbsp;— защитное кварцевое покрытие кузова в&nbsp;подарок и&nbsp;скидка 500&nbsp;₽ на&nbsp;первую мойку. Условия уточняйте при&nbsp;записи.</p>
+      <div class="card__actions"><button class="link-arrow" type="button" data-book data-book-context="Первый визит">Записаться<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></button></div>
+    </article>
+    <article class="card">
+      <h3>Пока ждёте</h3>
+      <p>На&nbsp;Мясницкой два часа закрытого паркинга включены в&nbsp;мойку. В&nbsp;зоне ожидания&nbsp;— Wi-Fi, вода и&nbsp;кофе. Кофемания&nbsp;— этажом выше.</p>
+    </article>
+    <article class="card">
+      <h3>Оплата</h3>
+      <p>Карта, СБП, QR, наличные, безналичный расчёт и&nbsp;рассрочка. На&nbsp;Мясницкой можно оплатить из&nbsp;автомобиля. Онлайн-запись доступна круглосуточно.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-team-title">
+  <header class="section-head section-head--left">
+    <h2 id="kit-team-title">Наша команда</h2>
+    <p class="section-head__lead">Всё делаем своей командой: работу с&nbsp;машиной, сопровождение клиента и&nbsp;организацию.</p>
+  </header>
+  <div class="col-basic cards cards--3">
+    <article class="card card--outline"><h3>Мастера студий</h3><p>Мойка, детейлинг, полировка, оклейка и&nbsp;восстановление&nbsp;— на&nbsp;Мясницкой и&nbsp;в&nbsp;Технопарке.</p></article>
+    <article class="card card--outline"><h3>Сопровождение</h3><p>Ведём задачу клиента целиком&nbsp;— от&nbsp;первого сообщения до&nbsp;выдачи машины или&nbsp;сделки.</p></article>
+    <article class="card card--outline"><h3>Проверенные партнёры</h3><p>Если задача шире наших студий, подключаем профессионалов, которые работают по&nbsp;нашим стандартам.</p></article>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-zigzag-title">
+  <header class="section-head"><h2 id="kit-zigzag-title">Наши работы</h2></header>
+  <div class="zigzag col-basic">
+    <div class="zigzag__row">
+      <figure><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R после подготовки к продаже" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Lotus Eletre R&nbsp;— подготовка к&nbsp;продаже</h3>
+        <p>Перед продажей сделали глубокую химчистку салона, отполировали кузов и&nbsp;нанесли керамическое покрытие Surface.</p>
+        <a class="link-arrow" href="auto#lotus-eletre">Машина в&nbsp;продаже<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+    <div class="zigzag__row">
+      <figure><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R после химчистки" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Химчистка салона</h3>
+        <p>Глубокая химчистка салона&nbsp;— часть подготовки машины к&nbsp;продаже.</p>
+        <div class="actions"><button class="btn btn--primary" type="button" data-request data-request-category="detailing">Узнать цену</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight" aria-label="Промо-блоки">
+  <div class="promo col-ext">
+    <div class="promo__media"><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></div>
+    <div class="promo__panel">
+      <h2>Больше, чем&nbsp;сервис</h2>
+      <p>Подарочные сертификаты, уход за&nbsp;корпоративным автопарком и&nbsp;индивидуальные комплексы. Обсудим условия и&nbsp;подберём удобное время.</p>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-membership="Условия клуба">Обсудить условия</button>
+        <a class="link-arrow" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="promo promo--paper promo--reverse col-ext kit-gap">
+    <div class="promo__media"><img src="assets/img/auto-lotus-8.webp" alt="Передние кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></div>
+    <div class="promo__panel">
+      <h2>Купить или&nbsp;продать&nbsp;— напишите</h2>
+      <p>Продаём автомобили и&nbsp;делаем предпродажную подготовку: детейлинг, полировку, химчистку салона.</p>
+      <div class="actions"><a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram<span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></div>
+    </div>
+  </div>
+  <div class="promo col-ext kit-gap">
+    <div class="promo__panel">
+      <h2>Под&nbsp;вашу задачу.</h2>
+      <p>Комплекс перед продажей, защита нового автомобиля или&nbsp;регулярный уход за&nbsp;автопарком. Для&nbsp;корпоративных клиентов&nbsp;— индивидуальный расчёт, консьерж-сервис и&nbsp;единый счёт.</p>
+      <button class="btn btn--primary" type="button" data-membership="Индивидуальный уход">Обсудить уход</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-teasers-title">
+  <header class="section-head"><h2 id="kit-teasers-title">Тизеры</h2></header>
+  <div class="col-ext">
+    <a class="teaser" href="wrap">
+      <img class="teaser__img" src="assets/shots/cf-bead-macro.webp" alt="" width="1600" height="900" loading="lazy" decoding="async">
+      <span class="teaser__body">
+        <span class="teaser__title">Оклейка полиуретаном</span>
+        <span class="teaser__text">Прозрачная бережёт заводской лак, цветная ещё и&nbsp;меняет цвет машины.</span>
+        <span class="teaser__cta">Подробнее<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></span>
+      </span>
+    </a>
+  </div>
+  <div class="teasers teasers--skewed col-ext kit-gap">
+    <a class="teaser" href="works">
+      <img class="teaser__img" src="assets/img/auto-lotus-2.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <span class="teaser__body"><span class="teaser__title">Наши работы</span><span class="teaser__text">Подготовка к&nbsp;продаже, оклейка плёнкой, химчистка и&nbsp;полировка.</span><span class="teaser__cta">Смотреть<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></span></span>
+    </a>
+    <a class="teaser" href="import">
+      <span class="teaser__body"><span class="teaser__title">Привоз авто <span class="nw">из-за</span> рубежа</span><span class="teaser__text">Тизер без&nbsp;фото&nbsp;— на&nbsp;поверхности.</span><span class="teaser__cta">Подробнее<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></span></span>
+    </a>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-faq-title">
+  <header class="section-head"><h2 id="kit-faq-title">Что&nbsp;входит</h2></header>
+  <div class="col-basic accordions">
+    <details class="accordion">
+      <summary class="accordion__head">Комплексная с&nbsp;воском&nbsp;— 60&nbsp;минут</summary>
+      <div class="accordion__body">
+        <ul>
+          <li>Всё из&nbsp;трёхфазной мойки</li>
+          <li>Покрытие кузова воском</li>
+          <li>Мойка дисков и&nbsp;колёсных арок</li>
+          <li>Пылесос салона и&nbsp;багажника</li>
+          <li>Протирка панели, стёкол изнутри</li>
+        </ul>
+      </div>
+    </details>
+    <details class="accordion" open>
+      <summary class="accordion__head">Где&nbsp;оклеиваем</summary>
+      <div class="accordion__body"><p>Только в&nbsp;детейлинг-центре Технопарк: ТЦ&nbsp;«Мегаполис», 1&nbsp;этаж.</p><a class="link-arrow" href="about#map-technopark">На&nbsp;карте<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a></div>
+    </details>
+    <details class="accordion">
+      <summary class="accordion__head">Как&nbsp;проходит оклейка: расчёт, подготовка, оклейка и&nbsp;выдача&nbsp;— длинная строка заголовка переносится</summary>
+      <div class="accordion__body"><p>Моем и&nbsp;обезжириваем кузов. Если нужно&nbsp;— полируем перед плёнкой.</p></div>
+    </details>
+  </div>
+</section>
+
+<!-- ── Медиа: карточки на фото, карусели, мозаики, ленты, «до/после» ───────── -->
+<section class="section" id="kit-media" aria-labelledby="kit-media-title">
+  <header class="section-head"><h2 id="kit-media-title">Карточки на&nbsp;фото</h2></header>
+  <div class="col-wide kit-photo-cards">
+    <a class="photo-card photo-card--l" href="auto#lotus-eletre">
+      <img class="photo-card__img" src="assets/img/auto-lotus-3.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <ul class="chips"><li class="chip chip--photo">2023</li><li class="chip chip--photo">38&nbsp;100&nbsp;км</li></ul>
+      <h3>Lotus Eletre R</h3>
+      <p>Подготовили в&nbsp;<span lang="en">Meat Auto</span>: глубокая химчистка салона, полировка кузова, керамическое покрытие.</p>
+    </a>
+    <a class="photo-card photo-card--m" href="works">
+      <img class="photo-card__img" src="assets/img/auto-lotus-7.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3>Химчистка салона</h3>
+    </a>
+    <a class="photo-card photo-card--s" href="services#price-help">
+      <img class="photo-card__img" src="assets/img/auto-lotus-6.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3>Кузов и&nbsp;диски</h3>
+    </a>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-path-title">
+  <div class="carousel col-basic" data-carousel aria-roledescription="карусель" aria-labelledby="kit-path-title">
+    <div class="carousel__head">
+      <h2 id="kit-path-title">Наш путь</h2>
+      <div class="carousel__nav">
+        <button type="button" data-carousel-prev aria-label="Назад"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-left"/></svg></button>
+        <button type="button" data-carousel-next aria-label="Вперёд"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button>
+      </div>
+    </div>
+    <ul class="carousel__track" tabindex="0" aria-label="Вехи">
+      <li class="carousel__slide card"><p class="t-sm t-muted">Сентябрь 2025</p><h3>Оклейка полиуретаном</h3><p>Рассказали, что&nbsp;давно оклеиваем машины защитной плёнкой,&nbsp;— показали BMW M4&nbsp;в&nbsp;цветном полиуретане Brooklyn Grey.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Ноябрь 2025</p><h3>Интервью в&nbsp;журнале</h3><p>Материал в&nbsp;Service &amp; Parts (РЁВ): про&nbsp;автокультуру, системный подход и&nbsp;развитие проекта.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Май 2026</p><h3>Детейлинг-выставка</h3><p>Впервые всей командой поучаствовали в&nbsp;выставке в&nbsp;медиаформате.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Сентябрь 2026</p><h3>Запуск направления продажи авто, канал <span lang="en">MEAT AUTO</span></h3><p>Свои автомобили в&nbsp;продаже: готовим их&nbsp;в&nbsp;наших студиях и&nbsp;показываем вживую.</p><a class="link-arrow" href="auto">Автомобили в&nbsp;продаже<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-gallery-title">
+  <div class="carousel col-basic" data-carousel aria-roledescription="карусель" aria-labelledby="kit-gallery-title">
+    <div class="carousel__head">
+      <h2 id="kit-gallery-title">Lotus Eletre R</h2>
+      <div class="carousel__nav">
+        <button type="button" data-carousel-prev aria-label="Назад"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-left"/></svg></button>
+        <button type="button" data-carousel-next aria-label="Вперёд"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button>
+      </div>
+    </div>
+    <ul class="carousel__track" tabindex="0" aria-label="Фотографии">
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"><h3>Спереди</h3><p>Снаружи большой кроссовер, по&nbsp;цифрам почти суперкар.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"><h3>Сзади</h3><p>Полировка кузова перед продажей.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"><h3>Салон</h3><p>Глубокая химчистка салона.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-6.webp" alt="Колесо Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"><h3>Диски</h3><p>Керамическое покрытие Surface.</p><a class="link-arrow" href="auto#lotus-eletre">Машина в&nbsp;продаже<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-mosaic-title">
+  <header class="section-head"><h2 id="kit-mosaic-title">Мозаики</h2></header>
+  <div class="col-wide">
+    <div class="mosaic">
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R, вид спереди сбоку" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-6.webp" alt="Колесо Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-8.webp" alt="Кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <ul class="mosaic__chips chips"><li class="chip chip--photo">2&nbsp;в&nbsp;продаже</li></ul>
+      <a class="mosaic__open" href="auto#lotus-eletre">Все&nbsp;фото (8)<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
+    </div>
+  </div>
+  <div class="col-wide kit-gap">
+    <div class="mosaic mosaic--three">
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-7.webp" alt="Центральная консоль Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-8.webp" alt="Кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+    </div>
+  </div>
+  <div class="col-wide kit-gap">
+    <div class="mosaic mosaic--zoom">
+      <figure class="mosaic__item"><img src="assets/shots/cf-rq-wet.webp" alt="Иллюстрация: заднее крыло в каплях воды" width="1600" height="900" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/shots/cf-wheel-macro.webp" alt="Иллюстрация: колесо крупным планом" width="1600" height="900" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/shots/cf-bead-macro.webp" alt="Иллюстрация: капли на покрытии" width="1600" height="900" loading="lazy" decoding="async"></figure>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-strip-title">
+  <header class="section-head section-head--left"><h2 id="kit-strip-title">Ленты фото</h2></header>
+  <div class="col-basic">
+    <ul class="strip" tabindex="0" aria-label="Фотографии Lotus Eletre R">
+      <li><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R сбоку" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R спереди сбоку" width="800" height="533" loading="lazy" decoding="async"></li>
+    </ul>
+  </div>
+  <div class="col-basic kit-gap">
+    <ul class="strip strip--tall" tabindex="0" aria-label="Фотографии BMW 740Ld xDrive">
+      <li><img src="assets/img/auto-bmw740-1.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-2.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-3.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-4.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-ba-title">
+  <header class="section-head"><h2 id="kit-ba-title">Разницу видно, если её&nbsp;показать</h2></header>
+  <div class="col-ext ba-grid">
+    <figure class="ba" data-ba>
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Фара после полировки: стекло прозрачное, виден отражатель" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-headlight-hazy.webp" srcset="assets/shots/cf-headlight-hazy-s.webp 900w, assets/shots/cf-headlight-hazy.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Та же фара до полировки: рассеиватель помутнел и отдаёт жёлтым" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Фары до и после полировки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b">до</span>
+        <span class="ba__tag ba__tag--a">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <b>Полировка фар&nbsp;— от&nbsp;5&nbsp;000&nbsp;₽</b>
+        <i>Мутный рассеиватель снова прозрачный: свет идёт на&nbsp;дорогу, а&nbsp;не&nbsp;рассеивается в&nbsp;пластике.</i>
+        <span class="ba__note">Иллюстрация, не&nbsp;работа студии</span>
+      </figcaption>
+    </figure>
+    <figure class="ba" data-ba data-split="72">
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-chip-macro-healed.webp" srcset="assets/shots/cf-chip-macro-healed-s.webp 900w, assets/shots/cf-chip-macro-healed.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Крыло после подкраски скола: отражение идёт без разрыва" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="То же крыло со сколом до ремонта" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Скол до и после подкраски" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b">до</span>
+        <span class="ba__tag ba__tag--a">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <b>Удаление сколов и&nbsp;подкраска&nbsp;— от&nbsp;5&nbsp;000&nbsp;₽</b>
+        <i>Отражение лампы идёт по&nbsp;крылу без&nbsp;разрыва&nbsp;— скол не&nbsp;читается ни&nbsp;под&nbsp;каким углом.</i>
+        <span class="ba__note">Иллюстрация, не&nbsp;работа студии</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ── Цифры, шаги, ссылки-строки, цитата ─────────────────────────────────── -->
+<section class="section" id="kit-numbers" aria-labelledby="kit-numbers-title">
+  <header class="section-head"><h2 id="kit-numbers-title">Подход к&nbsp;уходу</h2>
+    <p class="section-head__lead">Ручной уход за&nbsp;автомобилем в&nbsp;Москве. Подбираем химию под&nbsp;покрытие, согласуем работы на&nbsp;приёмке и&nbsp;проверяем результат перед выдачей.</p>
+  </header>
+  <div class="col-basic counters">
+    <p class="counter"><b class="counter__value">5.0</b><span class="counter__label">Рейтинг на&nbsp;Яндекс Картах</span></p>
+    <p class="counter"><b class="counter__value">2</b><span class="counter__label">Студии в&nbsp;Москве</span></p>
+    <p class="counter"><b class="counter__value">30<span class="counter__unit">мин</span></b><span class="counter__label">Мойка от</span></p>
+  </div>
+  <div class="col-basic number-tiles kit-gap">
+    <p class="number-tile"><b>2</b><span>Сейчас в&nbsp;продаже</span></p>
+    <p class="number-tile"><b>16</b><span>Уже продали</span></p>
+    <p class="number-tile"><b>2</b><span>Студии в&nbsp;Москве</span></p>
+    <p class="number-tile"><b>2021</b><span>Работаем с&nbsp;этого года</span></p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-steps-title">
+  <header class="section-head"><h2 id="kit-steps-title">Как&nbsp;проходит оклейка</h2></header>
+  <ol class="steps col-basic">
+    <li class="steps__item card--outline"><h3>Расчёт</h3><p>Позвоните в&nbsp;Технопарк&nbsp;— администратор подскажет цену для&nbsp;вашей машины. Стоимость зон риска и&nbsp;всего кузова называем после осмотра.</p></li>
+    <li class="steps__item card--outline"><h3>Подготовка</h3><p>Моем и&nbsp;обезжириваем кузов. Если нужно&nbsp;— полируем перед плёнкой.</p></li>
+    <li class="steps__item card--outline"><h3>Оклейка и&nbsp;выдача</h3><p>Оклеиваем в&nbsp;студии и&nbsp;вместе с&nbsp;вами проверяем результат перед выдачей.</p></li>
+  </ol>
+</section>
+
+<section class="section" aria-labelledby="kit-rows-title">
+  <header class="section-head"><h2 id="kit-rows-title">Документы</h2></header>
+  <ul class="link-rows col-title">
+    <li><a href="privacy">Политика обработки персональных данных</a></li>
+    <li><a href="consent">Согласие на&nbsp;обработку данных</a></li>
+    <li><a href="consent-request">Согласие при&nbsp;отправке заявки</a></li>
+    <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Все&nbsp;предложения&nbsp;— в&nbsp;канале <span lang="en">MEAT AUTO</span><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a></li>
+  </ul>
+</section>
+
+<figure class="quote-band">
+  <blockquote><p>Машина уезжает такой, какой её&nbsp;задумали на&nbsp;заводе&nbsp;— и&nbsp;остаётся такой дольше.</p></blockquote>
+  <figcaption lang="en">Meat Auto Car Care Club</figcaption>
+</figure>
 
 <!-- SHARED:book:START -->
 <!-- Блок записи в конце страницы (план §4.2; есть на «Мойке и детейлинге», «Работах», «Статьях»
@@ -170,8 +805,8 @@
       <p class="book-block__note">Онлайн-запись откроется в&nbsp;YCLIENTS <span class="nw">(<span lang="en">Meat Wash</span>)</span></p>
     </div>
     <div class="book-block__studios">
-      <a class="studio-link" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">Мясницкая</strong><span class="studio-link__type">Премиальная мойка</span><span class="studio-link__address">ул. Мясницкая, 11</span><span class="studio-link__hours">Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
-      <a class="studio-link" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">Технопарк</strong><span class="studio-link__type">Детейлинг-центр</span><span class="studio-link__address">пр-т&nbsp;Андропова, 8, стр. 2</span><span class="studio-link__hours">Ежедневно 08:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
+      <a class="studio-link" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">Мясницкая</strong><span class="studio-link__type">Премиальная мойка</span><span class="studio-link__address">ул. Мясницкая, 11</span><span class="studio-link__hours">Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
+      <a class="studio-link" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">Технопарк</strong><span class="studio-link__type">Детейлинг-центр</span><span class="studio-link__address">пр-т&nbsp;Андропова, 8, стр. 2</span><span class="studio-link__hours">Ежедневно 08:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
     </div>
   </div>
 </section>
@@ -179,28 +814,33 @@
 </main>
 
 <!-- SHARED:footer:START -->
-<!-- Подвал (план §1.4, паттерн Porsche 3.3). Владелец: WP1. Заготовка WP0 по контракту:
+<!-- Подвал (план §1.4, паттерн Porsche 3.3). Владелец: WP1.
+     Сверху «Наверх», строка города, три колонки (Студии · Meat Auto · Связаться), юридическая
+     строка, пометка о Meta, внизу по центру — белый бык и «Car Care Club».
      «На карте» — class="footer__map", href к карте студии, data-map-link — порядок атрибутов
      именно такой (его читают ui.js и check). Колонки ссылок — nav с подписью (поправка 25):
-     при закрытой шторке это единственная видимая навигация. -->
+     при закрытой шторке это единственная видимая навигация. На главной подвал следует цвету
+     страницы (v2), на остальных он тёмный, на «бумаге» тоже. -->
 <footer class="site-footer" id="contacts">
   <h2 class="sr">Контакты</h2>
-  <a class="site-footer__up link-arrow" href="#top"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up"/></svg>Наверх</a>
-  <p class="site-footer__region">Москва · 2&nbsp;студии</p>
+  <a class="site-footer__up" href="#top"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up"/></svg><span>Наверх</span></a>
+  <p class="site-footer__region"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-pin"/></svg><span>Москва · 2&nbsp;студии · с&nbsp;2021&nbsp;года</span></p>
   <div class="site-footer__cols">
-    <section class="site-footer__col" aria-labelledby="footer-studios-title">
+    <section class="site-footer__col site-footer__col--studios" aria-labelledby="footer-studios-title">
       <h3 class="site-footer__title" id="footer-studios-title">Студии</h3>
       <address class="site-footer__studio">
         <p class="site-footer__studio-name">Мясницкая</p>
-        <p>Премиальная мойка<br>ул. Мясницкая, 11<br>Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</p>
-        <p><a href="tel:+79300352325"><span class="nw">+7 (930) 035-23-25</span></a></p>
-        <a class="footer__map" href="about#map-myasnitskaya" data-map-link="myasnitskaya">На&nbsp;карте<span class="sr">: Мясницкая</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a>
+        <p class="site-footer__studio-type">Премиальная мойка</p>
+        <p>ул. Мясницкая, 11<br>Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</p>
+        <p><a class="site-footer__tel" href="tel:+79300352325"><span class="nw">+7 (930) 035-23-25</span></a></p>
+        <a class="footer__map" href="about#map-myasnitskaya" data-map-link="myasnitskaya">На&nbsp;карте<span class="sr">: Мясницкая</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
       </address>
       <address class="site-footer__studio">
         <p class="site-footer__studio-name">Технопарк</p>
-        <p>Детейлинг-центр<br>пр-т&nbsp;Андропова, 8, стр. 2<br>Ежедневно 08:00–22:00</p>
-        <p><a href="tel:+79324916991"><span class="nw">+7 (932) 491-69-91</span></a></p>
-        <a class="footer__map" href="about#map-technopark" data-map-link="technopark">На&nbsp;карте<span class="sr">: Технопарк</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></a>
+        <p class="site-footer__studio-type">Детейлинг-центр</p>
+        <p>пр-т&nbsp;Андропова, 8, стр. 2<br>Ежедневно 08:00–22:00</p>
+        <p><a class="site-footer__tel" href="tel:+79324916991"><span class="nw">+7 (932) 491-69-91</span></a></p>
+        <a class="footer__map" href="about#map-technopark" data-map-link="technopark">На&nbsp;карте<span class="sr">: Технопарк</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></a>
       </address>
     </section>
     <nav class="site-footer__col" aria-labelledby="footer-sections-title">
@@ -218,23 +858,23 @@
     <section class="site-footer__col" aria-labelledby="footer-contact-title">
       <h3 class="site-footer__title" id="footer-contact-title">Связаться</h3>
       <ul class="site-footer__links">
-        <li><button class="btn btn--primary" type="button" data-book>Записаться</button></li>
-        <li><a href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
-        <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал MEAT AUTO<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a></li>
-        <li><a href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
+        <li><button type="button" data-book>Записаться</button></li>
+        <li><a href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
+        <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал <span lang="en">MEAT AUTO</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> в&nbsp;Telegram (откроется в&nbsp;новой вкладке)</span></a></li>
+        <li><a href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg><span class="sr"> (откроется в&nbsp;новой вкладке)</span></a></li>
       </ul>
     </section>
   </div>
   <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
   <div class="site-footer__legal">
-    <span>© 2026 <span lang="en">Meat Auto</span></span>
+    <span class="site-footer__copy">©&nbsp;2026 <span lang="en">Meat Auto</span></span>
     <a href="privacy">Политика обработки персональных данных</a>
     <a href="consent">Согласие на&nbsp;обработку данных</a>
     <button type="button" data-consent-open hidden>Настройки cookie</button>
   </div>
   <!-- По слову Влада 19.10: пометка про Meta в подвале всех страниц. -->
   <p class="site-footer__note">Instagram принадлежит компании Meta, которая признана экстремистской организацией и&nbsp;запрещена на&nbsp;территории РФ.</p>
-  <p class="site-footer__mark"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg><span class="sr" lang="en">Meat Auto Car Care Club</span><svg class="ccc" viewBox="0 0 1231 198" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-ccc"/></svg></p>
+  <p class="site-footer__mark"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-bull"/></svg><span class="sr" lang="en">Meat Auto Car Care Club</span><svg class="ccc" viewBox="0 0 1231 198" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-ccc"/></svg></p>
 </footer>
 <!-- SHARED:footer:END -->
 
@@ -257,24 +897,24 @@
      «Обсудить условия» клуба и «Узнать цену», пока заявки с сайта не принимаются
      (site.requests.endpoint пуст): тогда главное в окне — телефоны. -->
 <dialog class="dialog dialog--booking" id="booking" aria-labelledby="booking-title" data-mode="book">
-  <form class="dialog__closer" method="dialog"><button class="dialog__close" aria-label="Закрыть"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-close"/></svg></button></form>
+  <form class="dialog__closer" method="dialog"><button class="dialog__close" aria-label="Закрыть"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button></form>
   <!-- Начальный фокус — на заголовке: на ссылке студии он выглядел выбором по умолчанию. -->
   <h2 class="dialog__title" id="booking-title" tabindex="-1" autofocus>Записаться</h2>
   <p class="dialog__context" id="booking-context" hidden></p>
   <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на&nbsp;вопросы и&nbsp;подберёт время.</p>
   <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и&nbsp;время&nbsp;— в&nbsp;её&nbsp;<span class="nw">онлайн-записи</span>.</p>
   <div class="dialog__branches">
-    <a class="dialog__branch studio-link" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong class="studio-link__name">Мясницкая</strong><span class="studio-link__type dialog__branch-type">Премиальная мойка</span><span class="studio-link__address">ул. Мясницкая, 11</span><span class="studio-link__hours dialog__branch-hours">Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
-    <a class="dialog__branch studio-link" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong class="studio-link__name">Технопарк</strong><span class="studio-link__type dialog__branch-type">Детейлинг-центр</span><span class="studio-link__address">пр-т&nbsp;Андропова, 8, стр. 2</span><span class="studio-link__hours dialog__branch-hours">Ежедневно 08:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
+    <a class="dialog__branch studio-link" href="https://n975571.yclients.com/company/906067/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong class="studio-link__name">Мясницкая</strong><span class="studio-link__type dialog__branch-type">Премиальная мойка</span><span class="studio-link__address">ул. Мясницкая, 11</span><span class="studio-link__hours dialog__branch-hours">Пн–Пт&nbsp;08:00–22:00<br>Сб–Вс&nbsp;09:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
+    <a class="dialog__branch studio-link" href="https://n1982508.yclients.com/company/1743348/personal/select-services" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong class="studio-link__name">Технопарк</strong><span class="studio-link__type dialog__branch-type">Детейлинг-центр</span><span class="studio-link__address">пр-т&nbsp;Андропова, 8, стр. 2</span><span class="studio-link__hours dialog__branch-hours">Ежедневно 08:00–22:00</span><span class="studio-link__go" aria-hidden="true"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-up-right"/></svg></span><span class="sr">&nbsp;— онлайн-запись, откроется в&nbsp;новой вкладке</span></a>
   </div>
   <p class="dialog__yc">Онлайн-запись откроется в&nbsp;YCLIENTS <span class="nw">(<span lang="en">Meat Wash</span>)</span></p>
   <!-- Мойка и другие работы выбраны вместе (гараж): цену остального — «Узнать цену». -->
-  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></button></p>
+  <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></button></p>
   <p class="dialog__aside" id="booking-other">Химчистка, полировка, плёнка, ремонт&nbsp;— по&nbsp;телефону: администратор назовёт цену.</p>
   <!-- Порядок телефонов меняет ui.js: про плёнку и защиту первым звонят в Технопарк. -->
   <div class="dialog__phones">
-    <a href="tel:+79300352325" data-phone="myasnitskaya"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-phone"/></svg><span>Мясницкая&nbsp;— мойка</span><strong>+7 (930) 035-23-25</strong></a>
-    <a href="tel:+79324916991" data-phone="technopark"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-phone"/></svg><span>Технопарк&nbsp;— детейлинг и&nbsp;плёнка</span><strong>+7 (932) 491-69-91</strong></a>
+    <a href="tel:+79300352325" data-phone="myasnitskaya"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span>Мясницкая&nbsp;— мойка</span><strong>+7 (930) 035-23-25</strong></a>
+    <a href="tel:+79324916991" data-phone="technopark"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span>Технопарк&nbsp;— детейлинг и&nbsp;плёнка</span><strong>+7 (932) 491-69-91</strong></a>
   </div>
 </dialog>
 
@@ -287,15 +927,15 @@
      Поля закрыты от Вебвизора (ym-hide-content у формы, ym-disable-keys у полей) —
      это обещает Политика, п. 2.1. -->
 <dialog class="dialog dialog--request request-dialog" id="request" aria-labelledby="request-title">
-  <form class="dialog__closer" method="dialog"><button class="dialog__close" aria-label="Закрыть заявку"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-close"/></svg></button></form>
+  <form class="dialog__closer" method="dialog"><button class="dialog__close" aria-label="Закрыть заявку"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button></form>
   <h2 class="dialog__title" id="request-title" tabindex="-1">Заявка с&nbsp;фото</h2>
   <p class="dialog__lead">Детейлинг, оклейка, стёкла и&nbsp;другие работы, кроме мойки. Мастер посмотрит фото, оценит объём работ и&nbsp;свяжется с&nbsp;вами.</p>
-  <p class="dialog__note request__wash" data-request-wash hidden><span data-request-wash-text></span> <button class="link-arrow" type="button" data-book data-request-wash-book>Записаться на&nbsp;мойку<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-arrow-right"/></svg></button></p>
+  <p class="dialog__note request__wash" data-request-wash hidden><span data-request-wash-text></span> <button class="link-arrow" type="button" data-book data-request-wash-book>Записаться на&nbsp;мойку<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-right"/></svg></button></p>
   <form class="request ym-hide-content" data-request-form novalidate>
     <fieldset class="request__card request__services">
       <legend class="request__legend">Работы <b aria-hidden="true">*</b></legend>
       <ul class="request__chips" data-request-chips aria-label="Выбранные работы"></ul>
-      <label class="request__add"><span class="visually-hidden">Добавить работу</span><select data-request-add aria-describedby="request-services-error"><option value="">+ Добавить работу</option></select><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-chevron-down"/></svg></label>
+      <label class="request__add"><span class="visually-hidden">Добавить работу</span><select data-request-add aria-describedby="request-services-error"><option value="">+ Добавить работу</option></select><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-down"/></svg></label>
       <p class="request__error" id="request-services-error" data-error-for="services"></p>
     </fieldset>
     <div class="request__card">
@@ -332,8 +972,8 @@
       <div class="request__offline" data-request-offline hidden>
         <p><strong>Отправка заявок с&nbsp;сайта пока не&nbsp;подключена.</strong> Позвоните в&nbsp;студию&nbsp;— администратор примет заявку. Введённое здесь сохранится до&nbsp;закрытия вкладки.</p>
         <div class="dialog__phones">
-          <a href="tel:+79300352325"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-phone"/></svg><span>Мясницкая</span><strong>+7 (930) 035-23-25</strong></a>
-          <a href="tel:+79324916991"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-phone"/></svg><span>Технопарк</span><strong>+7 (932) 491-69-91</strong></a>
+          <a href="tel:+79300352325"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span>Мясницкая</span><strong>+7 (930) 035-23-25</strong></a>
+          <a href="tel:+79324916991"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-phone"/></svg><span>Технопарк</span><strong>+7 (932) 491-69-91</strong></a>
         </div>
       </div>
       <p class="request__required"><b aria-hidden="true">*</b>&nbsp;— обязательные поля</p>
