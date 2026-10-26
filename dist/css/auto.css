@@ -233,6 +233,16 @@
   .car-card .strip::scroll-button(inline-end) { content: "→" / "Следующие фото"; right: var(--wide); }
   @media (max-width: 759px), (hover: none) { .car-card .strip::scroll-button(*) { display: none; } }
 }
+/* На телефоне — точки под лентой, как пагинация карточки Finder (P18); там же, где есть ::scroll-button */
+@supports selector(::scroll-marker) {
+  @media (max-width: 759px) {
+    .car-card .strip { scroll-marker-group: after; scrollbar-width: none; padding-bottom: 0; }
+    .car-card .strip::scroll-marker-group { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
+    .car-card .strip > li::scroll-marker { content: ""; width: 6px; height: 6px; border-radius: var(--r-pill);
+      background: rgb(var(--fg-rgb) / .3); transition: width var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease); }
+    .car-card .strip > li::scroll-marker:target-current { width: 18px; background: var(--fg); }
+  }
+}
 
 .car-card__body { display: grid; gap: var(--md); }
 .car-card__head, .car-card__about { max-width: 56rem; }
