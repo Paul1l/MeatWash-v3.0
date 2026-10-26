@@ -65,7 +65,7 @@ export const REGISTRY = [
       { href: 'assets/img/home/hero-1600.webp', srcset: 'assets/img/home/hero-1600.webp 1600w, assets/img/home/hero-2560.webp 2560w', sizes: '100vw', media: '(min-width: 700px)' },
     ],
     jsonLd: ['autowash'], ogImage: 'assets/img/og-meat-auto.webp',
-    date: '2026-10-08', sitemap: { changefreq: 'monthly', priority: '1.0' },
+    date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '1.0' },
   },
   {
     file: 'services.html', id: 'services', kind: 'landing', body: 'services.html',
@@ -77,7 +77,7 @@ export const REGISTRY = [
     // 3D грузится только по нажатию). Владелец garage.css / garage.js / config.js — WP3.
     css: ['services.css', 'garage.css'],
     preload: heroA('services'), ogImage: 'assets/img/services/og.webp',
-    date: '2026-10-08', sitemap: { changefreq: 'monthly', priority: '0.9' },
+    date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '0.9' },
   },
   {
     file: 'wrap.html', id: 'wrap', kind: 'landing', body: 'wrap.html', parent: 'services',
@@ -85,7 +85,7 @@ export const REGISTRY = [
     description: 'Оклейка автомобиля защитной полиуретановой плёнкой в Москве: прозрачной или цветной, зоны риска, весь кузов, фары и лобовое стекло. Технопарк.',
     headline: 'Оклейка полиуретаном', theme: 'dark', header: 'solid', cta: 'technopark',
     shared: ALL, css: ['services.css'],
-    date: '2026-10-08', sitemap: { changefreq: 'monthly', priority: '0.7' },
+    date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '0.7' },
   },
   {
     file: 'works.html', id: 'works', kind: 'landing', body: 'works.html', parent: 'services',
@@ -93,7 +93,7 @@ export const REGISTRY = [
     description: 'Работы Meat Auto: подготовка Lotus Eletre R к продаже, оклейка BMW M4 цветным полиуретаном, химчистка салона и полировка кузова в студиях в Москве.',
     headline: 'Наши работы', theme: 'dark', header: 'solid', cta: 'book',
     shared: WITH_BOOK, css: ['services.css'], ogImage: 'assets/img/auto-lotus-4.webp',
-    date: '2026-10-08', sitemap: { changefreq: 'monthly', priority: '0.6' },
+    date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '0.6' },
   },
   {
     file: 'import.html', id: 'import', kind: 'landing', body: 'import.html',
@@ -110,7 +110,7 @@ export const REGISTRY = [
     description: 'Meat Auto: автомобили в продаже, продажа под реализацию, подготовка к продаже в наших студиях, подбор и покупка автомобиля под ключ в Москве.',
     headline: 'Покупка и продажа авто', theme: 'dark', header: 'solid', cta: 'auto',
     shared: ALL, css: ['auto.css'], ogImage: 'assets/img/auto-lotus-1.webp',
-    date: '2026-10-19', sitemap: { changefreq: 'weekly', priority: '0.7' },
+    date: '2026-10-27', sitemap: { changefreq: 'weekly', priority: '0.7' },
   },
   {
     file: 'about.html', id: 'about', kind: 'landing', body: 'about.html',
@@ -119,7 +119,7 @@ export const REGISTRY = [
     headline: 'О нас', theme: 'dark', header: 'over', cta: 'book',
     shared: [...ALL, 'locations', 'membership'], css: ['about.css'],
     preload: heroA('about'), jsonLd: ['autowash'], ogImage: 'assets/img/about/og.webp',
-    date: '2026-10-08', sitemap: { changefreq: 'monthly', priority: '0.7' },
+    date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '0.7' },
   },
   {
     file: 'articles.html', id: 'articles', kind: 'list',
@@ -173,6 +173,3 @@ export const REGISTRY = [
   },
 ];
 
-// Совместимость со старыми скриптами (check:legacy).
-export const CONTENT = REGISTRY;
-export const SITEMAP = [];

@@ -656,7 +656,7 @@
       "address": "101000, г. Москва",
       "email": "MeatWash.detailing@gmail.com"
     },
-    "documentsDate": "2026-10-02",
+    "documentsDate": "2026-10-27",
     "requests": {
       "_comment": "Заявка с фото для немоечных работ. endpoint — адрес приёма заявок (POST multipart/form-data, ответ JSON {\"ok\":true}); пока null — форма не отправляет и предлагает позвонить. На meatwash.ru — \"api/request.php\" (обработчик dist/api/request.php, настройки — вне папки сайта, README «Заявка с фото на meatwash.ru»). hosts — сайты, где отправка работает: на копии GitHub Pages PHP нет, там форма остаётся «позвоните». Секретов и токенов здесь быть не должно.",
       "endpoint": null,
