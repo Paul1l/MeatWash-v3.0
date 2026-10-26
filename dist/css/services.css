@@ -23,7 +23,7 @@ body[data-page="services"] .hero-a__media img { object-position: 50% 50%; }
 .catalog { padding-bottom: var(--xl); }
 /* Четыре раздела встают в ряд и на 360–390 px. */
 @media (max-width: 759px) {
-  .catalog__tabs .anchor-tabs__track { padding-inline: 16px; gap: 2px; }
+  .catalog__tabs .anchor-tabs__track { padding-inline: 16px; gap: 2px; overflow-x: auto; scrollbar-width: none; }
   .catalog__tabs .anchor-tabs__track > a { padding-inline: 11px; }
 }
 
@@ -241,13 +241,14 @@ body[data-page="services"] .promo + .teasers { margin-top: var(--xl); }
 /* ==========================================================================
    Тизер «Оклейка» без фото: водяной знак PPF, как в герое страницы
    ========================================================================== */
-.teaser--mark { box-shadow: var(--lift); }
+.teaser--mark { position: relative; isolation: isolate; overflow: hidden; box-shadow: var(--lift); }
 .teaser__mark {
-  position: absolute; right: -.04em; bottom: -.16em; z-index: -1;
-  font: 800 clamp(120px, 15vw, 260px)/1 var(--sans); letter-spacing: -.05em;
+  position: absolute; left: calc(var(--md) - .06em); top: var(--sm); z-index: -1;
+  font: 800 clamp(110px, 17vw, 240px)/1 var(--sans); letter-spacing: -.05em;
   color: rgb(var(--on-rgb) / .07);
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
+@media (min-width: 1000px) { .teaser__mark { left: calc(var(--lg) - .06em); } }
 body[data-page="services"] .teasers { padding-bottom: var(--xl); }
 
 /* ==========================================================================
