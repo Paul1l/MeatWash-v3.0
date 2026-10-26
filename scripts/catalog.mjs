@@ -3,8 +3,10 @@
 //   {{compare}} (renderCompare); их вызывает scripts/pages.mjs при сборке страницы;
 // - dist/js/data.js — те же цены и филиалы для скриптов (гараж, окно услуги, карты).
 // Запуск: npm run catalog — пишет только dist/js/data.js (Meat Auto, WP0 27.10).
-// Владелец: WP3 (разметка каталога по §4.3 плана, renderCompare, SECTION_LINKS).
+// Владелец: WP3 (разметка каталога по §4.3 плана, renderCompare, SECTION_LINKS; 27.10).
 import {readFile,writeFile} from 'node:fs/promises';
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 const root=new URL('../',import.meta.url);
 export const content=JSON.parse(await readFile(new URL('dist/assets/meatwash-content.json',root),'utf8'));
@@ -30,69 +32,148 @@ export const minFor=id=>{
 // формат собирает js/catalog.js при смене кузова.
 export const programContext=(i,body)=>`${d.programs[i][0]} — ${d.bodyTypes[body]}, ${money(d.programPrices[i][body])}`;
 export const serviceCount=()=>d.groups.reduce((sum,group)=>sum+group.items.length,0);
-const isPackage=name=>/^Пакет/.test(name);
-const shot=(id,size)=>`assets/shots/${id}${size==='s'?'-s':''}.webp`;
-// Подпись кнопки для экранного диктора: «Записаться: Очистка битума кузова».
-const forName=name=>`<span class="visually-hidden">: ${escape(name)}</span> <span aria-hidden="true">→</span>`;
+// Иконка спрайта — та же разметка, что у подстановки icon (scripts/pages.mjs). Своя копия:
+// pages.mjs импортирует этот модуль, обратный импорт дал бы цикл при npm run catalog.
+// Версия ?v= — по содержимому файла, как assetUrl() в pages.mjs (поправки 27, 28).
+let spriteVersion;
+const icon=name=>{
+ spriteVersion??=createHash('sha256').update(readFileSync(new URL('dist/assets/brand/sprite.svg',root))).digest('hex').slice(0,8);
+ return `<svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=${spriteVersion}#i-${name}"/></svg>`;
+};
+// Подпись кнопки для экранного диктора: «Узнать цену: Химчистка руля».
+const forName=name=>`<span class="sr">: ${escape(name)}</span>`;
 // Одно действие на позицию. Мойка (booking: yclients) — окно филиалов с этой работой
 // в корзине (ui.js → yclients.js); остальное — «Узнать цену» с этой работой (ui.js:
 // пока заявки с сайта не принимаются — окно с телефонами студий, потом — request.js).
-// v2 (план юзабилити 08.10): подпись «Узнать цену» вместо «Заявка с фото»; у подраздела
-// с onsite: true (продаётся только на месте, «Дополнительно на мойке») кнопки нет —
-// подпись «добавим при приёмке».
+// У подраздела с onsite: true (продаётся только на месте, «Дополнительно на мойке»)
+// кнопки нет — подпись «добавим при приёмке».
+// Ключи data-* — побуквенно названия из JSON (typo() их не трогает, check сверяет).
 export const ONSITE_LABEL='добавим при приёмке';
+const ACTION_CLASS='catalog__action btn btn--compact btn--secondary';
 const action=(group,name)=>group.booking==='yclients'
- ?`<button class="catalog__action" type="button" data-book data-book-context="${escape(name)}" data-yc-items="${escape(name)}">Записаться${forName(name)}</button>`
- :`<button class="catalog__action" type="button" data-request data-request-category="${escape(group.id)}" data-request-services="${escape(name)}">Узнать цену${forName(name)}</button>`;
+ ?`<button class="${ACTION_CLASS}" type="button" data-book data-book-context="${escape(name)}" data-yc-items="${escape(name)}">Записаться${forName(name)}</button>`
+ :`<button class="${ACTION_CLASS}" type="button" data-request data-request-category="${escape(group.id)}" data-request-services="${escape(name)}">Узнать цену${forName(name)}</button>`;
 const itemRow=(group,section,[name,price,note])=>`<li class="catalog__item" data-price-item="${escape(name)}"><div class="catalog__item-text"><p class="catalog__item-name">${escape(name)}</p>${note?`<p class="catalog__item-note">${escape(note)}</p>`:''}</div><p class="catalog__item-price${price==null?' catalog__item-price--estimate':''}">${priceText(price)}</p>${section.onsite?`<p class="catalog__item-onsite">${ONSITE_LABEL}</p>`:action(group,name)}</li>`;
 const itemOf=(group,name)=>group.items.find(([n])=>n===name)??(()=>{throw new Error(`Подраздел ${group.id}: нет позиции «${name}» в items`);})();
-// Программы и пакеты мойки: в строке (summary) — название, короткое пояснение, время
-// и цена для выбранного кузова (js/catalog.js меняет её по data-prices); полный
-// состав — по «Подробнее» в <details id="program-i"> (на него ведут ссылки).
-const programRows=()=>`<fieldset class="body-types"><legend>Тип кузова</legend>${d.bodyTypes.map((type,i)=>`<label><input type="radio" name="body-type" value="${i}"${i===0?' checked':''}><span>${escape(type)}</span></label>`).join('')}</fieldset>
-    <p class="catalog__selection" id="body-price-label" aria-live="polite">Цены для типа кузова: ${escape(d.bodyTypes[0])}</p>
-    <ul class="catalog__programs" role="list">
-    ${d.programs.map(([name,,time,description],i)=>`<li class="program"><details class="program__details" id="program-${i}"><summary class="program__summary"><span class="program__name">${escape(name)}${isPackage(name)?' <span class="catalog__tag">пакет</span>':''}</span><span class="program__note">${escape(description)}</span><span class="program__time">${escape(time)}</span><span class="program__price" data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span><span class="program__toggle">Подробнее <span aria-hidden="true">+</span></span></summary><div class="program__body"><ul class="program-includes">${d.programIncludes[i].map(item=>`<li>${escape(item)}</li>`).join('')}</ul></div></details><button class="catalog__action" type="button" data-book data-program="${i}" data-book-context="${escape(programContext(i,0))}">Записаться${forName(name)}</button></li>`).join('\n    ')}
-    </ul>`;
-// Подраздел категории: заголовок h3 и позиции; accent — спокойно выделенный
-// (оклейка, ремонт стёкол). id подраздела — на обёртке: якорь встаёт на её край.
-const block=(group,section)=>`<div class="catalog__block${section.accent?' catalog__block--accent':''}" id="${escape(section.id)}">
-   <h3 class="catalog__subhead">${escape(section.title)}${section.programs?' <small>каждая следующая включает предыдущую</small>':section.onsite?' <small>Записываться отдельно не&nbsp;нужно&nbsp;— скажите администратору, когда приедете на&nbsp;мойку</small>':''}</h3>
-   <div class="catalog__block-body">
-    ${section.programs?programRows():`<ul class="catalog__items" role="list">${section.items.map(name=>itemRow(group,section,itemOf(group,name))).join('')}</ul>`}
-   </div>
-  </div>`;
-// v2 (план юзабилити 08.10): без «заявки с фото» — пока она не принимается, цену называют по телефону.
-const LEAD={yclients:'Запись онлайн — в выбранную студию.',request:'Стоимость для&nbsp;вашей машины назовёт администратор: нажмите «Узнать цену» у&nbsp;работы.'};
 
-// Полный каталог — services.html: четыре категории. Без JS переключатели — ссылки
-// на категории, панели идут подряд; js/catalog.js делает из них вкладки (WAI-ARIA tabs)
-// и показывает одну. Заголовок страницы (h1) стоит выше, в .page-head, поэтому
-// категории начинаются с h2, подразделы — h3.
+// Ссылки подразделов на страницы направления (§4.3 плана) — здесь, не в JSON.
+export const SECTION_LINKS={
+ 'price-film':{href:'wrap',label:'Подробнее об оклейке'},
+ 'price-presale':{href:'auto#sell',label:'Покупка и продажа авто'},
+};
+// Пояснение под заголовком подраздела.
+const SECTION_NOTE={
+ programs:'Каждая следующая включает предыдущую. Цена зависит от типа кузова.',
+ onsite:'Записываться отдельно не нужно — скажите администратору, когда приедете на мойку.',
+};
+
+// Программы и пакеты мойки (P02): карточка — название, цена для выбранного кузова
+// (js/catalog.js меняет её по data-prices), время, пояснение, состав в <details id="program-i">
+// (на него ведут ссылки #program-0…4) и запись с программой в корзине YCLIENTS.
+const programCard=([name,,time,description],i)=>`<li class="program-card">
+      <h4 class="program-card__name">${escape(name)}</h4>
+      <p class="program-card__price"><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span></p>
+      <ul class="chips program-card__chips"><li class="chip">${escape(time)}</li></ul>
+      <p class="program-card__desc">${escape(description)}</p>
+      <details class="accordion program-card__includes" id="program-${i}"><summary class="accordion__head">Что входит</summary><div class="accordion__body"><ul class="program-includes">${d.programIncludes[i].map(item=>`<li>${escape(item)}</li>`).join('')}</ul></div></details>
+      <button class="btn btn--primary program-card__book" type="button" data-book data-program="${i}" data-book-context="${escape(programContext(i,0))}">Записаться${forName(name)}</button>
+     </li>`;
+const programs=()=>`<fieldset class="body-types segmented"><legend class="sr">Тип кузова</legend>${d.bodyTypes.map((type,i)=>`<label><input type="radio" name="body-type" value="${i}"${i===0?' checked':''}><span>${escape(type)}</span></label>`).join('')}</fieldset>
+    <p class="catalog__selection" id="body-price-label" aria-live="polite">Цены для типа кузова: ${escape(d.bodyTypes[0])}</p>
+    <ol class="programs" aria-label="Программы и пакеты мойки">
+     ${d.programs.map(programCard).join('\n     ')}
+    </ol>
+    ${renderCompare()}`;
+
+// Подраздел категории: заголовок h3 (+ пояснение, + ссылка на страницу направления) и
+// позиции. accent — спокойно выделенный (оклейка, ремонт стёкол).
+const sectionHead=section=>{
+ const link=SECTION_LINKS[section.id];
+ const note=section.programs?SECTION_NOTE.programs:section.onsite?SECTION_NOTE.onsite:'';
+ return `<div class="catalog__section-head">
+    <h3 class="catalog__subhead" id="${escape(section.id)}-title">${escape(section.title)}</h3>${note?`
+    <p class="catalog__section-note">${note}</p>`:''}${link?`
+    <a class="link-arrow catalog__section-link" href="${link.href}">${escape(link.label)}${icon('arrow-right')}</a>`:''}
+   </div>`;
+};
+const section=(group,s)=>`<section class="catalog__section${s.accent?' catalog__section--accent':''}${s.programs?' catalog__section--programs':''}" id="${escape(s.id)}" aria-labelledby="${escape(s.id)}-title">
+   ${sectionHead(s)}
+   ${s.programs?programs():`<ul class="catalog__items" role="list">${s.items.map(name=>itemRow(group,s,itemOf(group,name))).join('')}</ul>`}
+  </section>`;
+// Пока заявки с сайта не принимаются, цену называют по телефону (окно «Узнать цену»).
+const LEAD={yclients:'Запись онлайн — в выбранную студию.',request:'Стоимость для вашей машины назовёт администратор: нажмите «Узнать цену» у работы.'};
+
+// Каталог /services (§4.3 плана) — подстановка {{catalog}}. Четыре категории; без JS
+// вкладки — ссылки на категории, панели идут подряд; js/catalog.js делает из них вкладки
+// (WAI-ARIA tabs: role="tablist" ставится на .anchor-tabs__track[data-catalog-tabs] —
+// вкладки его прямые потомки) и показывает одну. H1 стоит в герое, поэтому категории — h2,
+// подразделы — h3, программы и сравнение — h4.
 export function renderCatalog(){
  return `
-<div class="catalog catalog--page" id="catalog">
+<div class="catalog" id="catalog">
+ <nav class="catalog__tabs anchor-tabs" aria-label="Разделы каталога">
+  <div class="anchor-tabs__track" data-catalog-tabs>${d.groups.map(group=>`<a class="anchor-tabs__tab catalog__tab" id="tab-price-${escape(group.id)}" href="#price-${escape(group.id)}">${escape(group.title)}</a>`).join('')}</div>
+ </nav>
  <div class="catalog__list" id="price-list">
-  <nav class="catalog__tabs" aria-label="Категории услуг" data-catalog-tabs>${d.groups.map(group=>`<a class="catalog__tab" id="catalog-tab-${escape(group.id)}" href="#price-${escape(group.id)}">${escape(group.title)}</a>`).join('')}</nav>
 ${d.groups.map(group=>` <section class="catalog__panel" id="price-${escape(group.id)}" data-category="${escape(group.id)}" aria-labelledby="price-${escape(group.id)}-title">
-  <div class="catalog__panel-head"><h2 class="catalog__panel-title" id="price-${escape(group.id)}-title">${escape(group.title)}</h2><p class="catalog__panel-lead">${escape(group.desc)} ${LEAD[group.booking]}</p></div>
-  ${group.sections.map(section=>block(group,section)).join('\n  ')}
+  <header class="catalog__panel-head">
+   <h2 class="catalog__panel-title" id="price-${escape(group.id)}-title">${escape(group.title)}</h2>
+   <p class="catalog__panel-lead">${escape(group.desc)} ${LEAD[group.booking]}</p>
+  </header>
+  ${group.sections.map(s=>section(group,s)).join('\n  ')}
  </section>`).join('\n')}
-  <p class="catalog__note">Стоимость зависит от типа кузова и состояния автомобиля. Итоговый объём и цену согласуем перед работой. Не является публичной офертой.</p>
  </div>
+ <p class="catalog__note" id="price-note">Стоимость зависит от типа кузова и состояния автомобиля. Итоговый объём и цену согласуем перед работой. Не является публичной офертой.</p>
 </div>
 `}
 
-// Сравнение программ мойки (P04, §4.3 плана) — {{compare}}. Заготовка WP0: WP3 пишет
-// таблицу по правилу «каждая следующая включает предыдущую».
+// Сравнение программ мойки (P04, §4.3 плана) — {{compare}}, стоит в #programs каталога.
+// Строки — пункты состава в порядке появления, кроме первого пункта «Всё из …» у программ
+// 1–4; программа j отмечена в строках программ 0…j — буквальное правило «каждая следующая
+// включает предыдущую». Строки, общие для всех программ, помечены data-same: переключатель
+// «Только различия» прячет их без JS (services.css, :has). Нижние строки — время и цена;
+// цену меняет кузов (тот же data-program-price, что у карточек).
 export function renderCompare(){
- return `<div class="compare" id="compare" data-compare hidden></div>`;
+ const rows=[];
+ d.programIncludes.forEach((list,j)=>{
+  list.forEach((item,k)=>{
+   if(j>0&&k===0){
+    if(!/^Всё из /.test(item))throw new Error(`Программа ${j} «${d.programs[j][0]}»: первый пункт состава — «Всё из <предыдущей>», сейчас «${item}»`);
+    return;
+   }
+   rows.push({item,from:j});
+  });
+ });
+ const names=d.programs.map(([name])=>name);
+ const cell=(row,j)=>j>=row.from
+  ?`<td class="compare__yes">${icon('check')}<span class="sr">входит</span></td>`
+  :`<td class="compare__no"><span aria-hidden="true">—</span><span class="sr">не входит</span></td>`;
+ return `<div class="compare" id="compare">
+     <div class="compare__head">
+      <h4 class="compare__title" id="compare-title">Чем отличаются программы</h4>
+      <label class="compare__only"><input type="checkbox" data-compare-only><span class="compare__switch" aria-hidden="true"></span><span>Только различия</span></label>
+     </div>
+     <div class="compare__scroll" role="region" aria-labelledby="compare-title" tabindex="0" data-scroll-region>
+      <table class="compare__table">
+       <caption class="sr">Состав программ мойки: каждая следующая включает предыдущую</caption>
+       <thead><tr><th scope="col"><span class="sr">Работа</span></th>${names.map(name=>`<th scope="col">${escape(name)}</th>`).join('')}</tr></thead>
+       <tbody>
+${rows.map(row=>`        <tr${row.from===0?' data-same':''}><th scope="row">${escape(row.item)}</th>${names.map((_,j)=>cell(row,j)).join('')}</tr>`).join('\n')}
+       </tbody>
+       <tfoot>
+        <tr class="compare__time"><th scope="row">Время</th>${d.programs.map(([,,time])=>`<td>${escape(time)}</td>`).join('')}</tr>
+        <tr class="compare__price"><th scope="row">Цена</th>${d.programs.map((_,i)=>`<td><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span></td>`).join('')}</tr>
+       </tfoot>
+      </table>
+     </div>
+    </div>`;
 }
 
 // Превью на главной (прежняя главная; на Meat Auto не используется) — четыре категории в порядке каталога, ссылка
 // ведёт на вкладку категории. Подпись — название и короткое описание, цена «от» —
 // минимальная в категории (у мойки — минимальная цена программ), всё из JSON.
 // Кадры assets/shots — 1600×894, уменьшенные (-s) — 900 px.
+const shot=(id,size)=>`assets/shots/${id}${size==='s'?'-s':''}.webp`;
 const PREVIEW={
  wash:{shot:'cf-foam-crop',alt:'Спорткупе в активной пене на тёмном полу студии'},
  detailing:{shot:'cf-interior-seat',alt:'Салон классического купе: руль и кожаные сиденья с тканевыми вставками'},

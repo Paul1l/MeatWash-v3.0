@@ -156,7 +156,8 @@ export function buildEnvironment(scene, renderer, {low = false} = {}) {
 // «Оклейки» — на 2,0–2,1 м в секторе 55–75°: надпись левее этого сектора, иначе она
 // просвечивала бы сквозь стёкла машины; ниже 2 м — снова заходит за крышу на ракурсах оклейки
 // и сколов. На телефоне до первого касания её прикрывает подсказка жестов — она временная.
-export const LOGO = {file: 'assets/brand/Horizontal_Logo.svg', aspect: 2520 / 654, angle: 43, width: 2.4, y: 2.1};
+// Вывеска Meat Auto (бык, MEAT AUTO, «Car Care Club»; WP3 27.10) вместо прежнего логотипа MEATWASH.
+export const LOGO = {file: 'assets/img/services/garage-sign.svg', aspect: 2482 / 654, angle: 43, width: 2.4, y: 2.1};
 
 // Картинка логотипа; без неё гараж работает, просто стена без надписи.
 export function loadLogo(url) {

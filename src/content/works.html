@@ -1,21 +1,76 @@
-<!-- Тело /works (план §3.4). Владелец: WP3. Заготовка WP0: H1 и якоря.
-     Прежнее тело — git show fd8d88d:src/content/works.html. Пар «до/после» здесь нет:
-     на этой странице только настоящие работы. -->
+<!-- Тело /works (план §3.4). Владелец: WP3. Прежнее тело — git show fd8d88d:src/content/works.html:
+     все его тексты и фото здесь. Пар «до/после» нет: на этой странице только настоящие работы.
+     Фото студий — обрезки без водяного знака прежнего логотипа (assets/img/services/works-*).
+     Кадра BMW M4 пока нет — пометка «нужно от клиента» (план §6.4, п. 1). -->
 <section class="hero-d col-wide" aria-labelledby="page-title">
-  <a class="back-link" href="services">{{icon:chevron-left}}Мойка и детейлинг</a>
+  <a class="back-link" href="services">{{icon:chevron-left}}<span>Мойка и детейлинг</span></a>
   <h1 id="page-title">Наши работы</h1>
   <p class="hero-d__lead">Реальные машины из наших студий: подготовка к продаже, оклейка плёнкой, химчистка и полировка.</p>
+  <div class="hero-d__aside">
+    <a class="btn btn--secondary" href="services">Услуги и цены</a>
+  </div>
 </section>
-<section class="section" id="works-lotus" aria-labelledby="works-lotus-title">
-  <h2 id="works-lotus-title">Lotus Eletre R — подготовка к продаже</h2>
-  <a class="link-arrow" href="auto#lotus-eletre">Машина в продаже{{icon:arrow-right}}</a>
+
+<section class="section works-project" id="works-lotus" aria-labelledby="works-lotus-title">
+  <div class="col-wide">
+    <div class="mosaic">
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-4.webp" width="800" height="533" alt="Lotus Eletre R после полировки и керамики, вид спереди сбоку" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-1.webp" width="800" height="533" alt="Lotus Eletre R спереди после подготовки" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-8.webp" width="800" height="533" alt="Кресла Lotus Eletre R после химчистки салона" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-7.webp" width="800" height="533" alt="Центральная консоль Lotus Eletre R после чистки" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-5.webp" width="800" height="533" alt="Передняя панель Lotus Eletre R после чистки салона" loading="lazy" decoding="async"></figure>
+      <a class="mosaic__open" href="auto#lotus-eletre">Все фото машины{{icon:arrow-right}}</a>
+    </div>
+  </div>
+  <div class="works-project__copy col-basic">
+    <h2 id="works-lotus-title">Lotus Eletre R — подготовка к продаже</h2>
+    <div class="works-project__text">
+      <p>Перед продажей сделали глубокую химчистку салона, отполировали кузов и нанесли керамическое покрытие Surface.</p>
+      <ul class="chips works-project__chips" aria-label="Что сделали">
+        <li class="chip">Химчистка салона</li>
+        <li class="chip">Полировка кузова</li>
+        <li class="chip">Керамика Surface</li>
+      </ul>
+      <a class="link-arrow" href="auto#lotus-eletre">Машина в продаже{{icon:arrow-right}}</a>
+    </div>
+  </div>
 </section>
-<section class="section" id="works-m4" aria-labelledby="works-m4-title">
-  <h2 id="works-m4-title">BMW M4 — оклейка цветной плёнкой</h2>
-  <p>{{todo:кадр BMW M4 Brooklyn Grey из видео t.me/meat_wash/4}}</p>
-  <a class="link-arrow" href="wrap">Подробнее об оклейке{{icon:arrow-right}}</a>
+
+<section class="promo promo--paper col-ext works-m4" id="works-m4" aria-labelledby="works-m4-title">
+  <div class="promo__media works-m4__media">
+    <p class="works-m4__todo">{{todo:кадр BMW M4 Brooklyn Grey из видео t.me/meat_wash/4}}</p>
+  </div>
+  <div class="promo__panel">
+    <h2 id="works-m4-title">BMW M4 — оклейка цветной плёнкой</h2>
+    <p>Оклеили весь кузов цветной полиуретановой плёнкой. Машина стала серой (цвет Brooklyn Grey), а заводской лак остался под защитой.</p>
+    <div class="works-m4__links actions">
+      <a class="btn btn--primary" href="https://t.me/meat_wash/4" target="_blank" rel="noopener">Видео работы в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+      <a class="link-arrow" href="wrap">Подробнее об оклейке{{icon:arrow-right}}</a>
+    </div>
+  </div>
 </section>
+
 <section class="section" id="works-studio" aria-labelledby="works-studio-title">
-  <h2 id="works-studio-title">В студиях</h2>
-  <button class="link-arrow" type="button" data-request>Узнать цену{{icon:arrow-right}}</button>
+  <header class="section-head">
+    <h2 id="works-studio-title">В студиях</h2>
+  </header>
+  <div class="zigzag col-basic">
+    <div class="zigzag__row">
+      <figure><img src="assets/img/services/works-interior-983.webp" srcset="assets/img/services/works-interior-640.webp 640w, assets/img/services/works-interior-983.webp 983w" sizes="(max-width: 759px) 100vw, 40vw" width="983" height="737" alt="Мастер очищает кожаную дверную карту и салон автомобиля" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Химчистка салона</h3>
+        <p>Салон целиком за один визит: ткань, алькантара и кожа. Детейлинг-химчистка — {{price:Детейлинг-химчистка салона}}.</p>
+        <button class="btn btn--secondary" type="button" data-request data-request-category="detailing" data-request-services="Детейлинг-химчистка салона">Узнать цену<span class="sr">: химчистка салона</span></button>
+      </div>
+    </div>
+    <div class="zigzag__row">
+      <figure><img src="assets/img/services/works-polish-983.webp" srcset="assets/img/services/works-polish-640.webp 640w, assets/img/services/works-polish-983.webp 983w" sizes="(max-width: 759px) 100vw, 40vw" width="983" height="737" alt="Мастер полирует кузов машинкой при направленном свете" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Полировка кузова</h3>
+        <p>Полировка снимает паутинку, сверху — два слоя керамики. Полировка кузова с керамикой — {{price:Полировка кузова + 2 слоя керамики}}.</p>
+        <button class="btn btn--secondary" type="button" data-request data-request-category="protection" data-request-services="Полировка кузова + 2 слоя керамики">Узнать цену<span class="sr">: полировка кузова</span></button>
+      </div>
+    </div>
+  </div>
+  <p class="works-ask col-basic">Хотите так же? <button class="link-arrow" type="button" data-request>Узнать цену{{icon:arrow-right}}</button></p>
 </section>
