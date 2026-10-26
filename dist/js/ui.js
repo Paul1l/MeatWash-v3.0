@@ -1,5 +1,10 @@
-// Общее для всех страниц: меню, окна записи, «Узнать цену» и заявки, карты студий, переходы по якорям,
-// появление блоков.
+// Общее для всех страниц Meat Auto: окна записи, «Узнать цену» и заявки, карты студий, переходы
+// по якорям, появление блоков, блокировка прокрутки под любым открытым <dialog>.
+// Владелец: WP6 (план §4.1, §4.2, §4.7; поправки критика 18, 21).
+// Меню-шторка — js/shell.js (WP1): он открывает и закрывает <dialog id="drawer"> и закрывает его
+// в фазе capture перед ссылкой, [data-book], [data-request], [data-membership]; потом этот модуль
+// по тому же клику открывает своё окно. Класс html.is-locked ставит только этот модуль: он
+// считает открытые <dialog> — шторку, окна записи и заявки, 3D-гараж (поправка 21).
 // Любого элемента может не быть на странице — всё проверяется перед использованием.
 // Здесь же — уведомление о cookie и цели Метрики (analytics.js: только с согласия).
 import { setupAnalytics, goal } from './analytics.js';
@@ -10,28 +15,32 @@ export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
  const root=document.documentElement;
- const menu=$('#mobile-menu'), burger=$('#burger'), booking=$('#booking'), requestDialog=$('#request');
+ const booking=$('#booking'), requestDialog=$('#request'), drawer=$('#drawer'), drawerOpener=$('#drawer-open');
  const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
- // Прокрутка фона выключена, пока открыто меню или окно. Класс на <html>: iOS
- // не считается с overflow у одного body. Место полосы прокрутки держит
- // scrollbar-gutter (style.css), поэтому страница не прыгает вбок.
+ // Прокрутка фона выключена, пока открыт любой <dialog>: шторка меню, окно записи или заявки,
+ // 3D-гараж. Класс на <html>: iOS не считается с overflow у одного body. Место полосы
+ // прокрутки держит scrollbar-gutter (dialogs.css), поэтому страница не прыгает вбок.
+ // Состояние считается заново при каждом открытии и закрытии, а не переключается: шторка
+ // закрывается и окно записи открывается одним кликом — гонки нет (поправка критика 21).
  const syncLock=()=>{
   const dialogOpen=Boolean(document.querySelector('dialog[open]'));
   document.body.classList.toggle('dialog-open',dialogOpen);
-  root.classList.toggle('is-locked',dialogOpen||Boolean(menu&&!menu.hidden));
+  root.classList.toggle('is-locked',dialogOpen);
  };
- // Открытое меню держит фокус: всё, что под ним (страница, подвал, нижняя кнопка,
- // ссылка «к содержанию»), на это время inert — Tab после последнего пункта не уходит
- // под меню, а чтение с экрана не видит закрытое им содержимое.
- const behindMenu=()=>document.querySelectorAll('.skip-link, main, body > footer, .mobile-cta');
- const setMenu=open=>{
-   if(!menu||!burger)return;
-   menu.hidden=!open; burger.setAttribute('aria-expanded',String(open)); burger.setAttribute('aria-label',open?'Закрыть меню':'Открыть меню');
-   document.body.classList.toggle('menu-open',open);
-   behindMenu().forEach(el=>{el.inert=open;});
-   syncLock();
- };
- const closeMenu=()=>{ if(!menu||menu.hidden) return; const inside=menu.contains(document.activeElement); setMenu(false); if(inside) burger.focus({preventScroll:true}); };
+ // Чужие окна (шторку открывает shell.js, гараж строит garage.js) событий открытия не дают:
+ // следим за атрибутом open у всех <dialog>, в том числе появившихся позже. Закрытие
+ // ловим и событием close (оно не всплывает, но проходит фазу capture через document).
+ const lockWatch=new MutationObserver(records=>{if(records.some(r=>r.target.localName==='dialog'))syncLock();});
+ lockWatch.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
+ document.addEventListener('close',e=>{if(e.target instanceof HTMLDialogElement)syncLock();},{capture:true,signal:abort.signal});
+ // Шторка закрывается сразу (dialog.close() в shell.js), её уход только дорисовывается
+ // анимацией. Перед своим окном на всякий случай закрываем её и здесь.
+ const closeDrawer=()=>{if(drawer?.open)drawer.close();};
+ // Куда вернуть фокус после окна: на кнопку, которая его открыла, а если она была в шторке —
+ // на «Меню» (#drawer-open): шторка к этому времени уже закрыта.
+ // Кнопка внутри окна записи или заявки (переход между ними) прежнюю цель не меняет.
+ let returnTo=null;
+ const rememberOpener=control=>{if(control?.closest('dialog.dialog'))return;returnTo=control&&drawer?.contains(control)?drawerOpener:control||null;};
  // Окно открыто только что: второй клик двойного клика (или двойного тапа)
  // приходится в ту же точку — по фону он закрывал окно, по ссылке филиала
  // сам открывал запись. Такие клики по окну игнорируем.
@@ -43,7 +52,7 @@ export function setupUI() {
   dialog.showModal(); openedAt=performance.now(); syncLock();
  };
  const settling=e=>e.detail>1||performance.now()-openedAt<400;
- const closeDialogs=()=>{ booking?.close(); requestDialog?.close(); };
+ const closeDialogs=()=>{ booking?.close(); requestDialog?.close(); closeDrawer(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
  const leadText=lead?.textContent||'';
  // Что именно выбрал или спрашивает человек — только текстом, без разметки.
@@ -98,7 +107,7 @@ export function setupUI() {
  };
  const openBooking=(note='',spec=null,requestList=[])=>{
    if(!booking)return;
-   closeMenu(); requestDialog?.close();
+   closeDrawer(); requestDialog?.close();
    setRequestNote(requestList);
    booking.dataset.mode='book';
    $('#booking-title').textContent='Записаться';
@@ -120,7 +129,7 @@ export function setupUI() {
  const openTalk=({title,ask='',text=leadText,first=''})=>{
    if(!booking)return;
    bookingJob++;
-   closeMenu(); requestDialog?.close();
+   closeDrawer(); requestDialog?.close();
    if(requestNote)requestNote.hidden=true;
    if(otherNote)otherNote.hidden=true;
    booking.dataset.mode='talk';
@@ -132,7 +141,7 @@ export function setupUI() {
    show(booking);
    $('#booking-title').focus({preventScroll:true});
  };
- const openMembership=(title='')=>openTalk({title:title||'Meatwash Car Care Club'});
+ const openMembership=(title='')=>openTalk({title:title||'Meat Auto Car Care Club'});
  // v2 (план юзабилити 08.10): «Узнать цену», пока заявки с сайта не принимаются, — не
  // форма, которую нельзя отправить, а телефоны студий. Условие то же, что в request.js:
  // адрес приёма задан и этот сайт в списке hosts. Когда приём включат, кнопки снова
@@ -179,16 +188,10 @@ export function setupUI() {
  },{rootMargin:'600px 0px'}):null;
  mapBoxes.forEach(box=>mapWatch?.observe(box));
 
- burger?.addEventListener('click',()=>{ if(menu.hidden) setMenu(true); else closeMenu(); },options);
- document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();},options);
- // Бургер есть только до 900px. Меню открыли на планшете и повернули его —
- // шапка стала десктопной, а меню и блокировка прокрутки остались.
- const narrow=matchMedia('(max-width: 900px)');
- narrow.addEventListener('change',()=>{ if(!narrow.matches&&menu&&!menu.hidden) closeMenu(); },options);
- // Меню на весь экран под шапкой: «снаружи» — только шапка (логотип).
- document.addEventListener('pointerdown',e=>{ if(!menu||menu.hidden) return; if(menu.contains(e.target)||burger.contains(e.target)) return; closeMenu(); },options);
+ // Где на странице кнопка или ссылка — для параметров целей (telegram_click).
+ const placeOf=control=>control.closest('#drawer')?'drawer':control.closest('.site-header')?'header':control.closest('.site-footer,#contacts')?'footer':control.classList.contains('mobile-cta')?'mobile-cta':control.closest('dialog')?'dialog':'page';
 
- // Прыжок к блоку этой же страницы: раскрыть <details>, закрыть меню и окна,
+ // Прыжок к блоку этой же страницы: раскрыть <details>, закрыть шторку и окна,
  // фокус — на цель (без второй прокрутки).
  const jump=(target,hash)=>{
   if(target.tagName==='DETAILS')target.open=true;
@@ -206,8 +209,12 @@ export function setupUI() {
   const href=control.getAttribute('href')||'';
   if(href.startsWith('tel:'))goal('phone_click',{tel:href.slice(4)});
   else if(control.hasAttribute('data-club-card'))goal('club_card');
+  // Telegram — единственное действие на «Привозе» и «Покупке и продаже» (поправка критика 18):
+  // с какой страницы, из какого места и в какой канал или чат ушёл посетитель.
+  else if(/^https?:\/\/t\.me\//i.test(href))goal('telegram_click',{from:document.body.dataset.page||location.pathname,place:placeOf(control),to:href.replace(/^https?:\/\/t\.me\//i,'').split(/[?#]/)[0]});
   else{const branch=LOCATIONS.find(l=>href&&l.booking&&href.startsWith(l.booking.replace(/\/personal\/.*$/,'/')));if(branch)goal('booking_branch',{branch:branch.id,preset:/[?&]o=m-1s/.test(href)});}
   if(control.hasAttribute('data-book')){
+   rememberOpener(control);
    const d=control.dataset;
    const programs=[d.program,...(d.ycPrograms||'').split(',')].filter(v=>v!=='' &&v!=null).map(Number).filter(Number.isInteger);
    const items=(d.ycItems||'').split('|').filter(Boolean);
@@ -216,13 +223,16 @@ export function setupUI() {
   // «Узнать цену» — всё, кроме мойки: пока приём заявок выключен — телефоны студий,
   // иначе заявка с фото (модуль окна грузится по первому нажатию).
   if(control.hasAttribute('data-request')){
+   // Кнопка внутри уже открытого окна записи («Узнать цену» остальных работ): окно
+   // перестраивается на месте, фокус потом вернётся туда же, куда и после записи.
+   rememberOpener(control);
    const d=control.dataset;
    if(!requestsOn)return openPrice((d.requestServices||'').split('|').filter(Boolean),d.requestCategory||'');
-   closeMenu(); booking?.close();
+   closeDrawer(); booking?.close();
    loadRequest()?.then(open=>open?.({services:(d.requestServices||'').split('|').filter(Boolean),category:d.requestCategory||'',washContext:d.washContext||'',washPrograms:d.washPrograms||''}));
    return;
   }
-  if(control.hasAttribute('data-membership')) return openMembership(control.dataset.membership);
+  if(control.hasAttribute('data-membership')){ rememberOpener(control); return openMembership(control.dataset.membership); }
   // «На карте» в подвале — переход к карте студии: якорь на этой странице или на «О нас».
   // Уходя на главную, запрос Метрики со старой страницы может не успеть — тогда цель
   // отправит главная по прибытии (отметка в sessionStorage, см. ниже setupAnalytics).
@@ -231,7 +241,7 @@ export function setupUI() {
    if(href.startsWith('#'))goal('map_open',{branch,source:'footer'});else try{sessionStorage.setItem('mw:map-goal',branch);}catch{}
   }
   const hash=control.getAttribute('href');
-  if(hash?.startsWith('#')&&hash.length>1){const target=document.getElementById(hash.slice(1));if(target){e.preventDefault();closeMenu();closeDialogs();jump(target,hash);}}
+  if(hash?.startsWith('#')&&hash.length>1){const target=document.getElementById(hash.slice(1));if(target){e.preventDefault();returnTo=null;closeDialogs();jump(target,hash);}}
  },options);
 
  const outside=(dialog,e)=>{const r=dialog.getBoundingClientRect();return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom;};
@@ -244,7 +254,18 @@ export function setupUI() {
    if(settling(e)){ if(e.target.closest('a[href]')) e.preventDefault(); return; }
    if(e.target===dialog&&downOutside&&outside(dialog,e)) dialog.close();
   },options);
-  dialog.addEventListener('close',syncLock,options);
+  dialog.addEventListener('close',()=>{
+   syncLock();
+   // Окно сменилось другим (заявка → запись): кнопку-источник запомним для того, второго.
+   if(document.querySelector('dialog.dialog[open]'))return;
+   // Браузер сам возвращает фокус туда, где он был до showModal(). Если это не вышло
+   // (кнопка была в шторке, которая уже закрыта, или фокус остался на body) — ставим его
+   // на запомненную кнопку. Если фокус уже на месте (переход к якорю) — не трогаем.
+   const target=returnTo; returnTo=null;
+   const active=document.activeElement;
+   const lost=!active||active===document.body||Boolean(active.closest('dialog:not([open])'));
+   if(lost&&target?.isConnected&&!target.closest('[inert]'))target.focus({preventScroll:true});
+  },options);
  }
 
  // Прямой заход по адресу с якорем (services#price-polish, #programs внутри
@@ -281,5 +302,5 @@ export function setupUI() {
  setupAnalytics();
  // Пришли по «На карте» из подвала другой страницы: цель map_open — здесь, рядом с картой.
  try{const branch=sessionStorage.getItem('mw:map-goal');if(branch){sessionStorage.removeItem('mw:map-goal');if(location.hash==='#map-'+branch)goal('map_open',{branch,source:'footer'});}}catch{}
- return ()=>{abort.abort();observer.disconnect();mapWatch?.disconnect();};
+ return ()=>{abort.abort();observer.disconnect();mapWatch?.disconnect();lockWatch.disconnect();};
 }

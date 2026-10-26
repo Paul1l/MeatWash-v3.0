@@ -15,7 +15,12 @@
 // Цели (Метрика → Цели → «JavaScript-событие», идентификаторы — как здесь):
 //   booking_open, booking_branch, phone_click, map_open,
 //   garage_open, garage_ready, garage_book, garage_request, club_card,
-//   request_open, request_sent (заявка с фото — только при подтверждённой доставке).
+//   request_open, request_sent (заявка с фото — только при подтверждённой доставке),
+//   telegram_click {from, place, to} — переход в Telegram (ui.js, поправка критика 18;
+//   цель в счётчике создаёт Влад).
+//
+// Вид уведомления — css/dialogs.css (план §4.5, паттерн Porsche 3.4): карточка слоновой кости
+// внизу экрана, «Принять» и «Отказаться» одного размера; страницу не блокирует.
 
 const KEY = 'mw:consent';
 const VERSION = 1;
@@ -78,12 +83,16 @@ function showBanner(focus) {
   if (!banner) {
     banner = document.createElement('section');
     banner.className = 'consent';
-    banner.setAttribute('aria-label', 'Согласие на cookie');
+    banner.setAttribute('aria-labelledby', 'consent-title');
+    // Неразрывные пробелы — как typo() на страницах: короткие слова не висят в конце строки.
     banner.innerHTML = `
-      <p class="consent__text">Мы используем cookie и Яндекс Метрику с Вебвизором, чтобы считать посещения и улучшать сайт. Нажимая «Принять», вы даёте <a href="consent">согласие на обработку персональных данных</a>. Подробнее — в <a href="privacy">Политике</a>. Без согласия сайт работает полностью.</p>
+      <div class="consent__body">
+        <h2 class="consent__title" id="consent-title">Cookie и&nbsp;Яндекс Метрика</h2>
+        <p class="consent__text">Мы используем cookie и&nbsp;Яндекс Метрику с&nbsp;Вебвизором, чтобы считать посещения и&nbsp;улучшать сайт. Нажимая «Принять», вы&nbsp;даёте <a href="consent">согласие на&nbsp;обработку персональных данных</a>. Подробнее&nbsp;— в&nbsp;<a href="privacy">Политике</a>. Без согласия сайт работает полностью.</p>
+      </div>
       <div class="consent__actions">
-        <button class="btn btn--light consent__accept" type="button" data-consent="1">Принять</button>
-        <button class="btn btn--ghost consent__decline" type="button" data-consent="0">Отказаться</button>
+        <button class="btn btn--primary consent__accept" type="button" data-consent="1">Принять</button>
+        <button class="btn btn--secondary consent__decline" type="button" data-consent="0">Отказаться</button>
       </div>`;
     banner.addEventListener('click', (e) => {
       const button = e.target.closest('[data-consent]');

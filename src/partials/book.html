@@ -1,13 +1,17 @@
-<!-- Блок записи в конце страницы. v2: телефонов здесь нет — они в подвале сразу ниже;
-     надписи «MEATWASH / CAR CARE CLUB» над заголовком тоже нет — она ничего не добавляла.
-     На оклейке и продаже авто его нет: там свой финальный блок (src/content/wrap.html, auto.html). -->
-<section class="page-cta" id="book" aria-labelledby="book-title">
-  <div class="page-cta__head">
-    <h2 id="book-title">Записаться</h2>
-    <p>Выберите студию. Услугу и&nbsp;время&nbsp;— в&nbsp;её онлайн-записи. Онлайн-запись доступна круглосуточно.</p>
-  </div>
-  <div class="dialog__branches page-cta__branches">
-    <a class="dialog__branch" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer"><strong>{{loc:myasnitskaya:name}}</strong><span>{{loc:myasnitskaya:address}}</span></a>
-    <a class="dialog__branch" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer"><strong>{{loc:technopark:name}}</strong><span>{{loc:technopark:address}}</span></a>
+<!-- Блок записи в конце страницы (план §4.2; есть на «Мойке и детейлинге», «Работах», «Статьях»
+     и статье). Владелец: WP6, вид — css/dialogs.css. Две карточки студий — прямые ссылки в их
+     онлайн-запись YCLIENTS; телефонов здесь нет — они в подвале сразу ниже. Цвета — из --on*:
+     один и тот же блок работает на тёмной странице и на «бумаге». -->
+<section class="book-block" id="book" aria-labelledby="book-title">
+  <div class="book-block__inner">
+    <div class="book-block__head">
+      <h2 class="book-block__title" id="book-title">Записаться</h2>
+      <p class="book-block__lead">Выберите студию. Услугу и время — в её <span class="nw">онлайн-записи</span>. Онлайн-запись доступна круглосуточно.</p>
+      <p class="book-block__note">Онлайн-запись откроется в YCLIENTS <span class="nw">(<span lang="en">{{brand:legacy}}</span>)</span></p>
+    </div>
+    <div class="book-block__studios">
+      <a class="studio-link" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">{{loc:myasnitskaya:name}}</strong><span class="studio-link__type">{{loc:myasnitskaya:type}}</span><span class="studio-link__address">{{loc:myasnitskaya:address}}</span><span class="studio-link__hours">{{loc:myasnitskaya:hours}}</span><span class="studio-link__go" aria-hidden="true">{{icon:arrow-up-right}}</span><span class="sr"> — онлайн-запись, откроется в новой вкладке</span></a>
+      <a class="studio-link" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer"><strong class="studio-link__name">{{loc:technopark:name}}</strong><span class="studio-link__type">{{loc:technopark:type}}</span><span class="studio-link__address">{{loc:technopark:address}}</span><span class="studio-link__hours">{{loc:technopark:hours}}</span><span class="studio-link__go" aria-hidden="true">{{icon:arrow-up-right}}</span><span class="sr"> — онлайн-запись, откроется в новой вкладке</span></a>
+    </div>
   </div>
 </section>
