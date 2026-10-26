@@ -1,9 +1,16 @@
-<!-- Тело /services (план §3.2). Владелец: WP3. Заготовка WP0: H1, все якоря §1.7
-     (каталог даёт #catalog, #price-list, #price-*, #programs, #program-0…4), блоки
-     #proof, #individual, #garage-3d. 3D-гараж остаётся блоком этой страницы (решение Влада
-     27.10): кнопка data-garage-open, окно и сцена грузятся только по нажатию (js/site.js).
-     id="garage" и id="garage-title" заняты окном, которое строит garage.js, — блоку их не давать. -->
+<!-- Тело /services (план §3.2, поправки 9, 15, 16). Владелец: WP3.
+     Каталог (#catalog, #price-list, #price-*, #programs, #program-0…4, сравнение) собирает
+     scripts/catalog.mjs из JSON — подстановка catalog ниже. 3D-гараж остаётся блоком этой
+     страницы (решение Влада 27.10): кнопка data-garage-open, окно и сцена грузятся только
+     по нажатию (js/site.js → js/garage.js). id="garage" и id="garage-title" заняты окном,
+     которое строит garage.js, — блоку их не давать. Пары «до/после» постановочные: под каждой
+     видимая подпись «Иллюстрация, не работа студии» (решение Влада 27.10, поправка 9).
+     Надзаголовков и нумерации блоков нет (решение Влада). -->
 <section class="hero-a" aria-labelledby="page-title">
+  <picture class="hero-a__media">
+    <source media="(min-width: 760px)" srcset="assets/img/services/hero-1600.webp" width="1240" height="531">
+    <img src="assets/img/services/hero-900.webp" width="860" height="860" alt="Lexus LX в активной пене в моечном боксе" fetchpriority="high" decoding="async">
+  </picture>
   <div class="hero-a__body">
     <h1 id="page-title">Мойка и детейлинг</h1>
     <p class="hero-a__lead">Четыре раздела: мойка, детейлинг, защита и помощь. Мойку запишем онлайн в выбранную студию, цену остальных работ назовёт администратор.</p>
@@ -16,13 +23,66 @@
 
 {{catalog}}
 
-<section class="section" id="proof" aria-labelledby="proof-title">
-  <header class="section-head"><h2 id="proof-title">Разницу видно, если её показать</h2></header>
-  <!-- WP3: две пары figure.ba (proof.js), под каждой видимая подпись «Иллюстрация, не работа студии» (решение Влада 27.10). -->
-  <p>Полировка фар — {{price:Полировка фар}}. Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}.</p>
+<section class="section proof" id="proof" aria-labelledby="proof-title">
+  <header class="section-head">
+    <h2 id="proof-title">Разницу видно, если её показать</h2>
+    <p class="section-head__lead">Потяните шторку: слева деталь до работы, справа — после. Ракурс и свет одинаковые, меняется только состояние детали.</p>
+  </header>
+  <div class="proof__grid col-ext">
+    <figure class="ba proof__item" data-ba>
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Фара после полировки: стекло прозрачное, виден отражатель" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-headlight-hazy.webp" srcset="assets/shots/cf-headlight-hazy-s.webp 900w, assets/shots/cf-headlight-hazy.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Та же фара до полировки: рассеиватель помутнел и отдаёт жёлтым" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Фара до и после полировки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b" aria-hidden="true">до</span>
+        <span class="ba__tag ba__tag--a" aria-hidden="true">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <span class="ba__title">Полировка фар — {{price:Полировка фар}}</span>
+        <span class="ba__text">Мутный рассеиватель снова прозрачный: свет идёт на дорогу, а не рассеивается в пластике.</span>
+        <span class="ba__note">Иллюстрация, не работа студии</span>
+      </figcaption>
+      <button class="link-arrow proof__ask" type="button" data-request data-request-category="protection" data-request-services="Полировка фар">Узнать цену<span class="sr">: полировка фар</span>{{icon:arrow-right}}</button>
+    </figure>
+    <figure class="ba proof__item" data-ba data-split="72">
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-chip-macro-healed.webp" srcset="assets/shots/cf-chip-macro-healed-s.webp 900w, assets/shots/cf-chip-macro-healed.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Крыло после подкраски скола: отражение идёт без разрыва" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="То же крыло со сколом до ремонта" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Скол до и после подкраски" aria-valuemin="0" aria-valuemax="100" aria-valuenow="72"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b" aria-hidden="true">до</span>
+        <span class="ba__tag ba__tag--a" aria-hidden="true">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <span class="ba__title">Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}</span>
+        <span class="ba__text">Отражение лампы идёт по крылу без разрыва — скол не читается ни под каким углом.</span>
+        <span class="ba__note">Иллюстрация, не работа студии</span>
+      </figcaption>
+      <button class="link-arrow proof__ask" type="button" data-request data-request-category="help" data-request-services="Удаление сколов и подкраска">Узнать цену<span class="sr">: удаление сколов и подкраска</span>{{icon:arrow-right}}</button>
+    </figure>
+  </div>
 </section>
 
-<section class="promo col-ext" id="individual" aria-labelledby="individual-title">
+<section class="promo promo--paper col-ext garage-promo" id="garage-3d" aria-labelledby="garage-3d-title">
+  <div class="promo__media garage-promo__media">
+    <img src="assets/img/services/garage-1280.webp" srcset="assets/img/services/garage-800.webp 800w, assets/img/services/garage-1280.webp 1280w" sizes="(max-width: 759px) 100vw, 56vw" width="1280" height="960" alt="Кадр из 3D-гаража: Porsche 930 в зале с вывеской Meat Auto" loading="lazy" decoding="async">
+  </div>
+  <div class="promo__panel">
+    <h2 id="garage-3d-title">Соберите уход на одной машине</h2>
+    <p>Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p>
+    <button class="btn btn--primary garage-promo__open" type="button" data-garage-open>Открыть 3D-гараж</button>
+    <p class="garage-promo__note">3D загружается только по нажатию: около 1,4 МБ на телефоне и 2,4 МБ на компьютере.</p>
+    <p class="garage-promo__credit">3D-модель: <a href="https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e" target="_blank" rel="noopener noreferrer">Karol Miklas</a>, <a href="https://creativecommons.org/licenses/by/4.0/deed.ru" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>, изменена</p>
+  </div>
+</section>
+
+<section class="promo promo--reverse col-ext" id="individual" aria-labelledby="individual-title">
+  <div class="promo__media">
+    <img src="assets/img/auto-lotus-6.webp" width="800" height="533" alt="Колесо Lotus Eletre R после подготовки к продаже" loading="lazy" decoding="async">
+  </div>
   <div class="promo__panel">
     <h2 id="individual-title">Под вашу задачу.</h2>
     <p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p>
@@ -30,15 +90,21 @@
   </div>
 </section>
 
-<section class="section" id="garage-3d" aria-labelledby="garage-3d-title">
-  <header class="section-head">
-    <h2 id="garage-3d-title">Соберите уход на одной машине</h2>
-    <p class="section-head__lead">Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p>
-  </header>
-  <button class="btn btn--secondary" type="button" data-garage-open>Открыть 3D-гараж</button>
-</section>
-
-<div class="teasers teasers--skewed col-ext">
-  <a class="teaser" href="wrap">Оклейка полиуретаном</a>
-  <a class="teaser" href="works">Наши работы</a>
-</div>
+<nav class="teasers teasers--skewed col-ext" aria-label="Ещё в разделе «Мойка и детейлинг»">
+  <a class="teaser teaser--mark" href="wrap">
+    <span class="teaser__mark" aria-hidden="true" lang="en">PPF</span>
+    <span class="teaser__body">
+      <span class="teaser__title">Оклейка полиуретаном</span>
+      <span class="teaser__text">Прозрачная или цветная плёнка — в Технопарке.</span>
+      <span class="teaser__cta">Подробнее{{icon:arrow-right}}</span>
+    </span>
+  </a>
+  <a class="teaser" href="works">
+    <img class="teaser__media" src="assets/img/auto-lotus-3.webp" width="800" height="533" alt="" loading="lazy" decoding="async">
+    <span class="teaser__body">
+      <span class="teaser__title">Наши работы</span>
+      <span class="teaser__text">Lotus Eletre R перед продажей, BMW M4 в цветной плёнке, химчистка и полировка.</span>
+      <span class="teaser__cta">Смотреть{{icon:arrow-right}}</span>
+    </span>
+  </a>
+</nav>

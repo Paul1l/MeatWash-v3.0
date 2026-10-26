@@ -1,4 +1,6 @@
-// «Гараж услуг» — единый 3D-сценарий главной.
+// «Гараж услуг» — 3D-сценарий страницы «Мойка и детейлинг» (/services, блок #garage-3d;
+// решение Влада 27.10: гараж остаётся, но не на главной). Модуль грузит js/site.js по
+// первому нажатию [data-garage-open].
 //
 // Кнопки [data-garage-open] открывают одно модальное окно (<dialog id="garage">).
 // Оболочка — название, закрытие, состояние загрузки — появляется сразу; движок и
@@ -32,7 +34,8 @@ const byId = (id) => ZONES.find((z) => z.id === id);
 const PICKED_KEY = 'mw:garage';
 const WEBGL_KEY = 'mw:webgl2';
 const GUARD_MS = 400;   // второй щелчок двойного клика по кнопке входа не закрывает окно
-const CATALOG = 'services#price-list';
+// Гараж живёт на /services: «Открыть услуги» — якорь каталога этой же страницы.
+const CATALOG = '#price-list';
 const LATER = 'после оценки';   // цена работы, которую назовёт мастер (null в каталоге)
 // Вкладки — четыре категории каталога; готовых «наборов» нет: пакеты мойки —
 // настоящие позиции каталога, они во вкладке «Мойка».
@@ -131,7 +134,7 @@ export function setupGarage() {
           <p class="garage__failtitle" data-garage-failtitle></p>
           <p class="garage__failtext" data-garage-failtext></p>
           <div class="garage__failact">
-            <button class="btn btn--light" type="button" data-garage-retry>Повторить</button>
+            <button class="btn btn--primary" type="button" data-garage-retry>Повторить</button>
             <a class="btn btn--ghost" href="${CATALOG}" data-garage-catalog>Открыть услуги</a>
             <button class="btn btn--ghost" type="button" data-garage-close>Закрыть</button>
           </div>
@@ -170,7 +173,7 @@ export function setupGarage() {
             <button class="garage__clear" type="button" data-garage-clear>Сбросить выбор</button>
           </div>
           <div class="garage__act">
-            <button class="btn btn--fill garage__book" type="button" data-book data-garage-book>Записаться</button>
+            <button class="btn btn--primary garage__book" type="button" data-book data-garage-book>Записаться</button>
             <button class="btn btn--ghost garage__request" type="button" data-request data-garage-request hidden>Узнать цену</button>
           </div>
           <p class="garage__split" data-garage-split hidden>Мойка&nbsp;— онлайн-запись в&nbsp;студию, цену остальных работ назовёт администратор.</p>
@@ -530,7 +533,9 @@ export function setupGarage() {
 
   // ── Открытие и закрытие ───────────────────────────────────────────────────
   // Прокрутка страницы за окном выключена тем же способом, что у остальных окон
-  // (ui.js): класс на <html>, iOS не считается с overflow одного body.
+  // (ui.js syncLock): класс на <html>, iOS не считается с overflow одного body. Считаем
+  // по всем открытым dialog, как ui.js, поэтому гонки с его syncLock нет: кто бы ни
+  // пересчитал последним, результат один (поправка 21).
   function lock(on) {
     const other = [...document.querySelectorAll('dialog[open]')].some((d) => d !== dialog);
     const menu = document.getElementById('mobile-menu');
@@ -555,7 +560,7 @@ export function setupGarage() {
     dialog.showModal();
     lock(true);
     title.focus({ preventScroll: true });
-    goal('garage_open', { from: button?.closest('#garage-promo') ? 'promo' : button?.closest('.hero') ? 'hero' : 'link' });
+    goal('garage_open', { from: button?.closest('#garage-3d, #garage-promo') ? 'promo' : button?.closest('.hero') ? 'hero' : 'link' });
     load();
   }
   function teardown() {
@@ -596,8 +601,9 @@ export function setupGarage() {
     if (!control) return;
     if (control.matches('[data-garage-close]')) { if (!settling) close(); return; }
     if (control.matches('[data-garage-retry]')) { setState('loading'); title.focus({ preventScroll: true }); load(); return; }
-    // «Открыть услуги» уводит со страницы: сцену закрываем сразу (новую вкладку — нет).
-    if (control.matches('[data-garage-catalog]')) { if (!(e.ctrlKey || e.metaKey || e.shiftKey || e.button)) { active = false; teardown(); } return; }
+    // «Открыть услуги» — каталог этой же страницы: закрываем окно и сцену, переход по якорю
+    // делает браузер (или ui.js). С модификатором (новая вкладка) окно остаётся.
+    if (control.matches('[data-garage-catalog]')) { if (!(e.ctrlKey || e.metaKey || e.shiftKey || e.button)) close(); return; }
     if (control.matches('[data-garage-reset]')) { scene?.reset(); return; }
     if (control.matches('[data-garage-zoom]')) { scene?.zoomBy(control.dataset.garageZoom === 'in' ? 0.87 : 1.15); hideHint(); return; }
     if (control.matches('[data-garage-fold]')) { setFolded(!dialog.classList.contains('is-folded')); return; }
