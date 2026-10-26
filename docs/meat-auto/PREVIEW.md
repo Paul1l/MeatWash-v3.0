@@ -41,7 +41,7 @@ sh scripts/qa/serve-preview.sh stop
 `run.py` без `--preview` проверяет `dist` через `npm start`. Только Playwright и его Chromium/WebKit
 (системный Chrome не запускается), запросы к `mc.yandex.ru` обрываются. Результаты и снимки — в `--out`
 (по умолчанию `../meat-auto-qa`, вне репозитория). Для п. 13 нужен `axe.min.js`: `AXE_PATH=…` или
-`--axe …`; Lighthouse — `npx lighthouse@12.8.2` с Chrome for Testing, медиана трёх прогонов.
+`--axe …`; Lighthouse — `npx lighthouse@12.8.2` с Chrome for Testing, медиана пяти прогонов.
 
 ## 3. Перед загрузкой (Влад)
 

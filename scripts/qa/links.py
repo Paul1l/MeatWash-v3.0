@@ -134,11 +134,14 @@ def run(preview, host, headers, pages, res):
         for imp in re.findall(r'(?:from\s*|import\s*\(?\s*)[\'"](\./[^\'"]+)[\'"]', body.decode('utf-8', 'replace')):
             if f'?v={sha}' not in imp:
                 issues.append(f'{path}: импорт {imp} без ?v')
-    st, hd, _ = get(f'/css/base.css?v={sha}', 'HEAD')
+    # Стили в пакете склеены (css/b-<хеш>.css) — берём файл, на который ссылается главная.
+    css = re.search(r'href="/?(css/[^"?]+\.css)\?v=', docs.get('/', '')) 
+    css = '/' + css.group(1) if css else '/css/base.css'
+    st, hd, _ = get(f'{css}?v={sha}', 'HEAD')
     if st != 200 or not hd.get('Content-Type', '').startswith('text/css'):
-        issues.append(f'/css/base.css?v={sha} → {st} {hd.get("Content-Type")}')
+        issues.append(f'{css}?v={sha} → {st} {hd.get("Content-Type")}')
     res.add('11', 'Кэш', not issues,
-            f'адресов CSS/JS в HTML с ?v={sha}: {versioned}; импорты модулей с ?v; HEAD /css/base.css?v={sha} → {st} {hd.get("Content-Type")}', issues)
+            f'адресов CSS/JS в HTML с ?v={sha}: {versioned}; импорты модулей с ?v; HEAD {css}?v={sha} → {st} {hd.get("Content-Type")}', issues)
 
 
 def sweep(browser, preview, headers, pages, res):

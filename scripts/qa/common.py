@@ -131,10 +131,12 @@ class Results:
     def __init__(self, out):
         self.out = pathlib.Path(out)
         self.out.mkdir(parents=True, exist_ok=True)
-        self.items = {}
+        # Пункты прошлых запусков (--only) сохраняются; у каждого — время своего прогона.
+        f = self.out / 'results.json'
+        self.items = json.loads(f.read_text(encoding='utf-8')) if f.exists() else {}
 
     def add(self, key, title, ok, numbers, details=None):
-        self.items[key] = {'title': title, 'pass': bool(ok), 'numbers': numbers, 'details': details or []}
+        self.items[key] = {'title': title, 'pass': bool(ok), 'numbers': numbers, 'details': details or [], 'at': time.strftime('%Y-%m-%d %H:%M')}
         mark = 'PASS' if ok else 'FAIL'
         print(f'[{mark}] {key} {title}: {numbers}', flush=True)
         for d in (details or [])[:12]:

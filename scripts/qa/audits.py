@@ -13,7 +13,7 @@ from common import Context, load, ROOT
 
 LH_PAGES = ['', 'services', 'auto', 'about', 'article-avto-k-zime']
 LH_VERSION = os.environ.get('LIGHTHOUSE_VERSION', '12.8.2')
-RUNS = int(os.environ.get('LIGHTHOUSE_RUNS', '3'))
+RUNS = int(os.environ.get('LIGHTHOUSE_RUNS', '5'))
 
 
 def lighthouse(chrome, base, out, res, *, headers=None, seo_base=None):
@@ -33,7 +33,7 @@ def lighthouse(chrome, base, out, res, *, headers=None, seo_base=None):
         audits = data['audits']
         return score, audits
 
-    # Медиана трёх прогонов (так советует сам Lighthouse): у симулированного LCP разброс до 1 с.
+    # Медиана пяти прогонов (так советует сам Lighthouse): у симулированного LCP бывают выбросы до +1 с.
     med = lambda xs: sorted(xs)[len(xs) // 2]
     for p in LH_PAGES:
         runs = [run(f'{base}/{p}', f"{p or 'home'}-{i}", ['performance', 'accessibility', 'best-practices']) for i in range(RUNS)]
