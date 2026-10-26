@@ -431,7 +431,7 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
 }
 
 /* Подпись полосы цитаты: «Meat Auto» и надпись «Car Care Club» из логотипа. */
-.quote-band figcaption { white-space: nowrap; }
+body[data-page="about"] .quote-band figcaption { white-space: nowrap; }
 svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20px, 1.2vw + 12px, 30px); aspect-ratio: 1231 / 198; overflow: visible; }
 
 /* ---------- Появление фото: только при обычном движении и со скриптом ---------- */
