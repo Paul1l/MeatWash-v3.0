@@ -154,7 +154,7 @@
 @supports not (background: color-mix(in srgb, red 50%, blue)) { .anchor-tabs { background: var(--page); } }
 .anchor-tabs__track {
   display: flex; align-items: center; gap: 4px;
-  height: 100%; padding-inline: var(--basic);
+  height: 100%; padding-inline: var(--basic) max(var(--basic), 56px);
   overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
 }
 .anchor-tabs__track::-webkit-scrollbar { display: none; }
@@ -172,11 +172,11 @@
 }
 .anchor-tabs__track > a:focus-visible { outline-offset: -2px; }
 /* Лента шире экрана: затухание у края и кнопка «›» (components.js ставит data-overflow). */
-.anchor-tabs[data-overflow~="end"] .anchor-tabs__track { -webkit-mask: linear-gradient(90deg, #000 calc(100% - 72px), transparent calc(100% - 24px)); mask: linear-gradient(90deg, #000 calc(100% - 72px), transparent calc(100% - 24px)); }
+.anchor-tabs[data-overflow~="end"] .anchor-tabs__track { -webkit-mask: linear-gradient(90deg, #000 calc(100% - 96px), transparent calc(100% - 44px)); mask: linear-gradient(90deg, #000 calc(100% - 96px), transparent calc(100% - 44px)); }
 .anchor-tabs[data-overflow~="start"] .anchor-tabs__track { -webkit-mask: linear-gradient(90deg, transparent 8px, #000 48px); mask: linear-gradient(90deg, transparent 8px, #000 48px); }
-.anchor-tabs[data-overflow~="start"][data-overflow~="end"] .anchor-tabs__track { -webkit-mask: linear-gradient(90deg, transparent 8px, #000 48px, #000 calc(100% - 72px), transparent calc(100% - 24px)); mask: linear-gradient(90deg, transparent 8px, #000 48px, #000 calc(100% - 72px), transparent calc(100% - 24px)); }
+.anchor-tabs[data-overflow~="start"][data-overflow~="end"] .anchor-tabs__track { -webkit-mask: linear-gradient(90deg, transparent 8px, #000 48px, #000 calc(100% - 96px), transparent calc(100% - 44px)); mask: linear-gradient(90deg, transparent 8px, #000 48px, #000 calc(100% - 96px), transparent calc(100% - 44px)); }
 .anchor-tabs__more {
-  position: absolute; top: 50%; right: max(4px, calc(var(--basic) - 44px)); translate: 0 -50%;
+  position: absolute; top: 50%; right: 6px; translate: 0 -50%;
   display: none; place-items: center;
   width: 40px; height: 40px; padding: 0;
   border: 0; border-radius: 50%; background: transparent; color: var(--on);

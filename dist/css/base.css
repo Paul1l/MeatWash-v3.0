@@ -149,7 +149,7 @@ html:has(dialog:modal) { overflow: hidden; }
 .btn:disabled, .btn[aria-disabled="true"] { opacity: .4; cursor: not-allowed; pointer-events: none; }
 @media (pointer: coarse) { .btn--compact { min-height: 44px; padding-block: 9px; } }
 /* Группа кнопок: в ряд, на телефоне — столбиком на всю ширину (Porsche 2.6). */
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: max(12px, var(--sm)); }
 @media (max-width: 759px) {
   .actions--stack { flex-direction: column; align-items: stretch; }
   .actions--stack > .btn { width: 100%; }
