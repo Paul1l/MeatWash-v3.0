@@ -73,6 +73,8 @@ for (const page of REGISTRY) {
     const len = description.replace(/&[a-z]+;|&#\d+;/g, 'x').length;
     if (len > 160) fail(`${file}: description длиннее 160 знаков (${len})`);
   }
+  const seen = new Set();
+  for (const [, id] of strip(text).matchAll(/\bid="([^"]+)"/g)) { if (seen.has(id)) fail(`${file}: id="${id}" повторяется`); seen.add(id); }
   const h1 = [...text.matchAll(/<h1\b/g)].length;
   if (h1 !== 1) fail(`${file}: h1 на странице — ${h1}, нужен ровно один`);
   const url = SITE + pageSlug(file);

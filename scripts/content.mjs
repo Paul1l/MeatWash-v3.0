@@ -32,7 +32,7 @@ const THEME_COLOR = {dark: '#080808', paper: '#f1ebe0', home: '#080808'};
 // по старой ссылке ведём туда, где блок живёт теперь. #contacts и #top остаются у подвала и шапки.
 const LEGACY_HOME_HASH = {
   locations: 'about#visit-locations', 'map-myasnitskaya': 'about#map-myasnitskaya', 'map-technopark': 'about#map-technopark',
-  membership: 'about#membership', club: 'about#club', services: 'services', proof: 'services#proof', garage: 'services#garage',
+  membership: 'about#membership', club: 'about#club', services: 'services', proof: 'services#proof', garage: 'services#garage-3d',
 };
 const headScript = (page) => page.id === 'home'
   ? `document.documentElement.classList.add('js');(function(m,h){if(m[h])location.replace(m[h])})(${JSON.stringify(LEGACY_HOME_HASH)},location.hash.slice(1))`

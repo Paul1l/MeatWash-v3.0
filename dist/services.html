@@ -48,7 +48,7 @@
 <header class="site-header site-header--over" id="top">
   <div class="site-header__bar">
     <button class="site-header__menu" id="drawer-open" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-menu"/></svg><span>Меню</span></button>
-    <a class="site-header__logo" href="./" aria-label="Meat Auto — на главную"><svg class="bull" viewBox="0 0 1097 800" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg></a>
+    <a class="site-header__logo" href="./" aria-label="Meat Auto — на главную"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg></a>
     <button class="site-header__book btn btn--compact btn--secondary" type="button" data-book>Записаться</button>
   </div>
 </header>
@@ -143,8 +143,9 @@
 <main id="main">
 <!-- Тело /services (план §3.2). Владелец: WP3. Заготовка WP0: H1, все якоря §1.7
      (каталог даёт #catalog, #price-list, #price-*, #programs, #program-0…4), блоки
-     #proof, #individual, #garage. 3D-гараж остаётся блоком этой страницы (решение Влада
-     27.10): кнопка data-garage-open, окно и сцена грузятся только по нажатию (js/site.js). -->
+     #proof, #individual, #garage-3d. 3D-гараж остаётся блоком этой страницы (решение Влада
+     27.10): кнопка data-garage-open, окно и сцена грузятся только по нажатию (js/site.js).
+     id="garage" и id="garage-title" заняты окном, которое строит garage.js, — блоку их не давать. -->
 <section class="hero-a" aria-labelledby="page-title">
   <div class="hero-a__body">
     <h1 id="page-title">Мойка и&nbsp;детейлинг</h1>
@@ -271,9 +272,9 @@
   </div>
 </section>
 
-<section class="section" id="garage" aria-labelledby="garage-title">
+<section class="section" id="garage-3d" aria-labelledby="garage-3d-title">
   <header class="section-head">
-    <h2 id="garage-title">Соберите уход на&nbsp;одной машине</h2>
+    <h2 id="garage-3d-title">Соберите уход на&nbsp;одной машине</h2>
     <p class="section-head__lead">Выберите услуги и&nbsp;рассмотрите автомобиль в&nbsp;3D: камера покажет деталь каждой работы, итог «от» посчитается по&nbsp;ценам этого каталога и&nbsp;вашему кузову.</p>
   </header>
   <button class="btn btn--secondary" type="button" data-garage-open>Открыть 3D-гараж</button>
@@ -357,7 +358,7 @@
   </div>
   <!-- По слову Влада 19.10: пометка про Meta в подвале всех страниц. -->
   <p class="site-footer__note">Instagram принадлежит компании Meta, которая признана экстремистской организацией и&nbsp;запрещена на&nbsp;территории РФ.</p>
-  <p class="site-footer__mark"><svg class="bull" viewBox="0 0 1097 800" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg><span class="sr" lang="en">Meat Auto Car Care Club</span><svg class="ccc" viewBox="0 0 1231 198" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-ccc"/></svg></p>
+  <p class="site-footer__mark"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-bull"/></svg><span class="sr" lang="en">Meat Auto Car Care Club</span><svg class="ccc" viewBox="0 0 1231 198" fill="currentColor" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=72a1c064#i-ccc"/></svg></p>
 </footer>
 <!-- SHARED:footer:END -->
 

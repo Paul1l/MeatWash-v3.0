@@ -79,7 +79,7 @@ export function icon(name, cls) {
   const box = ICON_BOX[name];
   const klass = cls || (box ? name : 'icon');
   return box
-    ? `<svg class="${klass}" viewBox="${box}" aria-hidden="true" focusable="false"><use href="${assetUrl(SPRITE)}#i-${name}"/></svg>`
+    ? `<svg class="${klass}" viewBox="${box}" fill="currentColor" aria-hidden="true" focusable="false"><use href="${assetUrl(SPRITE)}#i-${name}"/></svg>`
     : `<svg class="${klass}" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="${assetUrl(SPRITE)}#i-${name}"/></svg>`;
 }
 

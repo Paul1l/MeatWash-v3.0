@@ -1,10 +1,12 @@
 name: Проверка
 
-# Идёт на каждый pull request и на каждую ветку, кроме main:
-# в main публикацией и проверкой занимается pages.yml.
+# Идёт на каждый pull request в main и в meat-auto (ветки пакетов WP1–WP7) и на каждый
+# push в любую ветку, кроме main: в main публикацией и проверкой занимается pages.yml.
+# Meat Auto (поправка критика 29): сгенерированные dist/*.html в PR пакетов можно не
+# включать (план §6.1), поэтому здесь сначала сборка, потом проверка свежего dist.
 on:
   pull_request:
-    branches: [main]
+    branches: [main, meat-auto]
   push:
     branches-ignore: [main]
   workflow_dispatch:
@@ -30,8 +32,14 @@ jobs:
       - name: Установить зависимости
         run: npm ci
 
-      - name: Ресурсы, ссылки и данные
+      - name: Собрать страницы
+        run: npm run build
+
+      - name: Ресурсы, ссылки, мета и данные
         run: npm run check
+
+      - name: 3D-гараж (бандл и модели)
+        run: npm run check:3d
 
       # Проверяющему не нужно поднимать проект у себя: папка сайта
       # прикладывается к запуску, её можно скачать и открыть локально.
