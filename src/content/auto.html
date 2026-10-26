@@ -1,43 +1,110 @@
-<!-- Тело /auto (план §3.6, §4.6). Владелец: WP4. Машины — src/data/cars.json,
-     разметка — scripts/cars.mjs (подстановки cars:sale, cars:sold, cars:date и счётчики).
-     Прежнее тело — git show fd8d88d:src/content/auto.html. -->
+<!-- Тело /auto (план §3.6, §4.6; паттерны Porsche: герой D, вкладки-якоря P08, карточка машины
+     P18/P19, сетка P27, карточки-шаги P20, тизеры P12, промо P11). Владелец: WP4.
+     Машины — src/data/cars.json, разметка карточек — scripts/cars.mjs (подстановки cars:sale,
+     cars:sold, cars:date и счётчики count:*). Вид — dist/css/auto.css.
+     Тексты — с прежней страницы (git show fd8d88d:src/content/auto.html), имя — Meat Auto.
+     Надзаголовков и нумерации нет (решение Влада). -->
 <section class="hero-d col-wide" aria-labelledby="page-title">
-  <h1 id="page-title">Покупка и продажа авто</h1>
-  <p class="hero-d__lead">Продать: берём машину на продажу, готовим в наших студиях, показываем покупателям и ведём сделку. Купить: подбираем автомобиль под задачу и покупаем под ключ. Всё через один контакт.</p>
+  <div class="hero-d__main">
+    <h1 id="page-title">Покупка и продажа авто</h1>
+    <p class="hero-d__lead">Продать: берём машину на продажу, готовим в наших студиях, показываем покупателям и ведём сделку. Купить: подбираем автомобиль под задачу и покупаем под ключ. Всё через один контакт.</p>
+  </div>
   <div class="hero-d__aside">
-    <span class="chip">В продаже: {{count:sale}}</span>
-    <span class="chip">Уже продали: {{count:sold}}</span>
-    <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+    <ul class="auto-stats" aria-label="Машины">
+      <li><a href="#for-sale"><b>{{count:sale}}</b><span>в продаже</span></a></li>
+      <li><a href="#sold"><b>{{count:sold}}</b><span>уже продали</span></a></li>
+    </ul>
+    <a class="btn btn--secondary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
   </div>
 </section>
+
 <nav class="anchor-tabs" data-anchor-tabs aria-label="Разделы страницы">
   <div class="anchor-tabs__track">
     <a class="anchor-tabs__tab" href="#for-sale">В продаже</a>
     <a class="anchor-tabs__tab" href="#sold">Уже продали</a>
-    <a class="anchor-tabs__tab" href="#sell">Продать машину</a>
+    <a class="anchor-tabs__tab" href="#sell">Как работаем</a>
     <a class="anchor-tabs__tab" href="#auto-contact">Связаться</a>
   </div>
 </nav>
-<section class="section" id="for-sale" aria-labelledby="for-sale-title">
-  <h2 id="for-sale-title">Сейчас в продаже</h2>
-  <p>Цены — на {{cars:date}}, наличие уточняйте перед визитом.</p>
+
+<section class="section cars col-wide" id="for-sale" aria-labelledby="for-sale-title">
+  <header class="section-head section-head--left">
+    <h2 id="for-sale-title">Сейчас в продаже</h2>
+    <p class="section-head__lead">Машины стоят у нас — их можно посмотреть вживую. Цены — на {{cars:date}}, наличие уточняйте перед визитом.</p>
+  </header>
+  <div class="cars__list">
 {{cars:sale}}
-  <ul class="link-rows"><li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Все предложения — в Telegram-канале MEAT AUTO{{icon:arrow-up-right}}</a></li></ul>
+  </div>
+  <ul class="link-rows cars__more">
+    <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener"><span>Все предложения — в Telegram-канале MEAT AUTO</span>{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a></li>
+  </ul>
 </section>
-<section class="section" id="sold" aria-labelledby="sold-title">
-  <h2 id="sold-title">Уже продали</h2>
+
+<section class="section sold col-wide" id="sold" aria-labelledby="sold-title">
+  <header class="section-head section-head--left">
+    <h2 id="sold-title">Уже продали <span class="chip chip--count">{{count:sold:машина}}</span></h2>
+    <p class="section-head__lead">Машины, которые уже нашли новых владельцев.</p>
+  </header>
   <ul class="sold-grid">
 {{cars:sold}}
   </ul>
 </section>
-<section class="section" id="sell" aria-labelledby="sell-title">
-  <h2 id="sell-title">Как мы работаем с автомобилями</h2>
-  <a class="link-arrow" href="services#price-presale">Подготовка к продаже{{icon:arrow-right}}</a>
+
+<section class="section sell col-ext" id="sell" aria-labelledby="sell-title">
+  <header class="section-head">
+    <h2 id="sell-title">Как мы работаем с автомобилями</h2>
+  </header>
+  <ul class="steps">
+    <li class="steps__item card--outline">
+      <h3>Продажа вашей машины</h3>
+      <p>Берём автомобиль на реализацию и ведём продажу до конца: показы, разговоры с покупателями, сделка.</p>
+      <a class="link-arrow" href="#auto-contact">Продать машину{{icon:arrow-right}}</a>
+    </li>
+    <li class="steps__item card--outline">
+      <h3>Подготовка к продаже</h3>
+      <p>Химчистка, полировка и защитные покрытия в наших студиях — машина выходит на показ в лучшем виде.</p>
+      <p class="steps__price"><span class="chip">{{price:Предпродажная подготовка}}</span></p>
+      <a class="link-arrow" href="services#price-presale">Подготовка к продаже{{icon:arrow-right}}</a>
+    </li>
+    <li class="steps__item card--outline">
+      <h3>Подбор и покупка</h3>
+      <p>Найдём автомобиль под задачу и купим под ключ. Пишите Роману — дальше подключится команда.</p>
+      <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+    </li>
+  </ul>
 </section>
-<section class="promo col-ext" id="auto-contact" aria-labelledby="auto-contact-title">
+
+<section class="section section--tight auto-links col-ext" aria-label="Ещё по теме">
+  <div class="teasers teasers--skewed">
+    <a class="teaser" href="import">
+      <img class="teaser__media" src="assets/img/import/g-class-800.webp" srcset="assets/img/import/g-class-800.webp 800w, assets/img/import/g-class-1240.webp 1240w" sizes="(min-width: 760px) 45vw, 100vw" width="1240" height="698" alt="" loading="lazy" decoding="async">
+      <span class="teaser__body">
+        <span class="teaser__title">Привоз авто <span class="nw">из-за</span> рубежа</span>
+        <span class="teaser__more">Подробнее{{icon:arrow-right}}</span>
+      </span>
+    </a>
+    <a class="teaser" href="works#works-lotus">
+      <img class="teaser__media" src="assets/img/auto-lotus-8.webp" width="800" height="533" alt="" loading="lazy" decoding="async">
+      <span class="teaser__body">
+        <span class="teaser__title">Как мы готовили Lotus к продаже</span>
+        <span class="teaser__more">Наши работы{{icon:arrow-right}}</span>
+      </span>
+    </a>
+  </div>
+</section>
+
+<section class="section auto-contact" id="auto-contact" aria-labelledby="auto-contact-title">
+  <div class="promo col-ext">
+  <div class="promo__media">
+    <img src="assets/img/auto-bmw740-1.webp" width="640" height="800" alt="" loading="lazy" decoding="async">
+  </div>
   <div class="promo__panel">
     <h2 id="auto-contact-title">Купить или продать — напишите</h2>
-    <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram</a>
-    <a href="tel:{{loc:myasnitskaya:tel}}">Или позвоните в студию на Мясницкой {{loc:myasnitskaya:phone}}</a>
+    <p>Расскажите, какую машину ищете или какую хотите продать. Ответит Роман, дальше подключится команда.</p>
+    <div class="promo__actions">
+      <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+      <a class="promo__tel" href="tel:{{loc:myasnitskaya:tel}}"><span>Или позвоните в студию на Мясницкой</span> <b>{{loc:myasnitskaya:phone}}</b></a>
+    </div>
+  </div>
   </div>
 </section>
