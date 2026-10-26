@@ -636,6 +636,13 @@
     "Внедорожник",
     "Микроавтобус"
   ],
+  "brand": {
+    "_comment": "Бренд сайта (решение Влада 22–27.10): name — видимое имя, descriptor — подпись «Car Care Club» (в шапке и герое — SVG из логотипа), legacy — прежнее имя: под ним студии в Яндекс Картах и YCLIENTS (alternateName в JSON-LD, пояснение в окне записи), since — год, с которого работаем («С 2021 года», как на нынешнем сайте). Подстановки {{brand:name|descriptor|legacy|since}}. Машины на продаже — src/data/cars.json.",
+    "name": "Meat Auto",
+    "descriptor": "Car Care Club",
+    "legacy": "Meat Wash",
+    "since": 2021
+  },
   "site": {
     "_comment": "Настройки сайта. analytics.metrika — номер счётчика Яндекс Метрики (цифры), analytics.webmaster — код подтверждения Яндекс Вебмастера (content мета-тега yandex-verification). Пусто — Метрика, уведомление о cookie и мета-тег на страницы не попадают; параметры счётчика (в том числе Вебвизор) — в js/analytics.js. operator — реквизиты оператора персональных данных для Политики и Согласия (152-ФЗ). После правки: npm run build.",
     "analytics": {

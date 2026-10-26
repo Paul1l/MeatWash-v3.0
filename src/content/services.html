@@ -1,0 +1,43 @@
+<!-- Тело /services (план §3.2). Владелец: WP3. Заготовка WP0: H1, все якоря §1.7
+     (каталог даёт #catalog, #price-list, #price-*, #programs, #program-0…4), блоки
+     #proof, #individual, #garage. 3D-гараж остаётся блоком этой страницы (решение Влада
+     27.10): кнопка data-garage-open, окно и сцена грузятся только по нажатию (js/site.js). -->
+<section class="hero-a" aria-labelledby="page-title">
+  <div class="hero-a__body">
+    <h1 id="page-title">Мойка и детейлинг</h1>
+    <p class="hero-a__lead">Четыре раздела: мойка, детейлинг, защита и помощь. Мойку запишем онлайн в выбранную студию, цену остальных работ назовёт администратор.</p>
+    <div class="hero-a__actions">
+      <button class="btn btn--primary" type="button" data-book>Записаться</button>
+      <a class="btn btn--secondary" href="#catalog">Смотреть цены</a>
+    </div>
+  </div>
+</section>
+
+{{catalog}}
+
+<section class="section" id="proof" aria-labelledby="proof-title">
+  <header class="section-head"><h2 id="proof-title">Разницу видно, если её показать</h2></header>
+  <!-- WP3: две пары figure.ba (proof.js), под каждой видимая подпись «Иллюстрация, не работа студии» (решение Влада 27.10). -->
+  <p>Полировка фар — {{price:Полировка фар}}. Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}.</p>
+</section>
+
+<section class="promo col-ext" id="individual" aria-labelledby="individual-title">
+  <div class="promo__panel">
+    <h2 id="individual-title">Под вашу задачу.</h2>
+    <p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p>
+    <button class="btn btn--primary" type="button" data-membership="Индивидуальный уход">Обсудить уход</button>
+  </div>
+</section>
+
+<section class="section" id="garage" aria-labelledby="garage-title">
+  <header class="section-head">
+    <h2 id="garage-title">Соберите уход на одной машине</h2>
+    <p class="section-head__lead">Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p>
+  </header>
+  <button class="btn btn--secondary" type="button" data-garage-open>Открыть 3D-гараж</button>
+</section>
+
+<div class="teasers teasers--skewed col-ext">
+  <a class="teaser" href="wrap">Оклейка полиуретаном</a>
+  <a class="teaser" href="works">Наши работы</a>
+</div>

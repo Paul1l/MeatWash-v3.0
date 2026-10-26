@@ -1,8 +1,9 @@
 // Всё, что зависит от цен и услуг, собирается из dist/assets/meatwash-content.json:
-// - каталог на services.html (между <!-- CATALOG:START --> и <!-- CATALOG:END -->);
-// - превью услуг на главной: четыре карточки — четыре категории (<!-- PREVIEW:START --> … <!-- PREVIEW:END -->);
-// - dist/js/data.js — те же цены и филиалы для скриптов («Гараж услуг», окно услуги, карта).
-// Запуск: npm run catalog. npm run check сверяет все три результата с этим файлом.
+// - каталог на /services — подстановка {{catalog}} (renderCatalog) и сравнение программ
+//   {{compare}} (renderCompare); их вызывает scripts/pages.mjs при сборке страницы;
+// - dist/js/data.js — те же цены и филиалы для скриптов (гараж, окно услуги, карты).
+// Запуск: npm run catalog — пишет только dist/js/data.js (Meat Auto, WP0 27.10).
+// Владелец: WP3 (разметка каталога по §4.3 плана, renderCompare, SECTION_LINKS).
 import {readFile,writeFile} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 const root=new URL('../',import.meta.url);
@@ -15,6 +16,16 @@ const number=n=>String(n+1).padStart(2,'0');
 export const priceText=price=>price==null?'После оценки':'от '+money(price);
 const priced=items=>items.map(([,price])=>price).filter(price=>price!=null);
 export const groupMin=id=>Math.min(...priced(d.groups.find(g=>g.id===id).items));
+// Цена «от» раздела для шторки, героев и description ({{min:<group>}}): у мойки — минимум
+// цен программ (позиции «Дополнительно на мойке» в «от» не входят), у остальных — минимум
+// позиций с ценой.
+export const minFor=id=>{
+ const group=d.groups.find(g=>g.id===id);
+ if(!group)throw new Error(`Нет раздела каталога ${id}`);
+ const prices=group.sections.some(s=>s.programs)?d.programPrices.flat():priced(group.items);
+ if(!prices.length)throw new Error(`В разделе ${id} нет позиций с ценой`);
+ return Math.min(...prices);
+};
 // Контекст записи программы: название, кузов и цена для этого кузова. Тот же
 // формат собирает js/catalog.js при смене кузова.
 export const programContext=(i,body)=>`${d.programs[i][0]} — ${d.bodyTypes[body]}, ${money(d.programPrices[i][body])}`;
@@ -70,17 +81,15 @@ ${d.groups.map(group=>` <section class="catalog__panel" id="price-${escape(group
   <p class="catalog__note">Стоимость зависит от типа кузова и состояния автомобиля. Итоговый объём и цену согласуем перед работой. Не является публичной офертой.</p>
  </div>
 </div>
-<!-- Кремовая полоса: гараж и индивидуальный уход — не прайс, их видно отдельно. -->
-<div class="services-extra">
- <section class="catalog__concierge cfg-teaser" id="garage-teaser" aria-labelledby="garage-teaser-title">
-  <div><p class="eyebrow">Гараж услуг · 3D</p><h2 id="garage-teaser-title">Соберите уход на одной машине</h2><p>Выберите услуги и рассмотрите автомобиль в 3D: камера покажет деталь каждой работы, итог «от» посчитается по ценам этого каталога и вашему кузову.</p></div>
-  <a class="btn btn--ghost btn--ink" href="./#garage">Открыть 3D-гараж <span aria-hidden="true">→</span></a>
- </section>
- <section class="catalog__concierge" aria-labelledby="concierge-title"><div><h2 id="concierge-title">Под вашу задачу.</h2><p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p></div><button class="btn btn--fill" type="button" data-membership="Индивидуальный уход">Обсудить уход <span aria-hidden="true">→</span></button></section>
-</div>
 `}
 
-// Превью на главной: четыре карточки — четыре категории в порядке каталога, ссылка
+// Сравнение программ мойки (P04, §4.3 плана) — {{compare}}. Заготовка WP0: WP3 пишет
+// таблицу по правилу «каждая следующая включает предыдущую».
+export function renderCompare(){
+ return `<div class="compare" id="compare" data-compare hidden></div>`;
+}
+
+// Превью на главной (прежняя главная; на Meat Auto не используется) — четыре категории в порядке каталога, ссылка
 // ведёт на вкладку категории. Подпись — название и короткое описание, цена «от» —
 // минимальная в категории (у мойки — минимальная цена программ), всё из JSON.
 // Кадры assets/shots — 1600×894, уменьшенные (-s) — 900 px.
@@ -147,9 +156,6 @@ export function replaceBetween(html,name,body,file){
 export const between=(html,name)=>{const start=`<!-- ${name}:START -->`,end=`<!-- ${name}:END -->`;const a=html.indexOf(start),b=html.indexOf(end);return a<0||b<0?null:html.slice(a+start.length,b);};
 
 if(process.argv[1]===fileURLToPath(import.meta.url)){
- const services=new URL('dist/services.html',root),home=new URL('dist/index.html',root);
- await writeFile(services,replaceBetween(await readFile(services,'utf8'),'CATALOG',renderCatalog(),'services.html'));
- await writeFile(home,replaceBetween(await readFile(home,'utf8'),'PREVIEW',renderPreview(),'index.html'));
  await writeFile(new URL('dist/js/data.js',root),renderData());
- console.log(`Rendered ${d.groups.length} categories, ${d.programs.length} wash programs, ${d.programs.length*d.bodyTypes.length} body prices, ${serviceCount()} services, home preview and js/data.js.`);
+ console.log(`js/data.js: ${d.groups.length} categories, ${d.programs.length} wash programs, ${d.programs.length*d.bodyTypes.length} body prices, ${serviceCount()} services.`);
 }

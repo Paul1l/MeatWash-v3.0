@@ -1,0 +1,274 @@
+{
+ "_comment": "Машины для /auto, шторки и счётчиков. Перенесено один к одному из src/content/auto.html (ветка v2, fd8d88d) 27.10.2026. Цены — на pricesDate. Владелец файла после WP0 — WP4 (scripts/cars.mjs). После правки: npm run build.",
+ "pricesDate": "2026-09-22",
+ "channel": "https://t.me/MEATWASH_Auto",
+ "contact": "https://t.me/otec_roman",
+ "forSale": [
+  {
+   "id": "lotus-eletre",
+   "title": "Lotus Eletre R",
+   "year": 2023,
+   "facts": [
+    "38 100 км",
+    "электромобиль",
+    "полный привод"
+   ],
+   "price": 10350000,
+   "priceVat": 12550000,
+   "lead": "Снаружи большой кроссовер, по цифрам почти суперкар: 918 л.с., 0–100 км/ч за 2,9 секунды, максимальная скорость 260 км/ч.",
+   "specs": [
+    "Батарея около 112 кВт·ч, запас хода около 450 км по WLTP",
+    "800-вольтовая архитектура: с 10 до 80% на мощной станции — около 20 минут",
+    "Пневмоподвеска, активное подавление кренов, 23-дюймовые колёса"
+   ],
+   "prepared": "глубокая химчистка салона, полировка кузова, керамическое покрытие Surface",
+   "tall": false,
+   "photos": [
+    {
+     "src": "assets/img/auto-lotus-1.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Lotus Eletre R спереди, чёрный кузов и жёлтые суппорты"
+    },
+    {
+     "src": "assets/img/auto-lotus-4.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Lotus Eletre R, вид спереди сбоку"
+    },
+    {
+     "src": "assets/img/auto-lotus-2.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Lotus Eletre R сзади, светодиодная полоса фонарей"
+    },
+    {
+     "src": "assets/img/auto-lotus-3.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Lotus Eletre R, вид сбоку на 23-дюймовых дисках"
+    },
+    {
+     "src": "assets/img/auto-lotus-5.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Салон Lotus Eletre R: руль и цифровая панель"
+    },
+    {
+     "src": "assets/img/auto-lotus-6.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Колесо Lotus Eletre R с карбоновыми вставками и жёлтым суппортом"
+    },
+    {
+     "src": "assets/img/auto-lotus-7.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Центральная консоль Lotus Eletre R"
+    },
+    {
+     "src": "assets/img/auto-lotus-8.webp",
+     "w": 800,
+     "h": 533,
+     "alt": "Передние кресла Lotus Eletre R после химчистки салона"
+    }
+   ]
+  },
+  {
+   "id": "bmw-740ld",
+   "title": "BMW 740Ld xDrive",
+   "year": 2021,
+   "facts": [
+    "90 000 км",
+    "1 владелец",
+    "дизель 3.0, 340 л.с."
+   ],
+   "price": 7850000,
+   "lead": "Длиннобазная «семёрка» в редкой заводской конфигурации и матовом цвете Frozen Bluestone Metallic. Комплектация представительского лимузина — особенно второй ряд.",
+   "specs": [
+    "Executive Lounge: два отдельных кресла сзади, консоль и холодильник",
+    "Массаж и вентиляция передних и задних кресел, экраны для задних пассажиров",
+    "Bowers & Wilkins Diamond, лазерные фары, ночное видение",
+    "Активное шасси Executive Drive Pro и подруливающая задняя ось"
+   ],
+   "prepared": null,
+   "tall": true,
+   "photos": [
+    {
+     "src": "assets/img/auto-bmw740-1.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "BMW 740Ld xDrive в матовом цвете Frozen Bluestone на закате"
+    },
+    {
+     "src": "assets/img/auto-bmw740-3.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "BMW 740Ld спереди, лазерные фары"
+    },
+    {
+     "src": "assets/img/auto-bmw740-2.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "BMW 740Ld сзади сбоку"
+    },
+    {
+     "src": "assets/img/auto-bmw740-6.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Второй ряд Executive Lounge: два отдельных кресла"
+    },
+    {
+     "src": "assets/img/auto-bmw740-5.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Салон BMW 740Ld с экранами для задних пассажиров"
+    },
+    {
+     "src": "assets/img/auto-bmw740-7.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Задняя консоль Executive Lounge с экраном"
+    },
+    {
+     "src": "assets/img/auto-bmw740-10.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Передняя часть салона BMW 740Ld"
+    },
+    {
+     "src": "assets/img/auto-bmw740-8.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Динамик Bowers & Wilkins Diamond в двери"
+    },
+    {
+     "src": "assets/img/auto-bmw740-4.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Задние фонари BMW 740Ld"
+    },
+    {
+     "src": "assets/img/auto-bmw740-9.webp",
+     "w": 640,
+     "h": 800,
+     "alt": "Открытая дверь BMW 740Ld с шторкой"
+    }
+   ]
+  }
+ ],
+ "sold": [
+  {
+   "title": "Mercedes-Benz S-класс (W223)",
+   "src": "assets/img/sold-mb-w223-sentyabr.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "Mercedes-Benz S-класс (W223) спереди в три четверти, чёрный кузов и многоспицевые диски"
+  },
+  {
+   "title": "BMW 7 серии",
+   "src": "assets/img/sold-bmw-7er-sentyabr.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "BMW 7 серии спереди в три четверти, тёмно-синий кузов и крупные двухцветные диски"
+  },
+  {
+   "title": "BMW 740d",
+   "src": "assets/img/sold-bmw-740d-sentyabr.webp",
+   "w": 800,
+   "h": 533,
+   "alt": "BMW 740d спереди в три четверти, матовый серый кузов на фоне закатного неба"
+  },
+  {
+   "title": "BMW 530d (G30)",
+   "src": "assets/img/sold-bmw-g30-530d-iyul.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "BMW 530d (G30) спереди в три четверти, серый кузов и двухцветные диски"
+  },
+  {
+   "title": "Mercedes-Benz GLE 450",
+   "src": "assets/img/sold-mb-gle-450-iyun.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "Mercedes-Benz GLE 450 спереди в три четверти, чёрный кузов и двухцветные диски"
+  },
+  {
+   "title": "Lotus Eletre",
+   "src": "assets/img/sold-lotus-eletre-iyun.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "Lotus Eletre спереди в три четверти, чёрный кузов, чёрные диски и жёлтые суппорты"
+  },
+  {
+   "title": "BMW XM",
+   "src": "assets/img/sold-bmw-xm-iyun.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "BMW XM спереди сбоку, чёрный кузов и золотистая окантовка решётки радиатора"
+  },
+  {
+   "title": "MINI John Cooper Works",
+   "src": "assets/img/sold-mini-jcw-aprel.webp",
+   "w": 800,
+   "h": 533,
+   "alt": "MINI John Cooper Works спереди в три четверти, тёмно-серый кузов, чёрная крыша и красные вставки в бампере"
+  },
+  {
+   "title": "BMW M3 (G80)",
+   "src": "assets/img/sold-bmw-m3-g80-aprel.webp",
+   "w": 800,
+   "h": 534,
+   "alt": "BMW M3 G80 спереди, зелёный кузов, чёрные диски и красные суппорты"
+  },
+  {
+   "title": "Toyota Land Cruiser 200",
+   "src": "assets/img/sold-toyota-lc200-aprel.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "Toyota Land Cruiser 200 спереди в три четверти, белый кузов и хромированная решётка радиатора"
+  },
+  {
+   "title": "Mercedes-Benz GLS 450 d",
+   "src": "assets/img/sold-mb-gls-mart.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "Mercedes-Benz GLS 450 d спереди в три четверти, чёрный кузов и двухцветные многоспицевые диски"
+  },
+  {
+   "title": "Mercedes-Benz G-класс",
+   "src": "assets/img/sold-mb-g-mart.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "Mercedes-Benz G-класс спереди в три четверти, чёрный кузов, чёрные диски с красной окантовкой и красные суппорты"
+  },
+  {
+   "title": "BMW M4 CS",
+   "src": "assets/img/sold-bmw-m4cs-mart.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "BMW M4 CS спереди в три четверти, голубой кузов, бронзовые диски и красные суппорты"
+  },
+  {
+   "title": "BMW M340i",
+   "src": "assets/img/sold-bmw-m340i-mart.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "BMW M340i спереди, серый кузов и красные суппорты"
+  },
+  {
+   "title": "BMW M5 Competition (F90)",
+   "src": "assets/img/sold-bmw-m5-f90-fevral.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "BMW M5 Competition спереди, синий кузов, чёрные диски и золотистые суппорты"
+  },
+  {
+   "title": "BMW M3 (G80)",
+   "src": "assets/img/sold-bmw-m3-g80-yanvar.webp",
+   "w": 800,
+   "h": 532,
+   "alt": "BMW M3 G80 спереди в три четверти, синий кузов и чёрные кованые диски"
+  }
+ ]
+}

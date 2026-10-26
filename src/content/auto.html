@@ -1,115 +1,43 @@
-<section class="page-head" aria-labelledby="page-title">
-  <p class="eyebrow" lang="en">MEATWASH / AUTO</p>
-  <h1 id="page-title">Продажа автомобилей</h1>
-  <p class="page-head__lead">Покупка и&nbsp;продажа автомобилей&nbsp;— второе направление MEATWASH. Продать: берём машину на&nbsp;продажу, готовим в&nbsp;наших студиях, показываем покупателям и&nbsp;ведём сделку. Купить: подбираем автомобиль под&nbsp;задачу и&nbsp;покупаем под&nbsp;ключ. Всё через один контакт.</p>
-</section>
-
-<section class="cars" aria-labelledby="cars-title">
-  <div class="cars__head">
-    <h2 id="cars-title">Сейчас в продаже</h2>
-    <p class="cars__note">Машины стоят у&nbsp;нас&nbsp;— их можно посмотреть вживую. Цены&nbsp;— на&nbsp;22&nbsp;сентября 2026&nbsp;года, наличие уточняйте перед визитом.</p>
+<!-- Тело /auto (план §3.6, §4.6). Владелец: WP4. Машины — src/data/cars.json,
+     разметка — scripts/cars.mjs (подстановки cars:sale, cars:sold, cars:date и счётчики).
+     Прежнее тело — git show fd8d88d:src/content/auto.html. -->
+<section class="hero-d col-wide" aria-labelledby="page-title">
+  <h1 id="page-title">Покупка и продажа авто</h1>
+  <p class="hero-d__lead">Продать: берём машину на продажу, готовим в наших студиях, показываем покупателям и ведём сделку. Купить: подбираем автомобиль под задачу и покупаем под ключ. Всё через один контакт.</p>
+  <div class="hero-d__aside">
+    <span class="chip">В продаже: {{count:sale}}</span>
+    <span class="chip">Уже продали: {{count:sold}}</span>
+    <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
   </div>
-
-  <article class="car" id="lotus-eletre" aria-labelledby="car-lotus-title">
-    <ul class="car__strip" tabindex="0" aria-label="Фотографии Lotus Eletre R">
-      <li><img src="assets/img/auto-lotus-1.webp" width="800" height="533" alt="Lotus Eletre R спереди, чёрный кузов и жёлтые суппорты" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-4.webp" width="800" height="533" alt="Lotus Eletre R, вид спереди сбоку" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-2.webp" width="800" height="533" alt="Lotus Eletre R сзади, светодиодная полоса фонарей" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-3.webp" width="800" height="533" alt="Lotus Eletre R, вид сбоку на 23-дюймовых дисках" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-5.webp" width="800" height="533" alt="Салон Lotus Eletre R: руль и цифровая панель" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-6.webp" width="800" height="533" alt="Колесо Lotus Eletre R с карбоновыми вставками и жёлтым суппортом" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-7.webp" width="800" height="533" alt="Центральная консоль Lotus Eletre R" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-lotus-8.webp" width="800" height="533" alt="Передние кресла Lotus Eletre R после химчистки салона" loading="lazy" decoding="async"></li>
-    </ul>
-    <div class="car__info">
-      <h3 id="car-lotus-title">Lotus Eletre R, 2023</h3>
-      <p class="car__meta">38 100 км · электромобиль · полный привод</p>
-      <p class="car__price">10 350 000 ₽ <span>с НДС&nbsp;— 12 550 000 ₽</span></p>
-      <p>Снаружи большой кроссовер, по цифрам почти суперкар: 918 л.с., 0–100 км/ч за 2,9 секунды, максимальная скорость 260 км/ч.</p>
-      <ul class="car__specs">
-        <li>Батарея около 112 кВт·ч, запас хода около 450 км по WLTP</li>
-        <li>800-вольтовая архитектура: с 10 до 80% на мощной станции&nbsp;— около 20 минут</li>
-        <li>Пневмоподвеска, активное подавление кренов, 23-дюймовые колёса</li>
-      </ul>
-      <p class="car__prep">Подготовили в MEATWASH: глубокая химчистка салона, полировка кузова, керамическое покрытие Surface.</p>
-      <a class="btn btn--fill car__cta" href="https://t.me/otec_roman" target="_blank" rel="noopener">Спросить о машине</a>
-    </div>
-  </article>
-
-  <article class="car" id="bmw-740ld" aria-labelledby="car-bmw-title">
-    <ul class="car__strip car__strip--tall" tabindex="0" aria-label="Фотографии BMW 740Ld xDrive">
-      <li><img src="assets/img/auto-bmw740-1.webp" width="640" height="800" alt="BMW 740Ld xDrive в матовом цвете Frozen Bluestone на закате" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-3.webp" width="640" height="800" alt="BMW 740Ld спереди, лазерные фары" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-2.webp" width="640" height="800" alt="BMW 740Ld сзади сбоку" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-6.webp" width="640" height="800" alt="Второй ряд Executive Lounge: два отдельных кресла" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-5.webp" width="640" height="800" alt="Салон BMW 740Ld с экранами для задних пассажиров" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-7.webp" width="640" height="800" alt="Задняя консоль Executive Lounge с экраном" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-10.webp" width="640" height="800" alt="Передняя часть салона BMW 740Ld" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-8.webp" width="640" height="800" alt="Динамик Bowers &amp; Wilkins Diamond в двери" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-4.webp" width="640" height="800" alt="Задние фонари BMW 740Ld" loading="lazy" decoding="async"></li>
-      <li><img src="assets/img/auto-bmw740-9.webp" width="640" height="800" alt="Открытая дверь BMW 740Ld с шторкой" loading="lazy" decoding="async"></li>
-    </ul>
-    <div class="car__info">
-      <h3 id="car-bmw-title">BMW 740Ld xDrive, 2021</h3>
-      <p class="car__meta">90 000 км · 1 владелец · дизель 3.0, 340 л.с.</p>
-      <p class="car__price">7 850 000 ₽</p>
-      <p>Длиннобазная «семёрка» в редкой заводской конфигурации и матовом цвете Frozen Bluestone Metallic. Комплектация представительского лимузина&nbsp;— особенно второй ряд.</p>
-      <ul class="car__specs">
-        <li>Executive Lounge: два отдельных кресла сзади, консоль и холодильник</li>
-        <li>Массаж и вентиляция передних и задних кресел, экраны для задних пассажиров</li>
-        <li>Bowers &amp; Wilkins Diamond, лазерные фары, ночное видение</li>
-        <li>Активное шасси Executive Drive Pro и подруливающая задняя ось</li>
-      </ul>
-      <a class="btn btn--fill car__cta" href="https://t.me/otec_roman" target="_blank" rel="noopener">Спросить о машине</a>
-    </div>
-  </article>
-
-  <p class="cars__more">Все предложения&nbsp;— в Telegram-канале <a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">MEAT AUTO <span aria-hidden="true">→</span></a></p>
 </section>
-
-<!-- «Уже продали» (19.10): проданные машины, свежие съёмки первыми (сентябрь → январь).
-     Без цен, пробега и номеров; номера на фото закрыты. Все 16 машин папки «2026 год» —
-     проданными по слову Влада 19.10; Lotus и 740Ld в «Сейчас в продаже» он решил оставить. -->
-<section class="sold" aria-labelledby="sold-title">
+<nav class="anchor-tabs" data-anchor-tabs aria-label="Разделы страницы">
+  <div class="anchor-tabs__track">
+    <a class="anchor-tabs__tab" href="#for-sale">В продаже</a>
+    <a class="anchor-tabs__tab" href="#sold">Уже продали</a>
+    <a class="anchor-tabs__tab" href="#sell">Продать машину</a>
+    <a class="anchor-tabs__tab" href="#auto-contact">Связаться</a>
+  </div>
+</nav>
+<section class="section" id="for-sale" aria-labelledby="for-sale-title">
+  <h2 id="for-sale-title">Сейчас в продаже</h2>
+  <p>Цены — на {{cars:date}}, наличие уточняйте перед визитом.</p>
+{{cars:sale}}
+  <ul class="link-rows"><li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Все предложения — в Telegram-канале MEAT AUTO{{icon:arrow-up-right}}</a></li></ul>
+</section>
+<section class="section" id="sold" aria-labelledby="sold-title">
   <h2 id="sold-title">Уже продали</h2>
-  <p class="sold__note">Машины, которые уже нашли новых владельцев.</p>
-  <ul class="sold__list">
-    <li class="sold__card"><img src="assets/img/sold-mb-w223-sentyabr.webp" width="800" height="534" alt="Mercedes-Benz S-класс (W223) спереди в три четверти, чёрный кузов и многоспицевые диски" loading="lazy" decoding="async"><h3 class="sold__name">Mercedes-Benz <span class="nowrap">S-класс</span> (W223)</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-7er-sentyabr.webp" width="800" height="534" alt="BMW 7 серии спереди в три четверти, тёмно-синий кузов и крупные двухцветные диски" loading="lazy" decoding="async"><h3 class="sold__name">BMW 7&nbsp;серии</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-740d-sentyabr.webp" width="800" height="533" alt="BMW 740d спереди в три четверти, матовый серый кузов на фоне закатного неба" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;740d</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-g30-530d-iyul.webp" width="800" height="534" alt="BMW 530d (G30) спереди в три четверти, серый кузов и двухцветные диски" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;530d (G30)</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-mb-gle-450-iyun.webp" width="800" height="534" alt="Mercedes-Benz GLE 450 спереди в три четверти, чёрный кузов и двухцветные диски" loading="lazy" decoding="async"><h3 class="sold__name">Mercedes-Benz GLE&nbsp;450</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-lotus-eletre-iyun.webp" width="800" height="534" alt="Lotus Eletre спереди в три четверти, чёрный кузов, чёрные диски и жёлтые суппорты" loading="lazy" decoding="async"><h3 class="sold__name">Lotus Eletre</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-xm-iyun.webp" width="800" height="534" alt="BMW XM спереди сбоку, чёрный кузов и золотистая окантовка решётки радиатора" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;XM</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-mini-jcw-aprel.webp" width="800" height="533" alt="MINI John Cooper Works спереди в три четверти, тёмно-серый кузов, чёрная крыша и красные вставки в бампере" loading="lazy" decoding="async"><h3 class="sold__name">MINI John&nbsp;Cooper&nbsp;Works</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-m3-g80-aprel.webp" width="800" height="534" alt="BMW M3 G80 спереди, зелёный кузов, чёрные диски и красные суппорты" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;M3 (G80)</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-toyota-lc200-aprel.webp" width="800" height="532" alt="Toyota Land Cruiser 200 спереди в три четверти, белый кузов и хромированная решётка радиатора" loading="lazy" decoding="async"><h3 class="sold__name">Toyota Land&nbsp;Cruiser&nbsp;200</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-mb-gls-mart.webp" width="800" height="532" alt="Mercedes-Benz GLS 450 d спереди в три четверти, чёрный кузов и двухцветные многоспицевые диски" loading="lazy" decoding="async"><h3 class="sold__name">Mercedes-Benz GLS&nbsp;450&nbsp;d</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-mb-g-mart.webp" width="800" height="532" alt="Mercedes-Benz G-класс спереди в три четверти, чёрный кузов, чёрные диски с красной окантовкой и красные суппорты" loading="lazy" decoding="async"><h3 class="sold__name">Mercedes-Benz <span class="nowrap">G-класс</span></h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-m4cs-mart.webp" width="800" height="532" alt="BMW M4 CS спереди в три четверти, голубой кузов, бронзовые диски и красные суппорты" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;M4&nbsp;CS</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-m340i-mart.webp" width="800" height="532" alt="BMW M340i спереди, серый кузов и красные суппорты" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;M340i</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-m5-f90-fevral.webp" width="800" height="532" alt="BMW M5 Competition спереди, синий кузов, чёрные диски и золотистые суппорты" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;M5 Competition (F90)</h3><p class="sold__badge">Продан</p></li>
-    <li class="sold__card"><img src="assets/img/sold-bmw-m3-g80-yanvar.webp" width="800" height="532" alt="BMW M3 G80 спереди в три четверти, синий кузов и чёрные кованые диски" loading="lazy" decoding="async"><h3 class="sold__name">BMW&nbsp;M3 (G80)</h3><p class="sold__badge">Продан</p></li>
+  <ul class="sold-grid">
+{{cars:sold}}
   </ul>
 </section>
-
-<section class="visit-notes" aria-labelledby="auto-how-title">
-  <h2 class="visit-notes__title" id="auto-how-title">Как мы работаем с&nbsp;автомобилями</h2>
-  <article><h3>Продажа вашей машины</h3><p>Берём автомобиль на&nbsp;реализацию и&nbsp;ведём продажу до&nbsp;конца: показы, разговоры с&nbsp;покупателями, сделка.</p></article>
-  <article><h3>Подготовка к&nbsp;продаже</h3><p>Химчистка, полировка и&nbsp;защитные покрытия в&nbsp;наших студиях&nbsp;— машина выходит на&nbsp;показ в&nbsp;лучшем виде.</p><a class="link-arrow" href="services#price-presale">Подготовка к&nbsp;продаже <span aria-hidden="true">→</span></a></article>
-  <article><h3>Подбор и&nbsp;покупка</h3><p>Найдём автомобиль под&nbsp;задачу и&nbsp;купим под&nbsp;ключ. Пишите Роману&nbsp;— дальше подключится команда.</p><a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram <span aria-hidden="true">→</span></a></article>
+<section class="section" id="sell" aria-labelledby="sell-title">
+  <h2 id="sell-title">Как мы работаем с автомобилями</h2>
+  <a class="link-arrow" href="services#price-presale">Подготовка к продаже{{icon:arrow-right}}</a>
 </section>
-
-<!-- Финальный блок (v2, план юзабилити 08.10): о покупке и продаже — сообщение в Telegram
-     или звонок в студию на Мясницкой; общего блока записи на мойку здесь нет. -->
-<section class="page-cta" id="auto-contact" aria-labelledby="auto-contact-title">
-  <div class="page-cta__head">
-    <p class="eyebrow">Продажа авто</p>
-    <h2 id="auto-contact-title">Купить или&nbsp;продать&nbsp;— напишите</h2>
-    <p>Расскажите, какую машину ищете или&nbsp;какую хотите продать. Ответит Роман, дальше подключится команда.</p>
-  </div>
-  <div class="page-cta__contact">
-    <a class="btn btn--fill" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в&nbsp;Telegram</a>
-    <a class="page-cta__tel" href="tel:{{loc:myasnitskaya:tel}}"><span>Или позвоните в&nbsp;студию на&nbsp;Мясницкой</span><strong>{{loc:myasnitskaya:phone}}</strong></a>
+<section class="promo col-ext" id="auto-contact" aria-labelledby="auto-contact-title">
+  <div class="promo__panel">
+    <h2 id="auto-contact-title">Купить или продать — напишите</h2>
+    <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram</a>
+    <a href="tel:{{loc:myasnitskaya:tel}}">Или позвоните в студию на Мясницкой {{loc:myasnitskaya:phone}}</a>
   </div>
 </section>

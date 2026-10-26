@@ -1,99 +1,94 @@
-// Страницы из src/content: раздел «Статьи» (articles.html), статьи, Политика
-// обработки персональных данных (privacy.html), Согласие (consent.html) и карта
-// сайта (sitemap.xml). Цены в статьях и реквизиты оператора в документах берутся
-// из dist/assets/meatwash-content.json; общие части (шапка, подвал, окна, запись,
-// аналитика) вставляет scripts/pages.mjs.
-// Запуск: npm run content (входит в npm run build). npm run check сверяет результат.
-import {readFile,writeFile,readdir,rm} from 'node:fs/promises';
+// Сборка всех страниц Meat Auto из реестра src/content/pages.mjs: <head> (layout),
+// тело из src/content/<body> (или разметка чтения scripts/reading.mjs вокруг тела),
+// подстановки и общие части (scripts/pages.mjs), неразрывные пробелы (scripts/typo.mjs),
+// JSON-LD, sitemap.xml и файл подтверждения Яндекс Вебмастера.
+// Запуск: npm run content (входит в npm run build). Руками dist/*.html не править.
+// Владелец: WP0, после сдачи — WP7.
+import {readFile, writeFile, readdir, rm} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {content as d,escape,money} from './catalog.mjs';
-import {CONTENT,ARTICLES,SITEMAP} from '../src/content/pages.mjs';
-import {renderPartial,renderPage,pageSlug,pageUrl} from './pages.mjs';
+import sharp from 'sharp';
+import {content as d, escape} from './catalog.mjs';
+import {REGISTRY, ARTICLES} from '../src/content/pages.mjs';
+import {renderPartial, renderPage, pageSlug, pageUrl, metaText, assetUrl, PAGES, BY_ID, SITE, humanDate, missingOperator} from './pages.mjs';
+import {typo} from './typo.mjs';
+import {renderList, renderArticle, renderDoc, readingMinutes, shot} from './reading.mjs';
 
-const root=new URL('../',import.meta.url);
-export const SITE='https://meatwash.ru/';
+const root = new URL('../', import.meta.url);
+const distFile = (path) => new URL(`dist/${path}`, root);
+export {SITE, humanDate, missingOperator, typo};
 // Полный адрес страницы для canonical, og:url, JSON-LD и sitemap: https://meatwash.ru/services, главная — https://meatwash.ru/.
-export const pageAddress=file=>SITE+pageSlug(file);
-const MONTHS=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
-export const humanDate=iso=>{const [y,m,day]=iso.split('-').map(Number);return `${day} ${MONTHS[m-1]} ${y} г.`;};
+export const pageAddress = (file) => SITE + pageSlug(file);
 
-// Реквизиты оператора: пока владелец их не передал, на месте поля — заметная
-// пометка, а npm run check предупреждает (site.operator в JSON).
-const OPERATOR_HINT={name:'полное наименование оператора — ООО или ИП',inn:'ИНН',ogrn:'ОГРН или ОГРНИП',address:'юридический или почтовый адрес',email:'адрес электронной почты для обращений'};
-export const missingOperator=()=>Object.keys(OPERATOR_HINT).filter(key=>!d.site?.operator?.[key]);
-const itemPrice=Object.fromEntries(d.groups.flatMap(g=>g.items));
+// Шрифт: один вариативный файл; адрес с версией по содержимому — один и тот же в preload
+// и в @font-face (поправка критика 28). @font-face — только здесь, не в CSS.
+export const FONT = 'assets/fonts/manrope-vf.woff2';
+const fontFace = () => `@font-face{font-family:'Manrope';src:url('${assetUrl(FONT)}') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}`;
+// Общие CSS в порядке подключения; за ними — CSS страницы (поле css реестра).
+export const SHARED_CSS = ['tokens', 'base', 'components', 'shell', 'dialogs'];
+const THEME_COLOR = {dark: '#080808', paper: '#f1ebe0', home: '#080808'};
 
-function substitute(text){
- return text.replace(/\{\{(price|program|program-from|program-includes|op|site):([^}]+)\}\}/g,(token,kind,arg)=>{
-  switch(kind){
-   case 'price':{
-    if(!(arg in itemPrice))throw new Error(`Нет работы в каталоге: ${token}`);
-    return itemPrice[arg]==null?'стоимость после оценки':'от '+money(itemPrice[arg]);
-   }
-   case 'program':case 'program-from':case 'program-includes':{
-    const i=Number(arg),program=d.programs[i];
-    if(!program)throw new Error(`Нет программы: ${token}`);
-    if(kind==='program')return `«${escape(program[0])}»`;
-    if(kind==='program-from')return 'от '+money(Math.min(...d.programPrices[i]));
-    return `<ul class="article-includes">\n${d.programIncludes[i].map(line=>`  <li>${escape(line)}</li>`).join('\n')}\n</ul>`;
-   }
-   case 'op':{
-    if(!(arg in OPERATOR_HINT))throw new Error(`Нет поля оператора: ${token}`);
-    const value=d.site?.operator?.[arg];
-    if(!value)return `<span class="doc-todo">[${OPERATOR_HINT[arg]}]</span>`;
-    if(arg==='ogrn'){
-     // ОГРН юрлица — 13 цифр, ОГРНИП предпринимателя — 15.
-     if(!/^(\d{13}|\d{15})$/.test(value))throw new Error(`site.operator.ogrn: нужно 13 (ОГРН) или 15 (ОГРНИП) цифр — ${value}`);
-     return `${value.length===15?'ОГРНИП':'ОГРН'} ${value}`;
-    }
-    if(arg==='email')return `<a href="mailto:${escape(value)}">${escape(value)}</a>`;
-    return escape(value);
-   }
-   case 'site':{
-    if(arg==='url')return SITE;
-    if(arg==='date')return humanDate(d.site.documentsDate);
-    throw new Error(`Неизвестная подстановка ${token}`);
-   }
+// Старые якоря главной (поправка критика 32 и гараж на /services, решение 27.10): заход
+// по старой ссылке ведём туда, где блок живёт теперь. #contacts и #top остаются у подвала и шапки.
+const LEGACY_HOME_HASH = {
+  locations: 'about#visit-locations', 'map-myasnitskaya': 'about#map-myasnitskaya', 'map-technopark': 'about#map-technopark',
+  membership: 'about#membership', club: 'about#club', services: 'services', proof: 'services#proof', garage: 'services#garage',
+};
+const headScript = (page) => page.id === 'home'
+  ? `document.documentElement.classList.add('js');(function(m,h){if(m[h])location.replace(m[h])})(${JSON.stringify(LEGACY_HOME_HASH)},location.hash.slice(1))`
+  : `document.documentElement.classList.add('js')`;
+
+const json = (value) => JSON.stringify(value).replace(/</g, '\\u003c');
+
+// Размер og:image — из файла (sharp); файла ещё нет — без размеров.
+async function ogMeta(path) {
+  const tags = [`<meta property="og:image" content="${SITE}${path}">`];
+  if (existsSync(distFile(path))) {
+    const {width, height} = await sharp(fileURLToPath(distFile(path))).metadata();
+    tags.push(`<meta property="og:image:width" content="${width}">`, `<meta property="og:image:height" content="${height}">`);
   }
- });
+  return tags.join('\n');
 }
+// Предзагрузка героя — когда файл уже лежит в dist (картинки кладут пакеты WP2–WP5).
+const preloadTags = (page) => (page.preload || []).filter((p) => existsSync(distFile(p.href))).map((p) =>
+  `<link rel="preload" as="image" href="${p.href}"${p.srcset ? ` imagesrcset="${p.srcset}"` : ''}${p.sizes ? ` imagesizes="${p.sizes}"` : ''}${p.media ? ` media="${p.media}"` : ''} fetchpriority="high">\n`).join('');
 
-const readBody=async name=>substitute(await readFile(new URL(`src/content/${name}`,root),'utf8'));
-// Время чтения — по числу слов (≈180 слов в минуту), без разметки.
-const readingMinutes=html=>Math.max(1,Math.round(html.replace(/<[^>]+>/g,' ').split(/\s+/).filter(Boolean).length/180));
-const shot=(id,size)=>`assets/shots/${id}${size==='s'?'-s':''}.webp`;
-const json=value=>JSON.stringify(value).replace(/</g,'\\u003c');
-
-function layout(page,{main,jsonLd,ogType='website',ogImage=SITE+'assets/img/og-club.webp'}){
- const url=pageAddress(page.file);
- return `<!doctype html>
-<html lang="ru">
+async function layout(page, {main, jsonLd, ogType = 'website'}) {
+  const url = pageAddress(page.file);
+  const theme = page.theme || 'dark';
+  if (!THEME_COLOR[theme]) throw new Error(`${page.file}: тема ${theme} — dark, paper или home`);
+  const title = metaText(page.title), description = metaText(page.description), ogTitle = metaText(page.ogTitle || page.title);
+  const book = page.shared.includes('book') && !main.includes('<!-- SHARED:book:START -->')
+    ? '\n<!-- SHARED:book:START -->\n<!-- SHARED:book:END -->\n' : '';
+  return `<!doctype html>
+<html lang="ru" data-theme="${theme}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#080808">
-<!-- SHARED:analytics:START -->
+<script>${headScript(page)}</script>
+<meta name="theme-color" content="${THEME_COLOR[theme]}">
+${page.robots ? `<meta name="robots" content="${escape(page.robots)}">\n` : ''}<!-- SHARED:analytics:START -->
 <!-- SHARED:analytics:END -->
-<title>${escape(page.title)}</title>
-<meta name="description" content="${escape(page.description)}">
+<title>${escape(title)}</title>
+<meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${url}">
-<meta property="og:title" content="${escape(page.ogTitle||page.title)}">
-<meta property="og:description" content="${escape(page.description)}">
+<meta property="og:site_name" content="Meat Auto">
+<meta property="og:title" content="${escape(ogTitle)}">
+<meta property="og:description" content="${escape(description)}">
 <meta property="og:type" content="${ogType}">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:url" content="${url}">
-<meta property="og:image" content="${ogImage}">
+${await ogMeta(page.ogImage || 'assets/img/og-meat-auto.webp')}
 <meta name="twitter:card" content="summary_large_image">
-<link rel="preload" href="assets/fonts/arsenal-sc-bold.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="assets/fonts/arsenal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="${assetUrl(FONT)}" as="font" type="font/woff2" crossorigin>
+${preloadTags(page)}<style>${fontFace()}</style>
 <link rel="icon" href="assets/favicon-bull.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/cinematic.css">
-${(page.css||[]).map(name=>`<link rel="stylesheet" href="css/${name}">\n`).join('')}<link rel="stylesheet" href="css/pages.css">
+${[...SHARED_CSS.map((n) => `${n}.css`), ...(page.css || [])].map((name) => `<link rel="stylesheet" href="css/${name}">`).join('\n')}
+<script type="module" src="js/site.js"></script>
 <script type="application/ld+json">${json(jsonLd)}</script>
 </head>
-<body class="page-inner" data-page="${page.id}">
+<body data-page="${page.id}" data-kind="${page.kind}">
 <a class="skip-link" href="#main">Перейти к содержанию</a>
 
 <!-- SHARED:header:START -->
@@ -101,99 +96,102 @@ ${(page.css||[]).map(name=>`<link rel="stylesheet" href="css/${name}">\n`).join(
 
 <main id="main">
 ${main.trim()}
-${page.shared.includes('book')?'\n<!-- SHARED:book:START -->\n<!-- SHARED:book:END -->\n':''}</main>
+${book}</main>
 
 <!-- SHARED:footer:START -->
 <!-- SHARED:footer:END -->
 
 <!-- SHARED:dialogs:START -->
 <!-- SHARED:dialogs:END -->
-<script type="module" src="js/page.js"></script>
 </body>
 </html>
 `;
 }
 
-const crumbs=(...items)=>({'@context':'https://schema.org','@type':'BreadcrumbList',itemListElement:[{name:'MEATWASH',item:SITE},...items].map((x,i)=>({'@type':'ListItem',position:i+1,name:x.name,item:x.item}))});
-const articleCard=(a,minutes)=>`  <article class="article-card">
-    <a class="article-card__link" href="${pageUrl(a.file)}">
-      <img class="article-card__img" src="${shot(a.image,'s')}" width="900" height="503" alt="" loading="lazy" decoding="async">
-      <span class="article-card__body">
-        <span class="article-card__meta"><time datetime="${a.date}">${humanDate(a.date)}</time> · ${minutes} мин чтения</span>
-        <span class="article-card__title">${escape(a.headline)}</span>
-        <span class="article-card__lead">${escape(a.lead)}</span>
-        <span class="article-card__more">Читать <span aria-hidden="true">→</span></span>
-      </span>
-    </a>
-  </article>`;
+// ── JSON-LD ──────────────────────────────────────────────────────────────────
+const ORG = {'@type': 'Organization', name: `${d.brand.name} ${d.brand.descriptor}`, alternateName: d.brand.legacy, url: SITE, logo: {'@type': 'ImageObject', url: SITE + 'assets/favicon-bull.png'}};
+// Хлебные крошки по иерархии §1.2: Meat Auto → [родитель] → страница.
+function crumbs(page) {
+  const chain = [];
+  for (let p = page; p; p = p.parent ? BY_ID[p.parent] : null) chain.unshift(p);
+  const items = [{name: d.brand.name, item: SITE}, ...chain.map((p) => ({name: p.headline, item: pageAddress(p.file)}))];
+  return {'@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: items.map((x, i) => ({'@type': 'ListItem', position: i + 1, name: x.name, item: x.item}))};
+}
+// Часы из строк сайта: «Пн–Пт 08:00–22:00», «Сб–Вс 09:00–22:00», «Ежедневно 08:00–22:00».
+const DAYS = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'], DAY_EN = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+function openingHours(lines) {
+  return lines.map((line) => {
+    const m = line.match(/^(?:(Ежедневно)|(Пн|Вт|Ср|Чт|Пт|Сб|Вс)–(Пн|Вт|Ср|Чт|Пт|Сб|Вс)) (\d\d:\d\d)–(\d\d:\d\d)$/);
+    if (!m) throw new Error(`Часы студии в непонятном виде: «${line}» — поправьте разбор в scripts/content.mjs`);
+    const [from, to] = m[1] ? [0, 6] : [DAYS.indexOf(m[2]), DAYS.indexOf(m[3])];
+    return {'@type': 'OpeningHoursSpecification', dayOfWeek: DAY_EN.slice(from, to + 1), opens: m[4], closes: m[5]};
+  });
+}
+// Адрес для разметки — как на прежнем сайте (полное «улица / проспект»).
+const STREET = {myasnitskaya: 'Мясницкая ул., 11', technopark: 'просп. Андропова, 8, стр. 2'};
+// Фото студии в разметке — только своё (Мясницкая, автор — Роман Антонович): у фото
+// Технопарка автор «ГЕОмаркетинг», прав на него нет (поправка критика 10).
+const STUDIO_IMAGE = {myasnitskaya: 'assets/img/studio-myasnitskaya-1200.webp'};
+const autoWash = () => d.locations.map((l) => ({
+  '@context': 'https://schema.org', '@type': 'AutoWash',
+  name: `${d.brand.name} — ${l.name}`, alternateName: d.brand.legacy,
+  url: `${SITE}about#map-${l.id}`,
+  ...(STUDIO_IMAGE[l.id] ? {image: SITE + STUDIO_IMAGE[l.id]} : {}),
+  telephone: l.tel,
+  address: {'@type': 'PostalAddress', streetAddress: STREET[l.id] || l.address, addressLocality: 'Москва', addressCountry: 'RU'},
+  geo: {'@type': 'GeoCoordinates', latitude: l.lat, longitude: l.lon},
+  openingHoursSpecification: openingHours(l.hours),
+  sameAs: [l.map],
+}));
 
-// Тело страницы: после цен и реквизитов — подстановки общих частей ({{home}}, {{loc}}).
-export async function renderContent(page){
- return renderPartial(await renderSkeleton(page),page.file);
+function jsonLdFor(page, extra = []) {
+  const out = [];
+  if (page.id !== 'home') out.push(crumbs(page));
+  for (const kind of page.jsonLd || []) {
+    if (kind === 'autowash') out.push(...autoWash());
+    else throw new Error(`${page.file}: неизвестный JSON-LD ${kind}`);
+  }
+  out.push(...extra);
+  return out.length === 1 ? out[0] : out;
 }
-async function renderSkeleton(page){
- if(page.kind==='list'){
-  const cards=[];
-  for(const a of ARTICLES)cards.push(articleCard(a,readingMinutes(await readBody(a.body))));
-  return layout(page,{
-   jsonLd:[crumbs({name:'Статьи',item:pageAddress(page.file)}),{'@context':'https://schema.org','@type':'CollectionPage',name:'Статьи MEATWASH',url:pageAddress(page.file),hasPart:ARTICLES.map(a=>({'@type':'Article',headline:a.headline,url:pageAddress(a.file),datePublished:a.date}))}],
-   main:`<section class="page-head articles-head" aria-labelledby="page-title">
-  <p class="eyebrow" lang="en">MEATWASH / JOURNAL</p>
-  <h1 id="page-title">Статьи</h1>
-  <p class="page-head__lead">Об уходе за автомобилем: что делать, когда и зачем. Цены в статьях — из каталога студий.</p>
-</section>
-<section class="articles" aria-label="Список статей">
-${cards.join('\n')}
-</section>`,
-  });
- }
- if(page.kind==='article'){
-  const body=await readBody(page.body),minutes=readingMinutes(body);
-  const image=SITE+shot(page.image);
-  return layout(page,{
-   ogType:'article',ogImage:image,
-   jsonLd:[crumbs({name:'Статьи',item:pageAddress('articles.html')},{name:page.headline,item:pageAddress(page.file)}),{'@context':'https://schema.org','@type':'Article',headline:page.headline,description:page.description,image,datePublished:page.date,dateModified:page.date,inLanguage:'ru',mainEntityOfPage:pageAddress(page.file),author:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE},publisher:{'@type':'Organization',name:'MEATWASH Car Care Club',url:SITE,logo:{'@type':'ImageObject',url:SITE+'assets/favicon-bull.png'}}}],
-   main:`<article class="article" aria-labelledby="page-title">
-  <header class="article__head">
-    <nav class="article__crumbs" aria-label="Навигационная цепочка"><a href="${pageUrl('articles.html')}">Статьи</a> <span aria-hidden="true">/</span></nav>
-    <h1 id="page-title">${escape(page.headline)}</h1>
-    <p class="article__lead">${escape(page.lead)}</p>
-    <p class="article__meta"><time datetime="${page.date}">${humanDate(page.date)}</time> · ${minutes} мин чтения</p>
-  </header>
-  <figure class="article__hero">
-    <img src="${shot(page.image)}" srcset="${shot(page.image,'s')} 900w, ${shot(page.image)} 1600w" sizes="(max-width: 1100px) 100vw, 1040px" width="1600" height="894" alt="${escape(page.imageAlt)}" fetchpriority="high" decoding="async">
-  </figure>
-  <div class="article__body">
-${body.trim()}
-  </div>
-</article>`,
-  });
- }
- // Раздел сайта (авто, работы, оклейка): тело целиком в src/content — свой
- // заголовок страницы (h1#page-title) и блоки из общих стилей.
- if(page.kind==='landing'){
-  return layout(page,{
-   ogImage:page.ogImage?SITE+page.ogImage:undefined,
-   jsonLd:crumbs({name:page.headline,item:pageAddress(page.file)}),
-   main:await readBody(page.body),
-  });
- }
- const body=await readBody(page.body);
- return layout(page,{
-  jsonLd:crumbs({name:page.headline,item:pageAddress(page.file)}),
-  main:`<article class="doc" aria-labelledby="page-title">
-  <h1 id="page-title">${escape(page.headline)}</h1>
-${body.trim()}
-</article>`,
- });
+
+// ── Тела страниц ─────────────────────────────────────────────────────────────
+const readBody = async (page, name) => renderPartial(await readFile(new URL(`src/content/${name}`, root), 'utf8'), page.file);
+
+async function renderMain(page) {
+  if (page.kind === 'landing') return {main: await readBody(page, page.body), jsonLd: jsonLdFor(page)};
+  if (page.kind === 'list') {
+    const articles = [];
+    for (const a of ARTICLES) articles.push({article: a, minutes: readingMinutes(await readBody(BY_ID[a.id], a.body))});
+    return {
+      main: renderList(page, articles),
+      jsonLd: jsonLdFor(page, [{'@context': 'https://schema.org', '@type': 'CollectionPage', name: `Статьи ${d.brand.name}`, url: pageAddress(page.file), hasPart: ARTICLES.map((a) => ({'@type': 'Article', headline: a.headline, url: pageAddress(a.file), datePublished: a.date}))}]),
+    };
+  }
+  if (page.kind === 'article') {
+    const body = await readBody(page, page.body), minutes = readingMinutes(body), image = SITE + shot(page.image);
+    return {
+      main: renderArticle(page, body, minutes), ogType: 'article',
+      jsonLd: jsonLdFor(page, [{'@context': 'https://schema.org', '@type': 'Article', headline: page.headline, description: page.description, image, datePublished: page.date, dateModified: page.date, inLanguage: 'ru', mainEntityOfPage: pageAddress(page.file), author: ORG, publisher: ORG}]),
+    };
+  }
+  if (page.kind === 'doc') return {main: renderDoc(page, await readBody(page, page.body)), jsonLd: jsonLdFor(page)};
+  throw new Error(`${page.file}: неизвестный kind ${page.kind}`);
 }
+
+// Страница целиком: <head>, тело, неразрывные пробелы в тексте, общие части.
+export async function renderContent(page) {
+  const {main, jsonLd, ogType} = await renderMain(page);
+  return typo(await layout(page, {main, jsonLd, ogType}));
+}
+export const buildPage = async (page) => renderPage(page.file, await renderContent(page));
 
 // Подтверждение прав в Яндекс Вебмастере способом «HTML-файл»: тот же код, что в мета-теге
 // yandex-verification (site.analytics.webmaster), файл — в корне сайта, текст — как выдаёт Вебмастер.
-export function renderYandexVerification(){
- const code=d.site?.analytics?.webmaster;
- if(!code)return null;
- return {file:`yandex_${code}.html`,text:`<html>
+export function renderYandexVerification() {
+  const code = d.site?.analytics?.webmaster;
+  if (!code) return null;
+  return {file: `yandex_${code}.html`, text: `<html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     </head>
@@ -202,12 +200,11 @@ export function renderYandexVerification(){
 `};
 }
 
-export function renderSitemap(){
- const today=d.site.documentsDate;
- const entries=[...SITEMAP,...CONTENT.map(p=>({file:p.file,lastmod:p.date||today,...p.sitemap}))];
- return `<?xml version="1.0" encoding="UTF-8"?>
+export function renderSitemap() {
+  const entries = REGISTRY.filter((p) => p.sitemap).map((p) => ({file: p.file, lastmod: p.date || d.site.documentsDate, ...p.sitemap}));
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${entries.map(e=>`  <url>
+${entries.map((e) => `  <url>
     <loc>${pageAddress(e.file)}</loc>
     <lastmod>${e.lastmod}</lastmod>
     <changefreq>${e.changefreq}</changefreq>
@@ -217,16 +214,16 @@ ${entries.map(e=>`  <url>
 `;
 }
 
-if(process.argv[1]===fileURLToPath(import.meta.url)){
- for(const page of CONTENT){
-  await writeFile(new URL(`dist/${page.file}`,root),await renderPage(page.file,await renderContent(page)));
-  console.log(page.file);
- }
- await writeFile(new URL('dist/sitemap.xml',root),renderSitemap());
- console.log('sitemap.xml');
- const verification=renderYandexVerification();
- for(const name of await readdir(new URL('dist/',root)))if(/^yandex_\w+\.html$/.test(name)&&name!==verification?.file)await rm(new URL(`dist/${name}`,root));
- if(verification){await writeFile(new URL(`dist/${verification.file}`,root),verification.text);console.log(verification.file);}
- const missing=missingOperator();
- if(missing.length)console.warn(`ВНИМАНИЕ: в Политике и Согласии не заполнены реквизиты оператора (site.operator в meatwash-content.json): ${missing.join(', ')}.`);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  for (const page of REGISTRY) {
+    await writeFile(distFile(page.file), await buildPage(page));
+    console.log(page.file);
+  }
+  await writeFile(distFile('sitemap.xml'), renderSitemap());
+  console.log('sitemap.xml');
+  const verification = renderYandexVerification();
+  for (const name of await readdir(new URL('dist/', root))) if (/^yandex_\w+\.html$/.test(name) && name !== verification?.file) await rm(distFile(name));
+  if (verification) { await writeFile(distFile(verification.file), verification.text); console.log(verification.file); }
+  const missing = missingOperator();
+  if (missing.length) console.warn(`ВНИМАНИЕ: в Политике и Согласии не заполнены реквизиты оператора (site.operator в meatwash-content.json): ${missing.join(', ')}.`);
 }

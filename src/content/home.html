@@ -1,0 +1,24 @@
+<!-- Тело главной (план §3.1). Владелец: WP2 — переносит утверждённую главную v2
+     (source/v2-design/index.html, 625ce74) как есть: герой, «Чем занимается Meat Auto»,
+     четыре плитки, карусель на телефоне. Меняется только (Влад 27.10): общая шапка
+     («Меню» слева, бык по центру, «Записаться» справа) и общий подвал вместо своих,
+     плитка 2 ведёт на import вместо Telegram, ссылки относительные. Подпись плитки 2
+     в решении Влада не менялась — «Обсудить привоз»; «Подробнее о привозе» (поправка 8) — вопрос Владу.
+     Заготовка WP0: один H1 и четыре направления, чтобы ссылки и якоря проверялись. -->
+<section class="hero" aria-labelledby="page-title">
+  <h1 class="hero__title" id="page-title">
+    <span class="hero__name" lang="en">Meat Auto</span>
+    <span class="sr" lang="en">Car Care Club</span>
+    {{icon:ccc:hero__script}}
+  </h1>
+</section>
+
+<section class="dirs" aria-labelledby="dirs-title">
+  <h2 class="dirs__heading" id="dirs-title">Чем занимается <span lang="en">Meat Auto</span></h2>
+  <ul class="dirs__grid">
+    <li class="dir"><a class="dir__cta" href="services">Мойка и детейлинг</a></li>
+    <li class="dir"><a class="dir__cta" href="import">Привоз авто <span class="nw">из-за</span> рубежа</a></li>
+    <li class="dir"><a class="dir__cta" href="auto">Покупка и продажа авто</a> <span class="chip">Уже продали {{count:sold:машина}}</span></li>
+    <li class="dir"><a class="dir__cta" href="about">О нас</a> <span class="chip">С {{brand:since}} года · {{count:studios:студия}} в Москве</span></li>
+  </ul>
+</section>

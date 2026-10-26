@@ -1,27 +1,100 @@
-<header class="header{{header-class}}" id="header">
-  <a class="brand" href="{{top}}" aria-label="MEATWASH — на главную">
-    <img class="brand__logo" src="assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654">
-  </a>
-  <!-- v2 (план юзабилити 08.10): подписи одинаковые в шапке, мобильном меню и подвале;
-       «Статьи» — только в подвале, стрелки «следующий раздел» нет. -->
-  <nav class="nav" aria-label="Основная навигация">
-    <a href="services"{{current:services}}>Услуги и цены</a>
-    <a href="wrap"{{current:wrap}}>Оклейка</a>
-    <a href="works"{{current:works}}>Наши работы</a>
-    <a href="auto"{{current:auto}}>Продажа авто</a>
-    <a href="about"{{current:about}}>О нас</a>
-  </nav>
-  <button class="btn btn--fill header__cta" type="button" data-book>Записаться</button>
-  <button class="burger" type="button" id="burger" aria-expanded="false" aria-controls="mobile-menu" aria-label="Открыть меню"><span></span><span></span></button>
-</header>
-<!-- Мобильное меню: пункты, сразу за ними «Записаться» (на 320×568 видна без прокрутки меню),
-     ниже — студии с типом и телефоном: позвонить в нужную в одно нажатие. Часы — в подвале. -->
-<nav class="mobile-menu" id="mobile-menu" aria-label="Мобильная навигация" hidden>
-  <a href="services"{{current:services}}>Услуги и цены</a><a href="wrap"{{current:wrap}}>Оклейка</a><a href="works"{{current:works}}>Наши работы</a><a href="auto"{{current:auto}}>Продажа авто</a><a href="about"{{current:about}}>О нас</a>
-  <button class="btn btn--fill mobile-menu__book" type="button" data-book>Записаться</button>
-  <div class="mobile-menu__studios" role="group" aria-labelledby="mobile-menu-studios">
-    <p class="mobile-menu__label" id="mobile-menu-studios">Студии</p>
-    <a class="mobile-menu__studio" href="tel:{{loc:myasnitskaya:tel}}"><span class="mobile-menu__studio-name"><strong>{{loc:myasnitskaya:name}}</strong><span>{{loc:myasnitskaya:type}}</span></span><span class="mobile-menu__tel">{{loc:myasnitskaya:phone}}</span></a>
-    <a class="mobile-menu__studio" href="tel:{{loc:technopark:tel}}"><span class="mobile-menu__studio-name"><strong>{{loc:technopark:name}}</strong><span>{{loc:technopark:type}}</span></span><span class="mobile-menu__tel">{{loc:technopark:phone}}</span></a>
+<!-- Шапка и меню-шторка (план §1.3, §1.5, §2.8). Владелец: WP1.
+     Заготовка WP0: разметка по контракту §2.8 и все ссылки шторки, чтобы якоря на других
+     страницах проверялись с первого дня. Ссылки внутри сайта к якорю — через подстановку
+     to:<id> (на своей странице это «#якорь», на чужой — «about#якорь»). Пункта «Русификация»
+     нет до ответа Романа (поправка критика 6). Иконки — подстановка icon:<имя> (спрайт
+     assets/brand/sprite.svg). В комментариях фигурные скобки подстановок не писать: сборка
+     их подставит или упадёт. -->
+<header class="site-header site-header--{{header-variant}}" id="top">
+  <div class="site-header__bar">
+    <button class="site-header__menu" id="drawer-open" type="button" aria-controls="drawer" aria-expanded="false" aria-haspopup="dialog">{{icon:menu}}<span>Меню</span></button>
+    <a class="site-header__logo" href="{{top}}" aria-label="Meat Auto — на главную">{{icon:bull}}</a>
+    <button class="site-header__book btn btn--compact btn--secondary" type="button" data-book>Записаться</button>
   </div>
-</nav>
+</header>
+
+<dialog class="drawer" id="drawer" aria-label="Меню">
+  <div class="drawer__panels">
+    <nav class="drawer__panel drawer__panel--root" aria-label="Разделы сайта">
+      <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню">{{icon:close}}</button>
+      <ul class="drawer__list">
+        <li><button class="drawer__item" type="button" aria-controls="drawer-p-care" aria-expanded="false">Мойка и детейлинг{{icon:chevron-right}}</button></li>
+        <li><button class="drawer__item" type="button" aria-controls="drawer-p-import" aria-expanded="false">Привоз авто <span class="nw">из-за</span> рубежа{{icon:chevron-right}}</button></li>
+        <li><button class="drawer__item" type="button" aria-controls="drawer-p-auto" aria-expanded="false">Покупка и продажа{{icon:chevron-right}}</button></li>
+        <li><button class="drawer__item" type="button" aria-controls="drawer-p-about" aria-expanded="false">О нас{{icon:chevron-right}}</button></li>
+        <li><a class="drawer__item" href="articles"{{current:articles}}>Статьи</a></li>
+        <li><button class="drawer__item" type="button" aria-controls="drawer-p-contacts" aria-expanded="false">Контакты{{icon:chevron-right}}</button></li>
+      </ul>
+      <div class="drawer__foot">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+      </div>
+    </nav>
+
+    <section class="drawer__panel" id="drawer-p-care" aria-labelledby="drawer-p-care-title" hidden>
+      <button class="drawer__back" type="button" data-drawer-back>{{icon:chevron-left}}<span>Назад</span></button>
+      <h2 class="drawer__title" id="drawer-p-care-title">Мойка и детейлинг</h2>
+      <div class="drawer__tiles">
+        <a class="drawer__tile" href="{{to:services}}#price-wash"><span class="drawer__tile-name">Мойка</span><span class="chip">от {{min:wash}}</span></a>
+        <a class="drawer__tile" href="{{to:services}}#price-detailing"><span class="drawer__tile-name">Детейлинг</span><span class="chip">от {{min:detailing}}</span></a>
+        <a class="drawer__tile" href="{{to:services}}#price-protection"><span class="drawer__tile-name">Защита</span><span class="chip">от {{min:protection}}</span></a>
+        <a class="drawer__tile" href="{{to:services}}#price-help"><span class="drawer__tile-name">Помощь</span><span class="chip">от {{min:help}}</span></a>
+      </div>
+      <ul class="drawer__links">
+        <li><a class="link-arrow" href="services"{{current:services}}>Все услуги и цены{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="wrap"{{current:wrap}}>Оклейка полиуретаном{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="works"{{current:works}}>Наши работы{{icon:arrow-right}}</a></li>
+      </ul>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-import" aria-labelledby="drawer-p-import-title" hidden>
+      <button class="drawer__back" type="button" data-drawer-back>{{icon:chevron-left}}<span>Назад</span></button>
+      <h2 class="drawer__title" id="drawer-p-import-title">Привоз авто <span class="nw">из-за</span> рубежа</h2>
+      <ul class="drawer__links">
+        <li><a class="link-arrow" href="import"{{current:import}}>Как мы работаем{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Обсудить привоз в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a></li>
+      </ul>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-auto" aria-labelledby="drawer-p-auto-title" hidden>
+      <button class="drawer__back" type="button" data-drawer-back>{{icon:chevron-left}}<span>Назад</span></button>
+      <h2 class="drawer__title" id="drawer-p-auto-title">Покупка и продажа</h2>
+      <ul class="drawer__links">
+        <li><a class="link-arrow" href="{{to:auto}}#for-sale">Сейчас в продаже ({{count:sale}}){{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:auto}}#sold">Уже продали ({{count:sold}}){{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:auto}}#sell">Продать машину{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал MEAT AUTO{{icon:arrow-up-right}}<span class="sr"> в Telegram (откроется в новой вкладке)</span></a></li>
+      </ul>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-about" aria-labelledby="drawer-p-about-title" hidden>
+      <button class="drawer__back" type="button" data-drawer-back>{{icon:chevron-left}}<span>Назад</span></button>
+      <h2 class="drawer__title" id="drawer-p-about-title">О нас</h2>
+      <ul class="drawer__links">
+        <li><a class="link-arrow" href="{{to:about}}#visit-locations">Студии и контакты{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:about}}#founder">Кто мы{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:about}}#club">Подход{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:about}}#path">Наш путь{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:about}}#team">Команда{{icon:arrow-right}}</a></li>
+        <li><a class="link-arrow" href="{{to:about}}#membership">Клубная карта{{icon:arrow-right}}</a></li>
+      </ul>
+    </section>
+
+    <section class="drawer__panel" id="drawer-p-contacts" aria-labelledby="drawer-p-contacts-title" hidden>
+      <button class="drawer__back" type="button" data-drawer-back>{{icon:chevron-left}}<span>Назад</span></button>
+      <h2 class="drawer__title" id="drawer-p-contacts-title">Контакты</h2>
+      <div class="drawer__studio">
+        <h3>{{loc:myasnitskaya:name}}</h3>
+        <p>{{loc:myasnitskaya:type}}<br>{{loc:myasnitskaya:address}}<br>{{loc:myasnitskaya:hours}}</p>
+        <p><a href="tel:{{loc:myasnitskaya:tel}}"><span class="nw">{{loc:myasnitskaya:phone}}</span></a></p>
+        <p><a class="link-arrow" href="{{to:about}}#map-myasnitskaya">На карте{{icon:arrow-right}}</a> <a class="link-arrow" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer">Записаться{{icon:arrow-up-right}}<span class="sr">: {{loc:myasnitskaya:name}} (откроется в новой вкладке)</span></a></p>
+      </div>
+      <div class="drawer__studio">
+        <h3>{{loc:technopark:name}}</h3>
+        <p>{{loc:technopark:type}}<br>{{loc:technopark:address}}<br>{{loc:technopark:hours}}</p>
+        <p><a href="tel:{{loc:technopark:tel}}"><span class="nw">{{loc:technopark:phone}}</span></a></p>
+        <p><a class="link-arrow" href="{{to:about}}#map-technopark">На карте{{icon:arrow-right}}</a> <a class="link-arrow" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer">Записаться{{icon:arrow-up-right}}<span class="sr">: {{loc:technopark:name}} (откроется в новой вкладке)</span></a></p>
+      </div>
+    </section>
+  </div>
+</dialog>
