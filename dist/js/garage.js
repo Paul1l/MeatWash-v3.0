@@ -82,6 +82,9 @@ const icon = {
   remove: '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false"><path d="M6 6l8 8M14 6l-8 8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>',
 };
 const esc = (text) => String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Короткие предлоги и союзы не висят в конце строки (как typo() при сборке страниц):
+// «Детейлинг-мойка от реагентов» переносится целиком «от реагентов». Только для видимого текста.
+const nb = (text) => String(text).replace(/(^|[\s(«—])([а-яё]{1,2}|для|без|под|над|при) /gi, '$1$2\u00a0');
 
 // Строка работы: флажок с названием и ценой; у программ и пакетов мойки —
 // кнопка «Состав», сам состав раскрывается по нажатию.
@@ -92,7 +95,7 @@ function zoneRow(z) {
                 <label class="garage__item" data-zone="${z.id}">
                   <input type="checkbox" value="${z.id}">
                   <span class="garage__box" aria-hidden="true"></span>
-                  <span class="garage__name">${esc(z.title)}</span>
+                  <span class="garage__name">${esc(nb(z.title))}</span>
                   <span class="garage__price" data-zone-price></span>
                 </label>${program ? `
                 <button class="garage__morebtn" type="button" data-zone-more="${z.id}" aria-expanded="false" aria-controls="garage-more-${z.id}">Состав<span class="visually-hidden">: ${esc(z.title)}</span>${icon.more}</button>
