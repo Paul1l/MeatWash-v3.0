@@ -27,13 +27,21 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
 }
 
 /* ---------- Герой: фото 21:9 / 1:1 (обрезки tile-4 v2, номер закрыт) ---------- */
-.about-hero .hero-a__media img { object-position: 50% 55%; }
+/* Кадр заполняет героя при любой высоте (на планшете герой выше 21:9 — под лид и кнопки). */
+.about-hero .hero-a__media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }
 
 /* ==========================================================================
    Студии и контакты: карточка студии + карта (P23). Контракт maps.js — §4.4.
    ========================================================================== */
 .locations { display: grid; gap: var(--lg); }
 .location { display: grid; gap: var(--sm); min-width: 0; }
+/* До 1000 px студия — одна карточка: карта сверху (как фото), данные под ней. Сюда же
+   приводит «На карте» из подвала (#map-студия): карта у верха экрана, название сразу под ней. */
+@media (max-width: 999px) {
+  .location { gap: 0; }
+  .location__map { order: -1; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+  .location__card { border-radius: 0 0 var(--r-lg) var(--r-lg); }
+}
 @media (min-width: 1000px) {
   .location { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--md); }
 }
@@ -78,7 +86,7 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
    На телефоне 4:3 (не ниже 260), от 760 — 16:10, от 1000 — во всю высоту карточки рядом. */
 .location__map {
   position: relative; isolation: isolate;
-  min-width: 0;
+  width: 100%; min-width: 0;            /* ширина задана — пропорция не раздувает её из min-height */
   aspect-ratio: 4 / 3; min-height: 260px;
   overflow: hidden;
   border-radius: var(--r-lg);
@@ -215,7 +223,11 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
 @media (max-width: 759px) {
   .founder__photo img { aspect-ratio: 4 / 5; }
 }
-@media (min-width: 1000px) {
+/* Планшет: колонка шире (--ext), фото и текст уже рядом. */
+@media (min-width: 760px) and (max-width: 999px) {
+  .founder { padding-inline: var(--ext); }
+}
+@media (min-width: 760px) {
   .founder {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     grid-template-areas: "title title" "photo quote" "photo text";
@@ -313,7 +325,7 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
   border-radius: 6px;
   box-shadow: 0 24px 60px rgb(0 0 0 / .55), var(--lift);
 }
-.press__pages img + img { margin-top: var(--md); }
+.press__pages img { align-self: flex-start; }
 .press figcaption { max-width: 40ch; font-size: var(--fs-sm); line-height: 1.55; text-align: center; color: var(--on-muted); }
 
 /* ==========================================================================
@@ -486,8 +498,13 @@ svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20p
     :where(body[data-page="about"]) .hero-a__lead { padding: var(--sm) var(--ext) 0; }
     :where(body[data-page="about"]) .hero-a__actions { display: grid; padding: var(--md) var(--ext) 0; }
   }
+  /* Телефон боком: квадрат выше экрана — кадр по высоте окна, заголовок остаётся на фото. */
+  @media (max-width: 759px) and (orientation: landscape) {
+    :where(body[data-page="about"]) .hero-a__media { aspect-ratio: auto; height: min(100vw, 78svh); }
+    :where(body[data-page="about"]) .hero-a__actions { display: flex; }
+  }
   @media (min-width: 760px) {
-    :where(body[data-page="about"]) .hero-a { min-height: calc(100vw * 9 / 21); align-items: end; }
+    :where(body[data-page="about"]) .hero-a { min-height: max(calc(100vw * 9 / 21), min(460px, 80svh)); align-items: end; }
     :where(body[data-page="about"]) .hero-a__media { position: absolute; inset: 0; z-index: -1; }
     :where(body[data-page="about"]) .hero-a__body { display: grid; justify-items: start; gap: var(--sm); padding: calc(var(--header-h) + var(--md)) var(--ext) var(--lg); }
     :where(body[data-page="about"]) .hero-a__actions { margin-top: var(--sm); }
@@ -517,6 +534,13 @@ svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20p
   :where(body[data-page="about"]) .anchor-tabs__tab:hover { background: var(--surface-2); }
   :where(body[data-page="about"]) .anchor-tabs__tab[aria-current="true"] { background: var(--fg); color: var(--ink); }
   :where(body[data-page="about"]) .anchor-tabs__tab:focus-visible { outline-offset: -2px; }
+  @media (max-width: 999px) {
+    :where(body[data-page="about"]) .anchor-tabs__track {
+      padding-inline: var(--ext);
+      -webkit-mask: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+      mask: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+    }
+  }
   @media (max-width: 759px) {
     :where(body[data-page="about"]) .anchor-tabs__track {
       padding: 8px var(--ext);
