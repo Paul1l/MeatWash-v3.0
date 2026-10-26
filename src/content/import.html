@@ -1,9 +1,16 @@
-<!-- Тело /import (план §1.6, §3.5; поправки критика 5, 6). Владелец: WP4.
-     Только известные факты: текст плитки 2 утверждённой главной и контакт — Telegram Романа.
-     Телефона студии здесь нет, пока Роман не подтвердит канал (поправка 5). Блоки «Уход
-     за машиной» и «Машины в продаже» — без связи с услугой привоза (поправка 6).
-     Чего нет — пометка «нужно от клиента» (подстановка todo); check:release на них падает. -->
+<!-- Тело /import (план §1.6, §3.5; поправки критика 5, 6; паттерны Porsche: шаблон «Сервис» —
+     фото-герой A, вкладки-якоря P08, редакционное интро P26, зигзаг P10, тизеры P12, промо P11).
+     Владелец: WP4. Только известные факты: текст плитки 2 утверждённой главной, фраза Влада
+     о «связанных услугах, типа русификации» и контакт — Telegram Романа. Телефона студии здесь
+     нет, пока Роман не подтвердит канал (поправка 5). Блоки «Уход за машиной» и «Машины в
+     продаже» — без связи с услугой привоза (поправка 6). Чего нет — пометка «нужно от клиента»
+     (подстановка todo), check:release на них падает. Фото героя — машина, которую продали
+     (sold-mb-g-mart): alt не говорит, что её привезли. Надзаголовков и нумерации нет. -->
 <section class="hero-a" aria-labelledby="page-title">
+  <picture class="hero-a__media">
+    <source media="(max-width: 759px)" srcset="assets/img/import/hero-900.webp" width="825" height="825">
+    <img src="assets/img/import/hero-1600.webp" width="1240" height="531" alt="Чёрный Mercedes-AMG G 63 с красными дисками в подземном паркинге" fetchpriority="high" decoding="async">
+  </picture>
   <div class="hero-a__body">
     <h1 id="page-title">Привоз авто <span class="nw">из-за</span> рубежа</h1>
     <p class="hero-a__lead">Привезём автомобиль <span class="nw">из-за</span> рубежа и подготовим его к жизни в России — например, сделаем русификацию.</p>
@@ -12,31 +19,78 @@
     </div>
   </div>
 </section>
+
 <nav class="anchor-tabs" data-anchor-tabs aria-label="Разделы страницы">
   <div class="anchor-tabs__track">
-    <a class="anchor-tabs__tab" href="#what">Что делаем</a>
+    <a class="anchor-tabs__tab" href="#what">Привоз</a>
     <a class="anchor-tabs__tab" href="#rusifikaciya">Русификация</a>
-    <a class="anchor-tabs__tab" href="#prep">Уход в студиях</a>
+    <a class="anchor-tabs__tab" href="#prep">Студии и машины</a>
     <a class="anchor-tabs__tab" href="#contact">Связаться</a>
   </div>
 </nav>
-<section class="section" id="what" aria-labelledby="what-title">
+
+<section class="section import-intro col-basic" id="what" aria-labelledby="what-title">
   <h2 id="what-title">Привоз автомобиля</h2>
-  <p>{{todo:что входит: подбор, проверка, покупка, доставка, оформление}}</p>
+  <div class="import-intro__text">
+    <p class="import-intro__lead">Привезём автомобиль <span class="nw">из-за</span> рубежа и подготовим его к жизни в России.</p>
+    <ul class="import-todo">
+      <li>{{todo:откуда возим — страны или площадки; какие машины — марки, новые или с пробегом}}</li>
+      <li>{{todo:что входит: подбор, проверка, покупка, доставка, оформление}}</li>
+      <li>{{todo:порядок работы, договор, сроки и цены — если готовы публиковать}}</li>
+    </ul>
+  </div>
 </section>
-<section class="section" id="rusifikaciya" aria-labelledby="rusifikaciya-title">
-  <h2 id="rusifikaciya-title">Русификация</h2>
-  <p>{{todo:что именно русифицируем, для каких марок, где делаем}}</p>
+
+<section class="section section--tight col-basic" id="rusifikaciya" aria-labelledby="rusifikaciya-title">
+  <div class="zigzag">
+    <div class="zigzag__row">
+      <figure class="import-mark" aria-hidden="true"><span>RU</span></figure>
+      <div class="zigzag__text">
+        <h2 id="rusifikaciya-title">Русификация</h2>
+        <p>Кроме самого привоза — связанные с ним услуги, например русификация.</p>
+        <ul class="import-todo">
+          <li>{{todo:что именно русифицируем, для каких марок, где делаем}}</li>
+          <li>{{todo:фото экранов и меню после русификации}}</li>
+        </ul>
+        <a class="link-arrow" href="https://t.me/otec_roman" target="_blank" rel="noopener">Спросить о русификации{{icon:arrow-up-right}}<span class="sr"> в Telegram (откроется в новой вкладке)</span></a>
+      </div>
+    </div>
+  </div>
 </section>
-<section class="section" id="prep" aria-labelledby="prep-title">
-  <a class="teaser" href="services"><span id="prep-title">Уход за машиной — в наших студиях</span></a>
+
+<section class="section import-links" id="prep" aria-labelledby="import-links-title">
+  <header class="section-head">
+    <h2 id="import-links-title">Ещё в <span lang="en">Meat Auto</span></h2>
+  </header>
+  <div class="teasers teasers--skewed col-ext">
+    <a class="teaser" href="services">
+      <img class="teaser__img" src="assets/img/import/care-foam-4x5-640.webp" srcset="assets/img/import/care-foam-4x5-640.webp 640w, assets/img/import/care-foam-4x5-1000.webp 1000w" sizes="(min-width: 760px) 45vw, 100vw" width="1000" height="1250" alt="" loading="lazy" decoding="async">
+      <div class="teaser__body">
+        <h3 class="teaser__title">Уход за машиной — в наших студиях</h3>
+        <span class="teaser__cta">Мойка и детейлинг{{icon:arrow-right}}</span>
+      </div>
+    </a>
+    <a class="teaser" id="for-sale-link" href="auto#for-sale">
+      <img class="teaser__img" src="assets/img/auto-bmw740-1.webp" width="640" height="800" alt="" loading="lazy" decoding="async">
+      <div class="teaser__body">
+        <h3 class="teaser__title">Машины в продаже: {{count:sale}}</h3>
+        <span class="teaser__cta">Покупка и продажа{{icon:arrow-right}}</span>
+      </div>
+    </a>
+  </div>
 </section>
-<section class="section" id="for-sale-link" aria-labelledby="for-sale-link-title">
-  <a class="teaser" href="auto#for-sale"><span id="for-sale-link-title">Машины в продаже: {{count:sale}}</span></a>
-</section>
-<section class="promo col-ext" id="contact" aria-labelledby="contact-title">
-  <div class="promo__panel">
-    <h2 id="contact-title">Обсудить привоз</h2>
-    <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+
+<section class="section import-contact" id="contact" aria-labelledby="contact-title">
+  <div class="promo promo--solo col-ext">
+    <div class="promo__panel">
+      <div class="promo__copy">
+        <h2 id="contact-title">Обсудить привоз</h2>
+        <p>Расскажите, какую машину и откуда хотите привезти. Ответит Роман.</p>
+      </div>
+      <div class="actions promo__actions">
+        <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+        <p class="promo__handle">Telegram <a href="https://t.me/otec_roman" target="_blank" rel="noopener">@otec_roman<span class="sr"> (откроется в новой вкладке)</span></a></p>
+      </div>
+    </div>
   </div>
 </section>
