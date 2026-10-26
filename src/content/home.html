@@ -1,11 +1,15 @@
-<!-- Тело главной (план §3.1). Владелец: WP2 — переносит утверждённую главную v2
+<!-- Тело главной (план §3.1). Владелец: WP2. Перенос утверждённой главной v2
      (source/v2-design/index.html, 625ce74) как есть: герой, «Чем занимается Meat Auto»,
-     четыре плитки, карусель на телефоне. Меняется только (Влад 27.10): общая шапка
-     («Меню» слева, бык по центру, «Записаться» справа) и общий подвал вместо своих,
-     плитка 2 ведёт на import вместо Telegram, ссылки относительные. Подпись плитки 2
-     в решении Влада не менялась — «Обсудить привоз»; «Подробнее о привозе» (поправка 8) — вопрос Владу.
-     Заготовка WP0: один H1 и четыре направления, чтобы ссылки и якоря проверялись. -->
+     четыре плитки, карусель на телефоне. Изменения (Влад 27.10): общая шапка и общий подвал
+     вместо своих, плитка 2 ведёт на страницу привоза вместо Telegram, ссылки относительные,
+     числа в чипах — из данных (проданные машины, год, студии). Подпись плитки 2 Влад
+     не менял («Обсудить привоз»); «Подробнее о привозе» (поправка 8) — вопрос Владу.
+     Стили — dist/css/home.css, поведение — dist/js/home.js. -->
 <section class="hero" aria-labelledby="page-title">
+  <picture class="hero__media">
+    <source media="(max-width: 699px)" srcset="assets/img/home/hero-m-720.webp 720w, assets/img/home/hero-m-1080.webp 1080w" sizes="100vw" width="1080" height="1920">
+    <img src="assets/img/home/hero-1600.webp" srcset="assets/img/home/hero-1600.webp 1600w, assets/img/home/hero-2560.webp 2560w" sizes="100vw" width="2560" height="1440" alt="Синий BMW M3 в полумраке подземного паркинга" fetchpriority="high" decoding="async">
+  </picture>
   <h1 class="hero__title" id="page-title">
     <span class="hero__name" lang="en">Meat Auto</span>
     <span class="sr" lang="en">Car Care Club</span>
@@ -14,11 +18,82 @@
 </section>
 
 <section class="dirs" aria-labelledby="dirs-title">
-  <h2 class="dirs__heading" id="dirs-title">Чем занимается <span lang="en">Meat Auto</span></h2>
-  <ul class="dirs__grid">
-    <li class="dir"><a class="dir__cta" href="services">Мойка и детейлинг</a></li>
-    <li class="dir"><a class="dir__cta" href="import">Привоз авто <span class="nw">из-за</span> рубежа</a></li>
-    <li class="dir"><a class="dir__cta" href="auto">Покупка и продажа авто</a> <span class="chip">Уже продали {{count:sold:машина}}</span></li>
-    <li class="dir"><a class="dir__cta" href="about">О нас</a> <span class="chip">С {{brand:since}} года · {{count:studios:студия}} в Москве</span></li>
-  </ul>
+  <div class="dirs__head" data-reveal>
+    <h2 class="dirs__heading" id="dirs-title"><span class="ln"><span class="ln__in"><span class="wd">Чем</span>&nbsp;<span class="wd">занимается</span></span></span> <span class="ln"><span class="ln__in"><span class="wd" lang="en">Meat&nbsp;Auto</span></span></span></h2>
+  </div>
+
+  <div class="dirs__grid">
+    <article class="dir" data-reveal aria-labelledby="dir-1">
+      <h3 class="dir__title" id="dir-1"><span class="dir__name">Мойка и детейлинг</span></h3>
+      <div class="dir__card">
+        <img class="dir__img" style="--focus-xy: 68% 56%" src="assets/img/home/tile-1-800.webp" srcset="assets/img/home/tile-1-800.webp 800w, assets/img/home/tile-1-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 447px, (max-width: 759px) 55vh, 52vw" width="1240" height="1864" loading="lazy" decoding="async" alt="Lexus LX в активной пене в моечном боксе Meat Auto">
+        <a class="dir__hit" href="services" tabindex="-1" aria-hidden="true"></a>
+        <div class="dir__content">
+          <div class="dir__body">
+            <ul class="dir__tags"><li class="chip chip--photo">Мойка · химчистка · полировка · ремонт</li></ul>
+            <p class="dir__desc">Мойка, химчистка, полировка, защита кузова и ремонт сколов и вмятин.</p>
+          </div>
+          <a class="dir__cta" href="services"><span class="dir__label">Услуги и цены</span><span class="sr">: мойка и детейлинг</span>{{icon:cta-arrow:dir__arrow}}</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="dir" data-reveal aria-labelledby="dir-2">
+      <h3 class="dir__title" id="dir-2"><span class="dir__name">Привоз авто <span class="nw">из-за</span> рубежа</span></h3>
+      <div class="dir__card">
+        <img class="dir__img" style="--focus-xy: 60% 50%" src="assets/img/home/tile-2-800.webp" srcset="assets/img/home/tile-2-800.webp 800w, assets/img/home/tile-2-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 1010px, (max-width: 759px) 125vh, (min-width: 1760px) calc(76.7vh + 15vw), (min-width: 1300px) calc(10.5vh + 58.6vw), 67.6vw" width="1240" height="825" loading="lazy" decoding="async" alt="Чёрный Mercedes-AMG G 63 с красными дисками в подземном паркинге">
+        <a class="dir__hit" href="import" tabindex="-1" aria-hidden="true"></a>
+        <div class="dir__content">
+          <div class="dir__body">
+            <ul class="dir__tags"><li class="chip chip--photo">Привоз и подготовка</li></ul>
+            <p class="dir__desc">Привезём автомобиль <span class="nw">из-за</span> рубежа и подготовим его к жизни в России — например, сделаем русификацию.</p>
+          </div>
+          <a class="dir__cta" href="import"><span class="dir__label">Обсудить привоз</span><span class="sr">: привоз авто <span class="nw">из-за</span> рубежа</span>{{icon:cta-arrow:dir__arrow}}</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="dir" data-reveal aria-labelledby="dir-3">
+      <h3 class="dir__title" id="dir-3"><span class="dir__name">Покупка и продажа авто</span></h3>
+      <div class="dir__card">
+        <img class="dir__img" style="--focus-xy: 75% 70%" src="assets/img/home/tile-3-800.webp" srcset="assets/img/home/tile-3-800.webp 800w, assets/img/home/tile-3-1080.webp 1080w" sizes="(max-width: 759px) and (min-height: 810px) 538px, (max-width: 759px) 66vh, 52vw" width="1080" height="1350" loading="lazy" decoding="async" alt="Серый BMW 7 серии на закате на фоне городских высоток">
+        <a class="dir__hit" href="auto" tabindex="-1" aria-hidden="true"></a>
+        <div class="dir__content">
+          <div class="dir__body">
+            <ul class="dir__tags"><li class="chip chip--photo">Уже продали {{count:sold:машина}}</li></ul>
+            <p class="dir__desc">Продаём автомобили и делаем предпродажную подготовку: детейлинг, полировку, химчистку салона.</p>
+          </div>
+          <a class="dir__cta" href="auto"><span class="dir__label">Смотреть машины</span><span class="sr"> на продажу</span>{{icon:cta-arrow:dir__arrow}}</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="dir" data-reveal aria-labelledby="dir-4">
+      <h3 class="dir__title" id="dir-4"><span class="dir__name">О нас</span></h3>
+      <div class="dir__card">
+        <picture>
+          <source media="(max-width: 759px)" srcset="assets/img/home/tile-4-m-860.webp 860w, assets/img/home/tile-4-m-1280.webp 1280w" sizes="(min-height: 810px) 447px, 55vh" width="1280" height="1924">
+          <img class="dir__img" style="--focus-xy: 50% 50%" src="assets/img/home/tile-4-800.webp" srcset="assets/img/home/tile-4-800.webp 800w, assets/img/home/tile-4-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 1010px, (max-width: 759px) 125vh, (min-width: 1760px) calc(76.7vh + 15vw), (min-width: 1300px) calc(10.5vh + 58.6vw), 67.6vw" width="1240" height="825" loading="lazy" decoding="async" alt="Серый BMW 8 серии в зале студии Meat Auto">
+        </picture>
+        <a class="dir__hit" href="about" tabindex="-1" aria-hidden="true"></a>
+        <div class="dir__content">
+          <div class="dir__body">
+            <ul class="dir__tags"><li class="chip chip--photo">С {{brand:since}} года · {{count:studios:студия}} в Москве</li></ul>
+            <p class="dir__desc"><span lang="en">Car Care Club Meat Auto</span>: студии на Мясницкой и в Технопарке, команда и наша история.</p>
+          </div>
+          <a class="dir__cta" href="about"><span class="dir__label">О компании</span>{{icon:cta-arrow:dir__arrow}}</a>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="dirs__controls" role="group" aria-label="Листание направлений">
+    <div class="dirs__dots">
+      <button class="dirs__dot" type="button" aria-label="1 из 4: Мойка и детейлинг" aria-current="true"><span></span></button>
+      <button class="dirs__dot" type="button" aria-label="2 из 4: Привоз авто из-за рубежа"><span></span></button>
+      <button class="dirs__dot" type="button" aria-label="3 из 4: Покупка и продажа авто"><span></span></button>
+      <button class="dirs__dot" type="button" aria-label="4 из 4: О нас"><span></span></button>
+    </div>
+    <button class="dirs__play" type="button" aria-label="Остановить автопрокрутку" data-state="playing">{{icon:pause:i-pause}}{{icon:play:i-play}}</button>
+  </div>
 </section>

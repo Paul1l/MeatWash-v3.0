@@ -1,5 +1,5 @@
 <h2 id="chto-delaet-zima">Что зима делает с автомобилем</h2>
-<p>Московскую зиму машина переживает не из-за снега. Дороги обрабатывают противогололёдными реагентами — это соли и растворы солей. С колёс они разлетаются по нижней части кузова, оседают в арках, на порогах, дисках и бамперах и держатся там вместе с влажной грязью.</p>
+<p>Московскую зиму машина переживает не <span class="nw">из-за</span> снега. Дороги обрабатывают противогололёдными реагентами — это соли и растворы солей. С колёс они разлетаются по нижней части кузова, оседают в арках, на порогах, дисках и бамперах и держатся там вместе с влажной грязью.</p>
 <ul>
   <li><strong>Лак и металл.</strong> Соль во влажной грязи ускоряет коррозию там, где металл открыт: в сколах, на кромках, в местах, где покрытие повреждено.</li>
   <li><strong>Царапины.</strong> Зимняя грязь абразивна. Если тереть её щёткой или тряпкой по сухому, на лаке остаются риски.</li>
@@ -73,9 +73,10 @@
   <li><strong>Не забывать низ.</strong> Реагенты копятся там, куда пена с крыши не стекает: в арках, на порогах, за бамперами.</li>
   <li><strong>Сушить после мойки.</strong> Вода в уплотнителях, замках и на зеркалах на морозе превращается в лёд. Машину после мойки нужно высушить, а не выезжать мокрой на холод.</li>
 </ul>
-<p>Для сезона реагентов в MEATWASH есть отдельная программа — {{program:2}} ({{program-from:2}}, цена зависит от типа кузова). В неё входит:</p>
+<p>Для сезона реагентов в <span lang="en">Meat Auto</span> есть отдельная программа — {{program:2}} ({{program-from:2}}, цена зависит от типа кузова). В неё входит:</p>
 {{program-includes:2}}
 
+<section class="article-brief" aria-labelledby="plan">
 <h2 id="plan">Короткий план</h2>
 <div class="article-plan">
   <div>
@@ -101,18 +102,26 @@
     <ul>
       <li>Смыть реагенты отовсюду, включая низ</li>
       <li>Оценить лак при хорошем свете</li>
-      <li>При необходимости — полировка: <span class="nowrap">{{price:Локальная полировка элемента}}</span> за элемент, <span class="nowrap">{{price:Полировка кузова + 2 слоя керамики}}</span> за кузов с керамикой</li>
+      <li>При необходимости — полировка: <span class="nw">{{price:Локальная полировка элемента}}</span> за элемент, <span class="nw">{{price:Полировка кузова + 2 слоя керамики}}</span> за кузов с керамикой</li>
     </ul>
   </div>
 </div>
+</section>
 
-<aside class="article-cta">
-  <p class="eyebrow" lang="en">SERVICE GARAGE · 3D</p>
-  <h2 id="garage-cta">Соберите зимний уход в 3D-гараже</h2>
-  <p>Отметьте работы — камера покажет нужную деталь на модели Porsche, итог «от» посчитается по каталогу и вашему типу кузова.</p>
-  <div class="article-cta__actions">
-    <a class="btn btn--light garage-cta" href="services#garage-3d">Открыть 3D-гараж</a>
-    <a class="link-arrow" href="services#programs">Все услуги и цены <span aria-hidden="true">→</span></a>
+<p class="article-note">Цены — минимальные по каталогу <span lang="en">Meat Auto</span>; точную стоимость называет мастер после осмотра автомобиля.</p>
+
+<!-- article:after -->
+<section class="promo col-ext article-promo" id="book-cta" aria-labelledby="book-cta-title">
+  <div class="promo__media">
+    <img src="assets/shots/cf-foam-crop.webp" srcset="assets/shots/cf-foam-crop-s.webp 900w, assets/shots/cf-foam-crop.webp 1600w" sizes="(max-width: 759px) 100vw, 50vw" width="1600" height="894" alt="Спорткупе в активной пене на тёмном полу студии" loading="lazy" decoding="async">
   </div>
-</aside>
-<p class="article-note">Цены — минимальные по каталогу MEATWASH; точную стоимость называет мастер после осмотра автомобиля.</p>
+  <div class="promo__panel">
+    <h2 id="book-cta-title" data-toc="no">{{program:2:name}}</h2>
+    <p>Очистка кузова, арок и порогов от дорожной химии — {{program:2:time}}, {{program:2:price}}; цена зависит от типа кузова. Остальной зимний уход можно собрать в 3D-гараже: отметьте работы, и итог «от» посчитается по каталогу.</p>
+    <div class="promo__actions">
+      <button class="btn btn--primary" type="button" data-book data-program="2" data-book-context="{{program:2:name}}">Записаться<span class="sr">: {{program:2:name}}</span></button>
+      <a class="link-arrow" href="services#programs">Все услуги и цены{{icon:arrow-right}}</a>
+      <a class="link-arrow" href="services#garage-3d">Собрать уход в 3D-гараже{{icon:arrow-right}}</a>
+    </div>
+  </div>
+</section>
