@@ -45,7 +45,7 @@
   .hero-a__media::before, .hero-a__media::after { content: ""; position: absolute; left: 0; right: 0; z-index: 1; pointer-events: none; }
   .hero-a__media::before { top: 0; height: 72px; background: linear-gradient(180deg, var(--fade)); }
   .hero-a__media::after { bottom: 0; height: 45%; background: linear-gradient(0deg, var(--page) 0%, rgb(var(--bg-rgb) / .72) 34%, rgb(var(--bg-rgb) / 0) 100%); }
-  .hero-a__body { position: relative; z-index: 2; margin-top: -4.25rem; padding-inline: var(--ext); }
+  .hero-a__body { position: relative; z-index: 2; margin-top: -4.25rem; padding: 0 var(--ext) var(--lg); }
   .hero-a h1 { font-size: var(--fs-3xl); font-weight: 300; line-height: 1.23; letter-spacing: -.025em; text-wrap: balance; }
   .hero-a__lead { max-width: 36em; margin-top: var(--sm); font-size: var(--fs-md); line-height: 1.42; color: rgb(var(--fg-rgb) / .86); text-wrap: pretty; }
   .hero-a__actions { display: flex; flex-wrap: wrap; gap: var(--sm); margin-top: var(--md); }
@@ -53,6 +53,8 @@
   @media (min-width: 760px) {
     .hero-a__media { aspect-ratio: 21 / 9; max-height: 100svh; }
     .hero-a__media::before { height: 148px; }
+  }
+  @media (min-width: 1280px) {
     .hero-a__media::after { height: 62%; background: linear-gradient(0deg, var(--fade)); }
     .hero-a__body { grid-area: 1 / 1; align-self: end; margin: 0; padding: 0 var(--ext) var(--lg); }
   }
@@ -61,7 +63,7 @@
   .hero-d { display: grid; gap: var(--md); padding-block: var(--lg); background: var(--surface); }
   .hero-d h1 { font-size: var(--fs-2xl); font-weight: 300; line-height: 1.26; letter-spacing: -.02em; }
   .hero-d__lead { max-width: 40em; margin-top: var(--sm); font-size: var(--fs-md); line-height: 1.42; color: var(--on-muted); text-wrap: pretty; }
-  @media (min-width: 1000px) { .hero-d { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--lg); } }
+  @media (min-width: 1200px) { .hero-d { grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--lg); } }
 
   /* Вкладки-якоря (P08): липкие, 52 / 62; выбранная — заливка слоновой костью (поправка 20) */
   .anchor-tabs { position: sticky; top: 0; z-index: 20; background: rgb(var(--bg-rgb) / .84);
@@ -105,12 +107,16 @@
   .teaser:hover .teaser__media { transform: scale(1.03); }
   .teaser:hover .teaser__more .icon { transform: translateX(3px); }
   @media (min-width: 760px) {
-    .teasers--skewed { grid-template-columns: 1fr 1fr; align-items: start; }
-    .teasers--skewed > :nth-child(2n) { margin-top: 60px; }
     .teaser { aspect-ratio: 16 / 9; align-items: stretch; }
     .teaser::after { background: linear-gradient(90deg, rgb(8 8 8 / .86), rgb(8 8 8 / .62) 38%, rgb(8 8 8 / 0) 80%); }
     .teaser__body { justify-content: space-between; max-width: 62%; padding: var(--md) var(--md) var(--md) calc(var(--md) + 4px); }
   }
+  @media (min-width: 1000px) {
+    .teasers--skewed { grid-template-columns: 1fr 1fr; align-items: start; }
+    .teasers--skewed > :nth-child(2n) { margin-top: 60px; }
+    .teasers--skewed .teaser__body { max-width: 78%; }
+  }
+  @media (min-width: 1280px) { .teasers--skewed .teaser__body { max-width: 62%; } }
 
   /* Карточки-шаги (P20) без нумерации; карточка с обводкой */
   .steps { display: grid; gap: var(--md); list-style: none; }
@@ -188,7 +194,7 @@
   .car-card__gallery { position: relative; }
   .car-card .strip::scroll-button(*) {
     position: absolute; bottom: 16px; z-index: 2; width: 48px; height: 48px; border: 0; border-radius: 50%;
-    background: rgb(8 8 8 / .55); color: var(--fg); font: 400 22px/48px var(--sans); text-align: center; cursor: pointer;
+    background: rgb(8 8 8 / .64); color: var(--fg); font: 400 22px/48px var(--sans); text-align: center; cursor: pointer;
     -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
     transition: background-color var(--t-fast) var(--ease), opacity var(--t-fast) var(--ease);
   }
@@ -201,9 +207,10 @@
 }
 .car-card__gallery { position: relative; }
 .car-card__count { position: absolute; top: 16px; left: 16px; z-index: 2; pointer-events: none;
-  background: rgb(8 8 8 / .55); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); color: var(--fg); }
+  background: rgb(8 8 8 / .64); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); color: var(--fg); }
 
 .car-card__body { display: grid; gap: var(--md); }
+.car-card__head, .car-card__about { max-width: 56rem; }
 .car-card__title { font-size: var(--fs-xl); font-weight: 400; line-height: 1.24; letter-spacing: -.015em; text-wrap: balance; }
 .car-card__year { color: var(--on-muted); }
 .car-card__facts { display: flex; flex-wrap: wrap; margin-top: var(--sm); font-size: var(--fs-md); line-height: 1.5; }
@@ -215,7 +222,10 @@
 .car-card__price { font-size: var(--fs-xl); font-weight: 400; line-height: 1.2; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .car-card__price span { display: block; margin-top: 6px; font-size: 14px; line-height: 1.55; letter-spacing: 0; color: var(--on-muted); }
 .car-card__actions { display: grid; gap: var(--sm); }
-.car-card__actions .btn { gap: 10px; }
+.car-card__actions .btn { gap: 10px; padding-inline: 16px; }
+@media (min-width: 760px) and (max-width: 999px) {
+  .car-card__offer { grid-template-columns: minmax(0, 1fr) minmax(240px, 300px); align-items: center; }
+}
 
 .car-card__lead { max-width: 40em; font-size: var(--fs-md); line-height: 1.5; text-wrap: pretty; }
 .car-card__specs { margin: var(--md) 0 0; padding: 0; list-style: none; border-bottom: 1px solid var(--line); }
@@ -241,7 +251,7 @@
 .sold-card img { display: block; width: 100%; height: auto; border-radius: var(--r-md); background: var(--surface); }
 .sold-card__name { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.35; letter-spacing: 0; text-wrap: balance; }
 .sold-card .chip { position: absolute; top: 10px; left: 10px; min-height: 24px; padding-inline: 10px; font-size: 13px;
-  background: rgb(8 8 8 / .55); color: var(--fg); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  background: rgb(8 8 8 / .64); color: var(--fg); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 @media (min-width: 600px) { .sold-card__name { font-size: 16px; } }
 @media (min-width: 900px) { .sold-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--lg) var(--md); } }
 

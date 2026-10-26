@@ -40,6 +40,9 @@ export function modelName(title) {
   }).join('');
 }
 
+// Текст из JSON: экранировать, слова через дефис («800-вольтовая», «23-дюймовые») не рвать.
+const text = (value) => escape(value).replace(/[\p{L}\d]+(?:-[\p{L}\d]+)+/gu, (w) => `<span class="nw">${w}</span>`);
+
 const photo = (p, eager) => `<li><img src="${escape(p.src)}" width="${p.w}" height="${p.h}" alt="${escape(p.alt)}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"></li>`;
 
 function card(car, index) {
@@ -56,7 +59,7 @@ function card(car, index) {
     <div class="car-card__body">
       <div class="car-card__head">
         <h3 class="car-card__title" id="car-${id}-title">${escape(car.title)}<span class="car-card__year">, ${car.year}</span></h3>
-        <p class="car-card__facts">${car.facts.map((f) => `<span>${escape(f)}</span>`).join('<span class="car-card__dot"> · </span>')}</p>
+        <p class="car-card__facts">${car.facts.map((f) => `<span>${text(f)}</span>`).join('<span class="car-card__dot"> · </span>')}</p>
       </div>
       <div class="car-card__offer">
         <p class="car-card__price">${money(car.price)}${car.priceVat ? ` <span>с НДС — ${money(car.priceVat)}</span>` : ''}</p>
@@ -66,11 +69,11 @@ function card(car, index) {
         </div>
       </div>
       <div class="car-card__about">
-        <p class="car-card__lead">${escape(car.lead)}</p>
+        <p class="car-card__lead">${text(car.lead)}</p>
         <ul class="car-card__specs">
-          ${car.specs.map((s) => `<li>${escape(s)}</li>`).join('\n          ')}
+          ${car.specs.map((s) => `<li>${text(s)}</li>`).join('\n          ')}
         </ul>
-${car.prepared ? `        <p class="car-card__prep"><b>Подготовили в Meat Auto:</b> ${escape(car.prepared)}.</p>\n` : ''}      </div>
+${car.prepared ? `        <p class="car-card__prep"><b>Подготовили в Meat Auto:</b> ${text(car.prepared)}.</p>\n` : ''}      </div>
     </div>
   </article>`;
 }
