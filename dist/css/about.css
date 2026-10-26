@@ -379,8 +379,10 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
    ========================================================================== */
 .membership {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);       /* колонка не шире экрана: на 320 фото 4:3 с min-height 240 растягивало её до 320 px + поля (WP7) */
   padding-block: var(--xl) calc(2 * var(--xl));
 }
+@media (max-width: 759px) { .membership__media { min-height: 0; } }
 .membership__media {
   display: grid; place-items: center;
   min-width: 0;

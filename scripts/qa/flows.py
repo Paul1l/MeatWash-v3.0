@@ -1,0 +1,195 @@
+"""§6.4 п. 5 (запись), п. 6 (согласие), п. 7 (карты), п. 8 (шторка и клавиатура; WebKit —
+поправка 23). Переходы в YCLIENTS не открываются. Владелец: WP7."""
+import json
+from common import Context, load, DIST
+
+STUDIOS = {'myasnitskaya': '906067', 'technopark': '1743348'}
+
+BOOKING_STATE = r"""() => {
+  const b = document.querySelector('#booking');
+  const links = [...b.querySelectorAll('a[data-branch]')].filter(a => a.offsetParent).map(a => ({branch: a.dataset.branch, href: a.href}));
+  const phones = [...b.querySelectorAll('a[data-phone]')].filter(a => a.offsetParent).map(a => a.dataset.phone);
+  return {open: b.open, mode: b.dataset.mode, links, phones, locked: document.documentElement.classList.contains('is-locked'),
+          title: document.querySelector('#booking-title').textContent.trim(), context: (document.querySelector('#booking-context')?.textContent || '').trim()};
+}"""
+
+
+def booking(browser, base, pages, res):
+    details, ok_pages = [], 0
+    for w in (1440, 390):
+        c = Context(browser, w, 900, consent=False, touch=w < 768)
+        pg = c.page()
+        for p in pages:
+            load(pg, f"{base}/{p['path']}")
+            btn = pg.locator('[data-book]:visible').first
+            btn.scroll_into_view_if_needed()
+            btn.click()
+            pg.wait_for_timeout(450)
+            s = pg.evaluate(BOOKING_STATE)
+            got = {l['branch']: l['href'] for l in s['links']}
+            good = s['open'] and s['mode'] == 'book' and all(STUDIOS[k] in got.get(k, '') for k in STUDIOS) and s['locked']
+            pg.keyboard.press('Escape')
+            pg.wait_for_timeout(450)
+            closed = pg.evaluate("() => !document.querySelector('#booking').open && !document.documentElement.classList.contains('is-locked')")
+            if good and closed:
+                ok_pages += 1
+            else:
+                details.append(f"/{p['path']} {w}: open={s['open']} mode={s['mode']} studios={list(got)} locked={s['locked']} closedByEsc={closed}")
+        c.close()
+    # /services: «Внедорожник» + программа 3 → корзина YCLIENTS с ID из yclients.json
+    yc = json.loads((DIST / 'assets/yclients.json').read_text(encoding='utf-8'))
+    c = Context(browser, 1440, 900, consent=False)
+    pg = c.page()
+    load(pg, f'{base}/services')
+    pg.locator('input[name="body-type"][value="2"]').evaluate('el => el.closest("label").click()')
+    pg.wait_for_timeout(200)
+    label = pg.locator('#body-price-label').inner_text()
+    pg.locator('[data-book][data-program="3"]').first.click()
+    pg.wait_for_function("() => [...document.querySelectorAll('#booking a[data-branch]')].some(a => a.href.includes('short?o='))", timeout=8000)
+    s = pg.evaluate(BOOKING_STATE)
+    want = {b: yc['programs'][3][b][2] for b in STUDIOS}
+    hrefs = {l['branch']: l['href'] for l in s['links']}
+    cart_ok = all(f'short?o=m-1s{want[b]}' in hrefs.get(b, '') for b in STUDIOS if want[b])
+    pg.keyboard.press('Escape')
+    pg.wait_for_timeout(400)
+    # «Узнать цену» в «Защите» → разговор, первым Технопарк
+    pg.click('#tab-price-protection')
+    pg.wait_for_timeout(300)
+    pg.locator('#price-protection [data-request][data-request-category="protection"]').first.click()
+    pg.wait_for_timeout(450)
+    t = pg.evaluate(BOOKING_STATE)
+    talk_ok = t['open'] and t['mode'] == 'talk' and t['phones'][:1] == ['technopark']
+    c.close()
+    total = len(pages) * 2
+    res.add('5', 'Запись', ok_pages == total and cart_ok and talk_ok,
+            f'первая [data-book] → #booking[open] с 906067 и 1743348, блокировка и Esc: {ok_pages}/{total} (13 страниц × 1440 и 390); '
+            f'«{label}» + программа 3 → {", ".join(f"{b}: …{hrefs.get(b, "")[-24:]}" for b in STUDIOS)} (ожидалось m-1s{want["myasnitskaya"]}/{want["technopark"]}) — {"да" if cart_ok else "нет"}; '
+            f'«Узнать цену» в «Защите» → режим {t["mode"]}, телефоны {t["phones"]}',
+            details + ([] if cart_ok else [f'корзина: {hrefs}']) + ([] if talk_ok else [f'разговор: {t}']))
+
+
+def consent(browser, base, res):
+    c = Context(browser, 1440, 900)
+    pg = c.page()
+    load(pg, f'{base}/services')
+    pg.wait_for_timeout(300)
+    shown = pg.locator('.consent').is_visible()
+    pg.click('[data-consent="0"]')
+    pg.wait_for_timeout(300)
+    load(pg, f'{base}/about')
+    pg.wait_for_timeout(500)
+    again = pg.locator('.consent').is_visible()
+    after_decline = len(c.metrika)
+    pg.locator('[data-consent-open]').scroll_into_view_if_needed()
+    pg.click('[data-consent-open]')
+    pg.wait_for_timeout(300)
+    reopened = pg.locator('.consent').is_visible()
+    focus = pg.evaluate("() => document.activeElement?.dataset?.consent")
+    pg.click('[data-consent="1"]')
+    pg.wait_for_timeout(800)
+    frames_after_decline = list(c.metrika_frames)
+    tag = [u for u in c.metrika if 'tag.js' in u]
+    c.close()
+    ok = shown and not again and after_decline == 0 and reopened and focus == '1' and tag
+    res.add('6', 'Согласие', ok,
+            f'первый визит — уведомление: {shown}; «Отказаться» → запросов страницы к mc.yandex.ru {after_decline}, после перехода уведомления нет: {not again}; '
+            f'«Настройки cookie» → уведомление {reopened}, фокус на «Принять»: {focus == "1"}; «Принять» → запрос tag.js: {len(tag)}; '
+            f'запросов к mc.yandex.ru из iframe виджета Яндекс Карт до согласия: {len(frames_after_decline)}',
+            [f'виджет Карт (не код сайта): {u[:90]}' for u in frames_after_decline[:4]])
+
+
+def maps(browser, base, res):
+    out = []
+    for w in (1440, 390):
+        c = Context(browser, w, 900, consent=False, touch=w < 768)
+        pg = c.page()
+        load(pg, f'{base}/about')
+        for studio in ('myasnitskaya', 'technopark'):
+            pg.locator(f'#map-{studio}').scroll_into_view_if_needed()
+            try:
+                pg.wait_for_function(f"() => ['loaded','error'].includes(document.querySelector('#map-{studio}').dataset.state)", timeout=25000)
+            except Exception:
+                pass
+            r = pg.evaluate(f"""() => {{ const m = document.querySelector('#map-{studio}'); const f = m.querySelector('iframe');
+              return {{state: m.dataset.state, iframe: Boolean(f), widget: Boolean(f && f.src.includes('map-widget')),
+                       retry: Boolean(m.querySelector('[data-map-retry]')?.offsetParent)}}; }}""")
+            r.update(studio=studio, width=w)
+            out.append(r)
+        c.close()
+    ok = all(r['iframe'] and r['widget'] and (r['state'] == 'loaded' or r['state'] == 'error' and r['retry']) for r in out)
+    res.add('7', 'Карты', ok, '; '.join(f"{r['studio']} {r['width']}: iframe mapWidget {r['widget']}, data-state={r['state']}" for r in out))
+
+
+FOCUS_JS = r"""() => { const a = document.activeElement; const cs = getComputedStyle(a);
+  return {id: a.id, cls: a.className && a.className.baseVal === undefined ? a.className : '', text: (a.textContent || '').trim().slice(0, 30),
+          style: cs.outlineStyle, width: parseFloat(cs.outlineWidth), color: cs.outlineColor,
+          inDrawer: Boolean(a.closest('#drawer')), modal: document.querySelector('#drawer').matches(':modal')}; }"""
+
+
+def drawer(browser, base, res, webkit=None):
+    details, facts = [], []
+
+    def scenario(br, name, w):
+        c = Context(br, w, 900, consent=False, touch=w < 768)
+        pg = c.page()
+        load(pg, f'{base}/services')
+        pg.keyboard.press('Tab')
+        skip = pg.evaluate(FOCUS_JS)
+        pg.keyboard.press('Tab')
+        menu = pg.evaluate(FOCUS_JS)
+        if name == 'webkit' and menu['id'] != 'drawer-open':
+            # Safari по умолчанию не ставит Tab на ссылки: фокус на «Меню» ставим сами.
+            pg.focus('#drawer-open')
+            menu = pg.evaluate(FOCUS_JS)
+        red = menu['style'] != 'none' and menu['width'] >= 2 and menu['color'] in ('rgb(226, 35, 26)', 'rgb(192, 21, 15)')
+        pg.keyboard.press('Enter')
+        pg.wait_for_timeout(500)
+        opened = pg.evaluate(FOCUS_JS)
+        trapped = True
+        for _ in range(25):
+            pg.keyboard.press('Tab')
+            # Из модального окна Tab уходит только в интерфейс браузера (activeElement — body), не в страницу.
+            if not pg.evaluate("() => document.activeElement === document.body || Boolean(document.activeElement.closest('#drawer'))"):
+                trapped = False
+                break
+        pg.keyboard.press('Escape')
+        pg.wait_for_timeout(500)
+        back = pg.evaluate("() => ({id: document.activeElement.id, open: document.querySelector('#drawer').open, locked: document.documentElement.classList.contains('is-locked')})")
+        deep = None
+        if w < 768:
+            pg.click('#drawer-open')
+            pg.wait_for_timeout(450)
+            pg.click('#drawer .drawer__item[aria-controls="drawer-p-care"]')
+            pg.wait_for_timeout(450)
+            sub = pg.evaluate("() => ({panel: !document.querySelector('#drawer-p-care').hidden, back: Boolean(document.querySelector('#drawer-p-care [data-drawer-back]')?.offsetParent)})")
+            pg.click('#drawer-p-care [data-drawer-back]')
+            pg.wait_for_timeout(450)
+            root = pg.evaluate("() => Boolean(document.querySelector('#drawer .drawer__panel--root').offsetParent)")
+            deep = sub['panel'] and sub['back'] and root
+            pg.keyboard.press('Escape')
+            pg.wait_for_timeout(400)
+        # Ссылка «к содержанию»
+        load(pg, f'{base}/about')
+        if name == 'webkit':
+            pg.focus('.skip-link')
+        else:
+            pg.keyboard.press('Tab')
+        pg.keyboard.press('Enter')
+        pg.wait_for_timeout(200)
+        skipped = pg.evaluate("() => location.hash === '#main' || document.activeElement.id === 'main'")
+        sticky = pg.evaluate("""async () => { const t = document.querySelector('.anchor-tabs'); if (!t) return null; scrollTo(0, t.getBoundingClientRect().top + scrollY + 900); await new Promise(r => setTimeout(r, 200)); return Math.round(t.getBoundingClientRect().top); }""")
+        has = pg.evaluate("() => CSS.supports('selector(:has(a))')")
+        c.close()
+        ok = ((skip['cls'] == 'skip-link' or name == 'webkit') and menu['id'] == 'drawer-open' and red and opened['inDrawer'] and opened['modal'] and trapped
+              and back['id'] == 'drawer-open' and not back['open'] and not back['locked'] and (deep is None or deep) and skipped and sticky == 0 and has)
+        facts.append(f"{name} {w}: Tab → «{skip['text']}» → «Меню» (обводка {menu['style']} {menu['width']}px {menu['color']}); шторка :modal {opened['modal']}, фокус внутри {opened['inDrawer']}, "
+                     f"Tab не выходит {trapped}; Esc → фокус на #{back['id']}, прокрутка свободна {not back['locked']}"
+                     + (f'; вглубь «Мойка и детейлинг» и «←» назад {deep}' if deep is not None else '') + f"; «к содержанию» {skipped}; липкие вкладки top={sticky}px; :has {has}")
+        if not ok:
+            details.append(facts[-1])
+        return ok
+
+    results = [scenario(browser, 'chromium', 1440), scenario(browser, 'chromium', 390)]
+    if webkit:
+        results += [scenario(webkit, 'webkit', 1440), scenario(webkit, 'webkit', 390)]
+    res.add('8', 'Шторка и клавиатура', all(results), ' | '.join(facts), details)

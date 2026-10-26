@@ -6,3 +6,6 @@ Thumbs.db
 # Настройки приёма заявок (секреты) — только на хостинге, не в репозитории.
 /meatwash-private/
 request-config.php
+
+# Проверки в браузере (scripts/qa) — кэш Python
+__pycache__/
