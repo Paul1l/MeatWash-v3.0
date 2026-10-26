@@ -139,3 +139,42 @@ def run(preview, host, headers, pages, res):
         issues.append(f'/css/base.css?v={sha} → {st} {hd.get("Content-Type")}')
     res.add('11', 'Кэш', not issues,
             f'адресов CSS/JS в HTML с ?v={sha}: {versioned}; импорты модулей с ?v; HEAD /css/base.css?v={sha} → {st} {hd.get("Content-Type")}', issues)
+
+
+def sweep(browser, preview, headers, pages, res):
+    """Дополнение к п. 4: страницы превью в браузере (прокрутка, гараж, окно записи с
+    программой) — ни одного ответа 4xx/5xx и оборванного запроса со своего адреса. Ловит
+    файлы, которые грузятся скриптами и могли уйти при отсеве (prune-deploy)."""
+    from common import Context, load
+    base = preview.rstrip('/')
+    bad, seen = [], 0
+    for w in (390, 1440):
+        c = Context(browser, w, 900, consent=False, headers=headers or None, touch=w < 768)
+        pg = c.page()
+        for p in [p for p in pages if p['file'] != 'kit.html']:
+            load(pg, f"{base}/{p['path']}", scroll=True)
+            if p['id'] == 'services' and w == 1440:
+                pg.locator('[data-book][data-program="2"]').first.click()
+                pg.wait_for_timeout(800)
+                pg.keyboard.press('Escape')
+                pg.wait_for_timeout(300)
+                pg.locator('[data-garage-open]').first.click()
+                try:
+                    pg.wait_for_function("() => ['ready', 'error', 'nogl'].includes(document.querySelector('#garage')?.dataset.state)", timeout=45000)
+                except Exception:
+                    pass
+                state = pg.evaluate("() => document.querySelector('#garage')?.dataset.state")
+                if state != 'ready':
+                    bad.append(f'гараж на превью: state={state}')
+                pg.keyboard.press('Escape')
+        seen += len([1 for _, u in c.responses if u.startswith(base)])
+        bad += [f'{s} {u}' for s, u in c.responses if u.startswith(base) and s >= 400]
+        bad += [f'оборван {u} ({f})' for u, f in c.failed if u.startswith(base)]
+        c.close()
+    item = res.items.get('4')
+    if item:
+        item['numbers'] += f'; в браузере (390 и 1440, прокрутка, гараж, окно записи) запросов к превью {seen}, ошибок {len(bad)}'
+        item['pass'] = item['pass'] and not bad
+        item['details'] += bad
+        res.save()
+        print(f"[{'PASS' if item['pass'] else 'FAIL'}] 4 (браузер): запросов {seen}, ошибок {len(bad)}", *bad[:10], sep='\n       - ')

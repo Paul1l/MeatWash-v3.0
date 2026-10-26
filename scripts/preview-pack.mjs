@@ -7,7 +7,8 @@
 //
 // Что делает:
 //   1. копирует dist в --out (папку очищает), запускает там prune-deploy, сжимает CSS (esbuild,
-//      без смены синтаксиса) и ставит ?v=<короткий sha HEAD> (stamp-assets);
+//      без смены синтаксиса), склеивает стили каждой страницы в один css/b-<хеш>.css и ставит
+//      ?v=<короткий sha HEAD> (stamp-assets);
 //   2. в каждом *.html: <meta name="robots" content="noindex, nofollow">; внутри <head>
 //      (canonical, og:*, JSON-LD) https://meatwash.ru/ → https://<host>/ — тексты документов
 //      не трогает; по умолчанию (--no-metrika) убирает <meta name="mw-metrika">: без номера
@@ -66,6 +67,30 @@ const cssFiles = (await readdir(resolve(out, 'css'))).filter((n) => n.endsWith('
 for (const name of cssFiles) {
   const file = resolve(out, 'css', name);
   execFileSync(resolve(root, 'node_modules/.bin/esbuild'), [file, '--minify', '--log-level=error', '--allow-overwrite', `--outfile=${file}`], {cwd: root});
+}
+// Один файл стилей на страницу (поправка 28, бюджет 26): 5 общих CSS + CSS страницы склеиваются
+// в css/b-<хеш>.css в том же порядке. На мобильном Lighthouse каждый блокирующий файл — лишний
+// круг по сети: с 6–7 файлами LCP был 2,8–3,3 с, с одним — 1,5–2,3 с. Страницы с одинаковым
+// набором получают один и тот же файл; отдельные CSS, на которые больше никто не ссылается, удаляются.
+let bundles = 0;
+{
+  const {createHash} = await import('node:crypto');
+  const made = new Set();
+  for (const name of (await readdir(out)).filter((n) => n.endsWith('.html'))) {
+    const file = resolve(out, name);
+    let html = await readFile(file, 'utf8');
+    const run = html.match(/(?:<link rel="stylesheet" href="\/?css\/[\w.-]+\.css">\n)+/);
+    if (!run) continue;
+    const links = [...run[0].matchAll(/href="(\/?)css\/([\w.-]+\.css)"/g)];
+    if (links.length < 2) continue;
+    const css = (await Promise.all(links.map(([, , n]) => readFile(resolve(out, 'css', n), 'utf8')))).join('\n');
+    const bundle = `b-${createHash('sha256').update(css).digest('hex').slice(0, 10)}.css`;
+    if (!made.has(bundle)) { await writeFile(resolve(out, 'css', bundle), css); made.add(bundle); bundles++; }
+    html = html.replace(run[0], `<link rel="stylesheet" href="${links[0][1]}css/${bundle}">\n`);
+    await writeFile(file, html);
+  }
+  const used = (await Promise.all((await readdir(out)).filter((n) => n.endsWith('.html')).map((n) => readFile(resolve(out, n), 'utf8')))).join('\n').replace(/<!--[\s\S]*?-->/g, '');
+  for (const name of await readdir(resolve(out, 'css'))) if (!used.includes(`css/${name}`)) await rm(resolve(out, 'css', name));
 }
 const stamped = node('stamp-assets.mjs', sha, out).trim();
 // 404.html собирается вне генератора: шрифт и спрайт — по тем же адресам с хешем, что на
@@ -192,7 +217,7 @@ console.log(`Пакет превью: ${out}`);
 console.log(`  хост ${host}, sha ${sha}${dirty ? ' (в рабочей копии есть незакоммиченные правки)' : ''}, Метрика ${metrika ? 'включена' : 'выключена (--no-metrika)'}`);
 console.log(`  страниц: ${pages.length} (из них 404.html), файлов: ${all.length}, размер: ${(bytes / 1048576).toFixed(2)} МБ`);
 console.log(`  ${pruned}`);
-console.log(`  ${stamped}; адресов CSS/JS с ?v=${sha} в HTML: ${versioned}`);
+console.log(`  ${stamped}; адресов CSS/JS с ?v=${sha} в HTML: ${versioned}; файлов стилей после склейки: ${bundles}`);
 console.log(`  пометок «нужно от клиента»: ${todo}`);
 console.log(`  шрифт manrope-vf.woff2: ${kb(fontSize)} КБ`);
 console.log('  бюджеты, КБ gzip (HTML ≤ 20, CSS ≤ 30, JS до взаимодействия ≤ 30; LCP-картинка ≤ 120 телефон / ≤ 200 компьютер, КБ):');
