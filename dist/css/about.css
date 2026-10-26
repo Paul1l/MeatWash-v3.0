@@ -1,2 +1,553 @@
-/* about.css — студии и карты, основатель, путь, команда, клуб.
-   Владелец: WP5. Заготовка WP0 — пустая. */
+/* ==========================================================================
+   about.css — «О нас»: студии и карты, перед визитом, основатель, подход, путь,
+   студии и работы, команда, клуб. Владелец: WP5 (план §3.7, §4.4; поправки 3, 10, 13,
+   19, 20, 22, 34). Цвета — только токены (tokens.css) и --on*.
+
+   Файл в двух частях:
+   1. Блоки страницы «О нас» (обычные правила) — карточки студий с картами, «Перед
+      визитом», «Кто мы и зачем», цифры и принципы, «Наш путь», мозаика студий, команда,
+      клубный блок. Это и есть вид страницы.
+   2. Слой wp5-fallback — временный вид общих компонентов §2.8 (герой A, вкладки-якоря,
+      заголовок секции, кнопки, ссылка-стрелка, карточка, цифры, полоса цитаты, промо),
+      пока их не сделал WP1 в components.css / base.css. Только на «О нас»
+      (body[data-page="about"]). Любое правило WP1 вне слоёв сильнее любого правила в
+      слое, поэтому после слияния WP1 слой ни на что не влияет; удалить его целиком —
+      задача сведения (WP7), когда components.css готов. Если WP1 тоже объявит свои
+      правила в @layer, слой нужно удалить сразу — иначе он перебьёт их.
+   ========================================================================== */
+
+/* ---------- Страница: якорь не прячется под липкими вкладками (поправка 22) ---------- */
+/* Вкладки липнут к верху (62 px, на телефоне 52); нижняя кнопка телефона закрывает низ. */
+html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
+@media (max-width: 759px) {
+  html:has(> body[data-page="about"]) { scroll-padding-top: 60px; }
+}
+@media (max-width: 759px) and (orientation: portrait) {
+  html:has(> body[data-page="about"]) { scroll-padding-bottom: 96px; }
+}
+
+/* ---------- Герой: фото 21:9 / 1:1 (обрезки tile-4 v2, номер закрыт) ---------- */
+.about-hero .hero-a__media img { object-position: 50% 55%; }
+
+/* ==========================================================================
+   Студии и контакты: карточка студии + карта (P23). Контракт maps.js — §4.4.
+   ========================================================================== */
+.locations { display: grid; gap: var(--lg); }
+.location { display: grid; gap: var(--sm); min-width: 0; }
+@media (min-width: 1000px) {
+  .location { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--md); }
+}
+
+.location__card {
+  display: flex; flex-direction: column;
+  min-width: 0;
+  padding: var(--md);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--lift);
+}
+@media (min-width: 1000px) { .location__card { padding: calc(var(--md) + 2px) var(--md) var(--md); } }
+.location__name { margin: 0; font: 400 var(--fs-lg)/1.36 var(--sans); letter-spacing: 0; }
+.location__type { margin: 2px 0 0; color: var(--on-muted); }
+.location__facts { display: grid; gap: 12px; margin: var(--md) 0 0; padding: 0; list-style: none; }
+.location__facts li { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 12px; align-items: start; }
+.location__facts .icon { color: var(--on-muted); }
+.location__phone {
+  justify-self: start;
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--on-line);
+  transition: border-color var(--t-fast) var(--ease);
+}
+.location__phone:hover { border-bottom-color: var(--on-red); }
+.location__detail {
+  margin: var(--md) 0 0; padding-top: var(--sm);
+  border-top: 1px solid var(--on-line);
+  font-size: var(--fs-sm); line-height: 1.55;
+  color: var(--on-muted);
+}
+.location__actions {
+  display: flex; flex-wrap: wrap; gap: var(--sm);
+  margin-top: auto; padding-top: var(--md);
+}
+.location__actions .btn { flex: 1 1 auto; }
+.location__actions .btn .icon { width: 20px; height: 20px; }
+
+/* Область карты: размер задан до загрузки — iframe лежит в ней абсолютно и её не меняет.
+   На телефоне 4:3 (не ниже 260), от 760 — 16:10, от 1000 — во всю высоту карточки рядом. */
+.location__map {
+  position: relative; isolation: isolate;
+  min-width: 0;
+  aspect-ratio: 4 / 3; min-height: 260px;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--lift);
+}
+@media (min-width: 760px) { .location__map { aspect-ratio: 16 / 10; } }
+@media (min-width: 1000px) { .location__map { aspect-ratio: auto; min-height: 400px; } }
+/* Фокус области — только скриптом (tabindex=-1) после «На карте»: для чтения с экрана.
+   Своя рамка у слоя для пальца и у самой карты. */
+.location__map:focus { outline: none; }
+.location__map iframe {
+  position: absolute; inset: 0; z-index: 1;
+  display: block; width: 100%; height: 100%;
+  border: 0;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+}
+/* Виджет виден, когда загрузился или грузится дольше 12 с (тогда — с плашкой-ссылкой). */
+.location__map:is([data-state="loaded"], [data-slow]) iframe { opacity: 1; }
+/* Заглушка всегда под iframe: сетка, метка, подпись; без скриптов, до загрузки и при ошибке —
+   ссылка на карточку в Яндекс Картах. Ошибка кладёт заглушку поверх iframe. */
+.location__fallback {
+  position: absolute; inset: 0; z-index: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px;
+  padding: var(--md);
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgb(var(--red-rgb) / .10), transparent 60%),
+    repeating-linear-gradient(0deg, rgb(var(--fg-rgb) / .045) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(90deg, rgb(var(--fg-rgb) / .045) 0 1px, transparent 1px 40px),
+    rgb(var(--fg-rgb) / .03);
+}
+.location__map[data-state="error"] .location__fallback { z-index: 2; background-color: var(--bg); }
+.location__pin { flex: none; color: var(--red); }
+.location__status { max-width: 30ch; margin: 0; font-size: var(--fs-sm); line-height: 1.55; color: var(--on-muted); }
+.location__status:empty { display: none; }
+.location__map[data-state="error"] .location__status { font-size: var(--fs-base); color: var(--on); }
+.location__retry[hidden] { display: none; }
+/* Под iframe ссылка заглушки недоступна (inert) — и не видна, чтобы не казаться кнопкой. */
+.location__map:is([data-state="loading"], [data-state="loaded"]) .location__external { visibility: hidden; }
+/* Слой для пальца (maps.js): только на сенсорном экране и только над картой. */
+.location__shield { display: none; }
+@media (pointer: coarse) {
+  .location__map:is([data-state="loading"], [data-state="loaded"]) .location__shield:not([hidden]) {
+    position: absolute; inset: 0; z-index: 3;
+    display: block; width: 100%; height: 100%;
+    padding: 0; border: 0;
+    background: transparent;
+    color: inherit; font: inherit;
+    cursor: pointer;
+  }
+}
+/* Плашки поверх карты: подпись слоя для пальца и «Карта долго грузится» (одна на месте другой).
+   Тёмное стекло: читается и на светлой карте, и на тёмной заглушке. */
+.location__hint,
+.location__slow:not([hidden]) {
+  position: absolute; left: 50%; top: 74%;
+  transform: translate(-50%, -50%);
+  display: inline-flex; align-items: center; gap: 8px;
+  width: max-content; max-width: calc(100% - 32px);
+  min-height: 40px; margin: 0;
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  background: rgb(var(--bg-rgb) / .84);
+  color: var(--fg);
+  font-size: var(--fs-sm); line-height: 1.35;
+  text-align: left;
+  box-shadow: 0 2px 16px rgb(0 0 0 / .3), var(--lift);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+}
+.location__hint .location__pin { color: var(--red); }
+.location__slow:not([hidden]) { z-index: 4; display: block; padding-block: 2px; }
+.location__slow a { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: rgb(var(--fg-rgb) / .5); }
+.location__slow a .icon { width: 18px; height: 18px; }
+.location__map[data-slow] .location__hint { visibility: hidden; }
+.location__shield:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+.location__shield:focus-visible .location__hint { box-shadow: 0 0 0 2px var(--fg), 0 0 0 4px var(--ink); }
+@media (prefers-reduced-motion: reduce) { .location__map iframe { transition: none; } }
+
+/* ==========================================================================
+   Перед визитом: три карточки; первая — предложение, на бордо.
+   ========================================================================== */
+.visit { display: grid; gap: var(--md); margin: 0; padding-block: 0; list-style: none; }
+.visit__item { display: flex; flex-direction: column; gap: var(--sm); min-width: 0; }
+.visit__item h3 { margin: 0; font: 400 var(--fs-lg)/1.36 var(--sans); letter-spacing: 0; }
+.visit__item p { margin: 0; color: var(--on-muted); text-wrap: pretty; }
+.visit__link { align-self: flex-start; margin-top: auto; }
+.visit__item--offer {
+  --focus: var(--fg);                         /* красный на бордо — 2,89:1 (поправка 19) */
+  --on-muted: rgb(var(--fg-rgb) / .84);
+  --on-line: rgb(var(--fg-rgb) / .34);
+  --on-red: var(--fg);
+  background: var(--oxblood);
+  box-shadow: none;
+}
+@media (min-width: 760px) and (max-width: 999px) {
+  .visit__item { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); column-gap: var(--md); align-items: start; }
+  .visit__item h3 { grid-row: 1 / span 2; }
+  .visit__link { grid-column: 2; margin-top: 0; }
+}
+@media (min-width: 1000px) {
+  .visit { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ==========================================================================
+   Кто мы и зачем — редакционное интро (P26): фото основателя, утверждение, текст.
+   ========================================================================== */
+.founder { display: grid; gap: var(--md); align-items: start; }
+.founder__title { margin: 0; font: 300 var(--fs-2xl)/1.26 var(--sans); letter-spacing: -.02em; }
+.founder__photo { position: relative; margin: 0; overflow: hidden; border-radius: var(--r-lg); background: var(--surface); }
+.founder__photo img { display: block; width: 100%; height: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: 50% 30%; }
+.founder__quote { margin: 0; }
+.founder__quote blockquote { margin: 0; }
+/* Красная линия над утверждением — как черта у подписей v2, без надписи. */
+.founder__quote blockquote::before {
+  content: ""; display: block;
+  width: 36px; height: 1px;
+  margin-bottom: var(--md);
+  background: var(--on-red);
+}
+.founder__quote blockquote p {
+  margin: 0;
+  font: 300 var(--fs-xl)/1.31 var(--sans);
+  letter-spacing: -.015em;
+  text-wrap: pretty;
+}
+.founder__quote figcaption { margin-top: var(--md); font-weight: 500; color: var(--on); }
+.founder__text { display: grid; gap: var(--sm); max-width: 40em; }
+.founder__text p { margin: 0; color: var(--on-muted); text-wrap: pretty; }
+.founder__text a { color: var(--on); text-decoration: underline; text-decoration-color: var(--on-line); text-underline-offset: 4px; transition: text-decoration-color var(--t-fast) var(--ease); }
+.founder__text a:hover { text-decoration-color: var(--on-red); }
+@media (max-width: 759px) {
+  .founder__photo img { aspect-ratio: 4 / 5; }
+}
+@media (min-width: 1000px) {
+  .founder {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas: "title title" "photo quote" "photo text";
+    grid-template-rows: auto auto 1fr;
+    column-gap: calc(2 * var(--md));
+    row-gap: var(--md);
+  }
+  .founder__title { grid-area: title; padding-bottom: var(--md); }
+  .founder__photo { grid-area: photo; }
+  .founder__quote { grid-area: quote; }
+  .founder__text { grid-area: text; }
+}
+
+/* ==========================================================================
+   Подход к уходу: цифры (P07) и три принципа.
+   ========================================================================== */
+.about-club .counters { margin-top: 0; }
+.about-club .counter { min-width: 0; }
+.principles {
+  display: grid; gap: var(--md);
+  margin: var(--xl) 0 0; padding-block: 0;
+  list-style: none;
+}
+@media (min-width: 760px) { .principles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.principles__item { position: relative; min-width: 0; padding-top: var(--md); border-top: 1px solid var(--on-line); }
+/* Красный штрих в начале линии — акцент v2: линия, не заливка. */
+.principles__item::before {
+  content: ""; position: absolute; left: 0; top: -1px;
+  width: 36px; height: 1px;
+  background: var(--on-red);
+}
+.principles__item h3 { margin: 0 0 6px; font: 400 var(--fs-lg)/1.36 var(--sans); letter-spacing: 0; }
+.principles__item p { margin: 0; color: var(--on-muted); }
+
+/* ==========================================================================
+   Наш путь: четыре вехи на линии времени. От 1000 px — в ряд, ниже — лента
+   с прокруткой пальцем и стрелками клавиатуры (ol в фокусе по Tab).
+   ========================================================================== */
+.milestones {
+  --dot: 9px;
+  display: grid; gap: var(--md);
+  margin: 0; padding-top: calc(var(--dot) / 2); padding-bottom: 0;
+  list-style: none;
+}
+.milestone {
+  position: relative;
+  display: flex; flex-direction: column; gap: var(--sm);
+  min-width: 0;
+  padding-top: var(--md);
+}
+/* Линия времени: отрезок над каждой вехой, продолжается в зазор до следующей. */
+.milestone::after {
+  content: ""; position: absolute; left: 0; top: 0;
+  right: calc(-1 * var(--md));
+  height: 1px;
+  background: var(--on-line);
+}
+.milestone:last-child::after { right: 0; }
+.milestone::before {
+  content: ""; position: absolute; z-index: 1;
+  left: 0; top: calc(var(--dot) / -2 + .5px);
+  width: var(--dot); height: var(--dot);
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 4px var(--page);
+}
+.milestone__date { font: 300 var(--fs-xl)/1.2 var(--sans); letter-spacing: -.015em; color: var(--on); }
+.milestone h3 { margin: 0; font: 600 var(--fs-md)/1.42 var(--sans); letter-spacing: 0; }
+.milestone p { margin: 0; color: var(--on-muted); text-wrap: pretty; }
+.milestone .link-arrow { align-self: flex-start; margin-top: auto; }
+@media (min-width: 1000px) {
+  .milestones { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+@media (max-width: 999px) {
+  .milestones {
+    display: flex;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: var(--ext);
+    padding-bottom: var(--sm);
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--fg-rgb) / .3) transparent;
+  }
+  .milestone { flex: 0 0 min(76%, 340px); scroll-snap-align: start; }
+  .milestones:focus-visible { outline-offset: 4px; }
+}
+
+/* Вырезки из журнала (Service & Parts, ноябрь 2025). */
+.press { display: grid; justify-items: center; gap: var(--md); margin: var(--xl) 0 0; }
+.press__pages { display: flex; justify-content: center; gap: var(--md); max-width: 100%; }
+.press__pages img {
+  display: block;
+  width: clamp(128px, 15vw, 232px); height: auto;
+  border-radius: 6px;
+  box-shadow: 0 24px 60px rgb(0 0 0 / .55), var(--lift);
+}
+.press__pages img + img { margin-top: var(--md); }
+.press figcaption { max-width: 40ch; font-size: var(--fs-sm); line-height: 1.55; text-align: center; color: var(--on-muted); }
+
+/* ==========================================================================
+   Студии и работы: мозаика 1 + 2 (P26). Подписи — матовые чипы на фото
+   (от 760 px), на телефоне — под фото.
+   ========================================================================== */
+.studios { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sm); }
+.studios__item { position: relative; margin: 0; min-width: 0; }
+.studios__item img {
+  display: block; width: 100%; height: auto;
+  aspect-ratio: 4 / 3; object-fit: cover;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.studios__item--main { grid-column: 1 / -1; }
+.studios__item--main img { aspect-ratio: 3 / 2; }
+.studios__item figcaption { margin-top: 8px; font-size: var(--fs-sm); line-height: 1.45; color: var(--on-muted); }
+@media (min-width: 760px) {
+  .studios { grid-template-columns: minmax(0, 2.25fr) minmax(0, 1fr); }
+  .studios__item--main { grid-column: 1; grid-row: 1 / span 2; }
+  .studios__item--main img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto; }
+  .studios__item { overflow: hidden; border-radius: var(--r-lg); }
+  .studios__item figcaption {
+    position: absolute; left: var(--sm); bottom: var(--sm); z-index: 1;
+    max-width: calc(100% - 2 * var(--sm));
+    margin: 0; padding: 4px 12px;
+    border-radius: var(--r-pill);
+    font: 400 13.5px/21.75px var(--sans);
+    color: var(--fg);
+    background: linear-gradient(var(--frost-strong), var(--frost-strong)), rgb(var(--bg-rgb) / .58);
+    box-shadow: inset 0 0 0 1px rgb(var(--fg-rgb) / .16);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  }
+}
+.studios__foot {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--sm) var(--md);
+  margin-top: var(--md);
+}
+.studios__credit { margin: 0; max-width: 60ch; font-size: var(--fs-sm); line-height: 1.55; color: var(--on-muted); }
+
+/* ==========================================================================
+   Команда: строки «роль — что делает» с линиями (как таблица фактов P04).
+   ========================================================================== */
+.team { display: grid; margin: 0; padding-block: 0; list-style: none; }
+.team__row { display: grid; gap: 6px var(--md); padding-block: var(--md); border-top: 1px solid var(--on-line); }
+.team__row:last-child { border-bottom: 1px solid var(--on-line); }
+.team__row h3 { margin: 0; font: 400 var(--fs-lg)/1.36 var(--sans); letter-spacing: 0; }
+.team__row p { margin: 0; max-width: 42em; color: var(--on-muted); font-size: var(--fs-md); line-height: 1.5; text-wrap: pretty; }
+@media (min-width: 760px) {
+  .team__row { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: baseline; }
+}
+
+/* ==========================================================================
+   Клуб: промо «фото | панель» (P11), панель — бордо. Карта клуба на чёрном.
+   ========================================================================== */
+.membership {
+  display: grid;
+  padding-block: var(--xl) calc(2 * var(--xl));
+}
+.membership__media {
+  display: grid; place-items: center;
+  min-width: 0;
+  padding: var(--lg) var(--md);
+  overflow: hidden;
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: #000;
+}
+.membership__media img { display: block; width: min(100%, 600px); height: auto; }
+.membership__panel {
+  --focus: var(--fg);                          /* поправка 19 */
+  --on-muted: rgb(var(--fg-rgb) / .84);
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  gap: var(--sm);
+  min-width: 0;
+  padding: var(--lg) var(--md);
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  background: var(--oxblood);
+  color: var(--fg);
+}
+.membership__title { margin: 0; font: 400 var(--fs-xl)/1.31 var(--sans); letter-spacing: -.01em; }
+.membership__panel p { margin: 0; max-width: 34em; color: var(--on-muted); text-wrap: pretty; }
+.membership__actions { display: flex; flex-wrap: wrap; gap: var(--sm); margin-top: var(--sm); }
+/* Ссылка на оформление карты — основная кнопка (класс membership__link — контракт проверки). */
+.membership__link {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 56px; padding: 16px 28px;
+  border-radius: var(--r-sm);
+  background: var(--fg); color: var(--ink);
+  font: 500 16px/1.2 var(--sans);
+  text-decoration: none;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.membership__link:hover { background: #fff; }
+.membership__link .icon { width: 20px; height: 20px; }
+@media (max-width: 759px) {
+  .membership__actions { display: grid; width: 100%; }
+}
+@media (min-width: 760px) {
+  .membership { grid-template-columns: minmax(0, 56fr) minmax(0, 44fr); }
+  .membership__media { border-radius: var(--r-lg) 0 0 var(--r-lg); padding: var(--lg); }
+  .membership__panel { border-radius: 0 var(--r-lg) var(--r-lg) 0; padding: var(--lg); }
+}
+
+/* Подпись полосы цитаты: «Meat Auto» и надпись «Car Care Club» из логотипа. */
+.quote-band figcaption { white-space: nowrap; }
+svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20px, 1.2vw + 12px, 30px); aspect-ratio: 1231 / 198; overflow: visible; }
+
+/* ---------- Появление фото: только при обычном движении и со скриптом ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .js .founder__photo[data-reveal]:not(.is-in) img,
+  .js .studios__item[data-reveal]:not(.is-in) img,
+  .js .membership__media[data-reveal]:not(.is-in) img { opacity: 0; transform: scale(1.06); }
+  .founder__photo[data-reveal].is-in img,
+  .studios__item[data-reveal].is-in img,
+  .membership__media[data-reveal].is-in img { transition: opacity 1s var(--ease-out), transform 1.6s var(--expo); }
+}
+
+
+/* ==========================================================================
+   2. Временный вид общих компонентов §2.8 — только «О нас», до components.css WP1.
+   ========================================================================== */
+@layer wp5-fallback {
+  :where(body[data-page="about"]) :where(h1, h2, h3, p, figure, blockquote) { margin: 0; }
+  :where(body[data-page="about"]) :where(img) { display: block; max-width: 100%; }
+  :where(body[data-page="about"]) :where(main) { display: block; }
+
+  /* Кнопки (2.6): вторичная — матовое стекло, компактная — 36. */
+  :where(body[data-page="about"]) .btn { transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+  :where(body[data-page="about"]) .btn .icon { width: 20px; height: 20px; }
+  :where(body[data-page="about"]) .btn--primary:hover { background: #fff; border-color: #fff; }
+  :where(body[data-page="about"]) .btn--secondary {
+    background: var(--frost-strong); border-color: transparent; color: var(--fg);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  }
+  :where(body[data-page="about"]) .btn--secondary:hover { background: rgb(156 156 159 / .45); }
+  :where(body[data-page="about"]) .btn--compact { min-height: 40px; padding: 8px 18px; border-radius: var(--r-xs); font-size: 15px; }
+
+  /* Ссылка-стрелка. */
+  :where(body[data-page="about"]) .link-arrow {
+    display: inline-flex; align-items: center; gap: 6px;
+    min-height: 44px; padding: 0;
+    border: 0; background: none; color: var(--on);
+    font: 500 16px/1.5 var(--sans);
+    text-decoration: underline; text-decoration-thickness: 1px;
+    text-decoration-color: var(--on-line); text-underline-offset: 6px;
+    cursor: pointer;
+    transition: text-decoration-color var(--t-fast) var(--ease);
+  }
+  :where(body[data-page="about"]) .link-arrow:hover { text-decoration-color: var(--on-red); }
+  :where(body[data-page="about"]) .link-arrow .icon { width: 20px; height: 20px; transition: transform .6s var(--expo); }
+  :where(body[data-page="about"]) .link-arrow:hover .icon { transform: translateX(3px); }
+
+  /* Герой A: 21:9 от 760 px (заголовок слева внизу по --ext, снизу --lg, нижний скрим),
+     1:1 ниже — на фото только заголовок, лид и кнопки под фото. */
+  :where(body[data-page="about"]) .hero-a { position: relative; isolation: isolate; display: grid; overflow: hidden; background: var(--bg); color: var(--fg); }
+  :where(body[data-page="about"]) .hero-a__media { position: relative; display: block; }
+  :where(body[data-page="about"]) .hero-a__media img { width: 100%; height: 100%; object-fit: cover; }
+  :where(body[data-page="about"]) .hero-a__media::after { content: ""; position: absolute; inset: auto 0 0; height: 60%; background: linear-gradient(0deg, var(--fade)); pointer-events: none; }
+  :where(body[data-page="about"]) .hero-a__media::before { content: ""; position: absolute; inset: 0 0 auto; z-index: 1; height: 148px; background: linear-gradient(180deg, var(--fade)); opacity: .7; pointer-events: none; }
+  :where(body[data-page="about"]) .hero-a h1 { font: 300 var(--fs-3xl)/1.1 var(--sans); letter-spacing: -.025em; color: #fff; text-wrap: balance; }
+  :where(body[data-page="about"]) .hero-a__lead { font: 400 var(--fs-md)/1.42 var(--sans); color: rgb(var(--fg-rgb) / .9); }
+  :where(body[data-page="about"]) .hero-a__actions { display: flex; flex-wrap: wrap; gap: var(--sm); }
+  @media (max-width: 759px) {
+    :where(body[data-page="about"]) .hero-a { grid-template-columns: minmax(0, 1fr); padding-bottom: var(--lg); }
+    :where(body[data-page="about"]) .hero-a__media { grid-area: 1 / 1; aspect-ratio: 1; }
+    :where(body[data-page="about"]) .hero-a__media::before { height: 72px; }
+    :where(body[data-page="about"]) .hero-a__body { display: contents; }
+    :where(body[data-page="about"]) .hero-a h1 { grid-area: 1 / 1; z-index: 1; align-self: end; padding: 0 var(--ext) var(--md); }
+    :where(body[data-page="about"]) .hero-a__lead { padding: var(--sm) var(--ext) 0; }
+    :where(body[data-page="about"]) .hero-a__actions { display: grid; padding: var(--md) var(--ext) 0; }
+  }
+  @media (min-width: 760px) {
+    :where(body[data-page="about"]) .hero-a { min-height: calc(100vw * 9 / 21); align-items: end; }
+    :where(body[data-page="about"]) .hero-a__media { position: absolute; inset: 0; z-index: -1; }
+    :where(body[data-page="about"]) .hero-a__body { display: grid; justify-items: start; gap: var(--sm); padding: calc(var(--header-h) + var(--md)) var(--ext) var(--lg); }
+    :where(body[data-page="about"]) .hero-a__actions { margin-top: var(--sm); }
+  }
+
+  /* Вкладки-якоря (P08): липкая полоса 62 / 52, вкладка 36, радиус 8; выбранная —
+     слоновая кость с текстом --ink (поправка 20); на телефоне — лента с затуханием. */
+  :where(body[data-page="about"]) .anchor-tabs {
+    position: sticky; top: 0; z-index: 20;
+    background: rgb(var(--bg-rgb) / .88);
+    -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+    box-shadow: 0 1px 0 var(--on-line);
+  }
+  :where(body[data-page="about"]) .anchor-tabs__track {
+    display: flex; gap: 4px;
+    padding: 13px var(--basic);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  :where(body[data-page="about"]) .anchor-tabs__track::-webkit-scrollbar { display: none; }
+  :where(body[data-page="about"]) .anchor-tabs__tab {
+    flex: none; display: inline-flex; align-items: center;
+    min-height: 36px; padding: 6px 16px;
+    border-radius: var(--r-xs);
+    color: var(--on); text-decoration: none; white-space: nowrap;
+    transition: background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  :where(body[data-page="about"]) .anchor-tabs__tab:hover { background: var(--surface-2); }
+  :where(body[data-page="about"]) .anchor-tabs__tab[aria-current="true"] { background: var(--fg); color: var(--ink); }
+  :where(body[data-page="about"]) .anchor-tabs__tab:focus-visible { outline-offset: -2px; }
+  @media (max-width: 759px) {
+    :where(body[data-page="about"]) .anchor-tabs__track {
+      padding: 8px var(--ext);
+      -webkit-mask: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+      mask: linear-gradient(90deg, #000 calc(100% - 48px), transparent);
+    }
+  }
+
+  /* Заголовок секции (P09): по центру по колонке --title. */
+  :where(body[data-page="about"]) .section-head { padding-bottom: var(--lg); text-align: center; }
+  :where(body[data-page="about"]) .section-head h2 { font: 300 var(--fs-2xl)/1.26 var(--sans); letter-spacing: -.02em; text-wrap: balance; }
+  :where(body[data-page="about"]) .section-head__lead { max-width: 44em; margin: var(--sm) auto 0; font-size: var(--fs-md); line-height: 1.5; color: var(--on-muted); text-wrap: pretty; }
+
+  /* Карточка (P02/P20). */
+  :where(body[data-page="about"]) .card { padding: var(--md); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--lift); }
+
+  /* Цифры (P07): значение --fs-4xl/300, подпись 16 --on-muted. */
+  :where(body[data-page="about"]) .counters { display: grid; gap: var(--md); margin: 0; padding-block: 0; list-style: none; }
+  :where(body[data-page="about"]) .counter { display: flex; flex-direction: column; gap: 4px; }
+  :where(body[data-page="about"]) .counter__value { font: 300 var(--fs-4xl)/1.1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  :where(body[data-page="about"]) .counter__label { color: var(--on-muted); }
+  @media (min-width: 760px) { :where(body[data-page="about"]) .counters { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  /* Полоса цитаты: бордо во всю ширину, без фото; фокус — слоновая кость (поправка 19). */
+  :where(body[data-page="about"]) .quote-band {
+    --focus: var(--fg);
+    display: grid; justify-items: center; gap: var(--md);
+    padding: calc(var(--xl) * 1.25) var(--title);
+    background: var(--oxblood); color: var(--fg);
+    text-align: center;
+  }
+  :where(body[data-page="about"]) .quote-band blockquote p { font: 300 var(--fs-2xl)/1.26 var(--sans); letter-spacing: -.02em; text-wrap: balance; }
+  :where(body[data-page="about"]) .quote-band figcaption { display: inline-flex; align-items: center; gap: 12px; font-weight: 500; letter-spacing: .02em; }
+}

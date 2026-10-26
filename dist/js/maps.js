@@ -1,4 +1,4 @@
-// Карты студий в карточках локаций (главная и «О нас»): у каждого филиала своя
+// Карты студий в карточках локаций (страница «О нас», блок «Студии и контакты»): у каждого филиала своя
 // карта на месте фотографии, видна сразу, без окна.
 //
 // Виджет — официальный iframe Яндекс Карт без карточки организации, только
@@ -140,7 +140,8 @@ function embed(box) {
     const settled = new Promise((resolve) => { release = resolve; setTimeout(resolve, QUEUE_STEP_MS); });
     const iframe = document.createElement('iframe');
     iframe.src = location.mapWidget;
-    iframe.title = `Яндекс Карты: MEATWASH ${location.name}, ${location.address}`;
+    // Имя на сайте — Meat Auto (в самих Картах студии пока под прежним именем, Meat Wash).
+    iframe.title = `Яндекс Карты: Meat Auto — ${location.name}, ${location.address}`;
     iframe.allowFullscreen = true;
     iframe.referrerPolicy = 'strict-origin-when-cross-origin';
     // Итог проверки: 'ok', 'fail' — запрос отклонён (блокировка, обрыв, нет сети),
