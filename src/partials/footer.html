@@ -1,24 +1,29 @@
-<!-- Подвал (план §1.4, паттерн Porsche 3.3). Владелец: WP1. Заготовка WP0 по контракту:
+<!-- Подвал (план §1.4, паттерн Porsche 3.3). Владелец: WP1.
+     Сверху «Наверх», строка города, три колонки (Студии · Meat Auto · Связаться), юридическая
+     строка, пометка о Meta, внизу по центру — белый бык и «Car Care Club».
      «На карте» — class="footer__map", href к карте студии, data-map-link — порядок атрибутов
      именно такой (его читают ui.js и check). Колонки ссылок — nav с подписью (поправка 25):
-     при закрытой шторке это единственная видимая навигация. -->
+     при закрытой шторке это единственная видимая навигация. На главной подвал следует цвету
+     страницы (v2), на остальных он тёмный, на «бумаге» тоже. -->
 <footer class="site-footer" id="contacts">
   <h2 class="sr">Контакты</h2>
-  <a class="site-footer__up link-arrow" href="#top">{{icon:arrow-up}}Наверх</a>
-  <p class="site-footer__region">Москва · {{count:studios:студия}}</p>
+  <a class="site-footer__up" href="#top">{{icon:arrow-up}}<span>Наверх</span></a>
+  <p class="site-footer__region">{{icon:pin}}<span>Москва · {{count:studios:студия}} · с&nbsp;{{brand:since}}&nbsp;года</span></p>
   <div class="site-footer__cols">
-    <section class="site-footer__col" aria-labelledby="footer-studios-title">
+    <section class="site-footer__col site-footer__col--studios" aria-labelledby="footer-studios-title">
       <h3 class="site-footer__title" id="footer-studios-title">Студии</h3>
       <address class="site-footer__studio">
         <p class="site-footer__studio-name">{{loc:myasnitskaya:name}}</p>
-        <p>{{loc:myasnitskaya:type}}<br>{{loc:myasnitskaya:address}}<br>{{loc:myasnitskaya:hours}}</p>
-        <p><a href="tel:{{loc:myasnitskaya:tel}}"><span class="nw">{{loc:myasnitskaya:phone}}</span></a></p>
+        <p class="site-footer__studio-type">{{loc:myasnitskaya:type}}</p>
+        <p>{{loc:myasnitskaya:address}}<br>{{loc:myasnitskaya:hours}}</p>
+        <p><a class="site-footer__tel" href="tel:{{loc:myasnitskaya:tel}}"><span class="nw">{{loc:myasnitskaya:phone}}</span></a></p>
         <a class="footer__map" href="{{locations}}#map-myasnitskaya" data-map-link="myasnitskaya">На карте<span class="sr">: {{loc:myasnitskaya:name}}</span>{{icon:arrow-right}}</a>
       </address>
       <address class="site-footer__studio">
         <p class="site-footer__studio-name">{{loc:technopark:name}}</p>
-        <p>{{loc:technopark:type}}<br>{{loc:technopark:address}}<br>{{loc:technopark:hours}}</p>
-        <p><a href="tel:{{loc:technopark:tel}}"><span class="nw">{{loc:technopark:phone}}</span></a></p>
+        <p class="site-footer__studio-type">{{loc:technopark:type}}</p>
+        <p>{{loc:technopark:address}}<br>{{loc:technopark:hours}}</p>
+        <p><a class="site-footer__tel" href="tel:{{loc:technopark:tel}}"><span class="nw">{{loc:technopark:phone}}</span></a></p>
         <a class="footer__map" href="{{locations}}#map-technopark" data-map-link="technopark">На карте<span class="sr">: {{loc:technopark:name}}</span>{{icon:arrow-right}}</a>
       </address>
     </section>
@@ -37,16 +42,16 @@
     <section class="site-footer__col" aria-labelledby="footer-contact-title">
       <h3 class="site-footer__title" id="footer-contact-title">Связаться</h3>
       <ul class="site-footer__links">
-        <li><button class="btn btn--primary" type="button" data-book>Записаться</button></li>
+        <li><button type="button" data-book>Записаться</button></li>
         <li><a href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a></li>
-        <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал MEAT AUTO{{icon:arrow-up-right}}<span class="sr"> в Telegram (откроется в новой вкладке)</span></a></li>
+        <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал <span lang="en">MEAT AUTO</span>{{icon:arrow-up-right}}<span class="sr"> в Telegram (откроется в новой вкладке)</span></a></li>
         <li><a href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a></li>
       </ul>
     </section>
   </div>
   <!-- Документы по 152-ФЗ. «Настройки cookie» показывает js/analytics.js, только если подключена Метрика. -->
   <div class="site-footer__legal">
-    <span>© 2026 <span lang="en">Meat Auto</span></span>
+    <span class="site-footer__copy">©&nbsp;2026 <span lang="en">Meat Auto</span></span>
     <a href="privacy"{{current:privacy}}>Политика обработки персональных данных</a>
     <a href="consent"{{current:consent}}>Согласие на обработку данных</a>
     <button type="button" data-consent-open hidden>Настройки cookie</button>

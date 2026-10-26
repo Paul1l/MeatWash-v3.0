@@ -1,11 +1,22 @@
 /* ==========================================================================
    Meat Auto — токены дизайн-системы (план §2.1, поправки критика 19, 20, 24, 25, 29).
-   Владелец: WP0 в первый день, дальше WP1 (добавляет --header-h, --cta-zone и т. п.).
+   Владелец: WP1 (заготовка WP0).
    Шрифт (@font-face) здесь НЕ объявляется: его пишет scripts/content.mjs в <head>
    каждой страницы, с тем же адресом ?v=<хеш>, что и у <link rel=preload> (поправка 28).
    Тема страницы — атрибут data-theme на <html> (поправка 24): dark | paper | home.
-   Компоненты берут цвета только из --on* и --page — тогда один и тот же компонент
-   работает на тёмной странице, на «бумаге» и на главной в обеих фазах.
+   Компоненты берут цвета только из --on* и --page: тогда один и тот же компонент
+   работает на тёмной странице, на «бумаге», в шторке, на бордо и на главной.
+
+   Схемы блока (как scheme-dark у Porsche): .scheme-dark, .scheme-light, .scheme-oxblood
+   переопределяют --on* внутри блока; фон блока — var(--page) (base.css).
+
+   Контраст (WCAG, посчитано):
+     --fg на --bg 16,88 · --muted 7,51 · --red на --bg 4,28 (текст от 24 px и не-текст)
+     --ink на --fg 16,88 · ink/.7 на --fg 7,2 · --red-ink на --fg 5,27
+     --fg на --oxblood 11,38 · fg/.66 на --oxblood 5,6 · --red на --oxblood 2,89 — не сочетать:
+     фокус на бордо — слоновой костью (поправка 19).
+     Выбранное состояние (вкладки, переключатели, пункт шторки) — заливка --on с текстом
+     --on-inverse (15:1) или линия 2–3 px --on-red, а не прозрачная плашка (поправка 20).
    ========================================================================== */
 :root {
   color-scheme: dark;
@@ -14,7 +25,7 @@
   --fg: #f1ebe0;  --fg-rgb: 241 235 224;        /* слоновая кость */
   --fg-2: #e6dfd3;                               /* вторая панель шторки, тень «бумаги» */
   --ink: #080808; --ink-rgb: 8 8 8;
-  --oxblood: #5c1219;                            /* бордо: промо-панели, полоса цитаты */
+  --oxblood: #5c1219; --oxblood-rgb: 92 18 25;   /* бордо: промо-панели, полоса цитаты */
   --red: #e2231a; --red-rgb: 226 35 26;          /* линии, активное, фокус, прогресс; не заливка */
   --red-ink: #c0150f;                            /* красный текст на слоновой кости (5,27:1) */
   --surface: rgb(var(--fg-rgb) / .06);           /* фон карточек и полос */
@@ -24,9 +35,10 @@
   --muted: rgb(var(--fg-rgb) / .66);             /* 7,51:1 */
   --frost: rgb(107 107 112 / .227);
   --frost-strong: rgb(156 156 159 / .3);
+  --frost-hover: rgb(156 156 159 / .45);         /* наведение на вторичную кнопку */
   --scrim: rgb(0 0 0 / .6);                      /* фон за шторкой и окнами */
   --blur: blur(32px);
-  --focus: var(--red);                           /* на бордо — var(--fg): красный там 2,89:1 (поправка 19) */
+  --focus: var(--red);                           /* на бордо — var(--fg) (поправка 19) */
   /* 16 точек затемнения, как в v2 (rgb(8 8 8 / .8) → 0) */
   --fade: rgb(8 8 8 / .8) 0%, rgb(8 8 8 / .8) 8.1%, rgb(8 8 8 / .8) 15.5%, rgb(8 8 8 / .8) 22.5%,
           rgb(8 8 8 / .78) 29%, rgb(8 8 8 / .73) 35.3%, rgb(8 8 8 / .67) 41.2%, rgb(8 8 8 / .6) 47.1%,
@@ -77,15 +89,21 @@
   --expo: cubic-bezier(.16, 1, .3, 1);          /* крупные появления главной, 1.5–2s */
   --t-fast: .25s; --t-open: .4s; --t-close: .25s;
 
-  /* Оболочка (WP1 уточняет): высота шапки подстраниц 66 / 83 (Porsche) и зона
-     нижней кнопки на телефоне — над ней встаёт уведомление о cookie (поправка 25). */
-  --header-h: 66px;
+  /* Оболочка. Шапка подстраниц: белый бык по центру (решение Влада 27.10 — «крупно»),
+     полоса 76 / 88 / 104–118 px. Главная — размеры v2 (shell.css). Липкие панели
+     страницы (вкладки P08 62/52, панель P06 61/56) — --sticky-h, по нему scroll-padding
+     (поправка 22). --cta-zone — высота зоны нижней кнопки на телефоне (shell.css, поправка 25). */
+  --bull-h: 52px;
+  --header-h: 76px;
+  --sticky-h: 52px;
   --cta-zone: 0px;
 
   /* Тема по умолчанию — тёмная */
   --page: var(--bg);
   --on: var(--fg); --on-rgb: var(--fg-rgb); --on-muted: var(--muted);
   --on-line: var(--line); --on-red: var(--red);
+  --on-inverse: var(--ink);                      /* текст на заливке --on: основная кнопка, выбранная вкладка */
+  --on-danger: #ff5a50;                          /* текст ошибки поля: 6,5:1 на --bg */
 }
 @media (min-width: 760px) {
   :root {
@@ -93,21 +111,74 @@
     --basic:  calc(16.4vw - 10.5px);   /* 225,7 @1440 */
     --title:  calc(22.1vw - 7.8px);    /* 310,4 @1440 */
     --narrow: calc(27.8vw - 5px);      /* 395,3 @1440 */
+    --bull-h: 58px;
+    --header-h: 88px;
+    --sticky-h: 62px;
   }
 }
 @media (min-width: 1000px) {
-  :root { --header-h: 83px; }
+  :root {
+    --bull-h: clamp(64px, 2.2vw + 40px, 84px);  /* 64 @1000, 72 @1440, 82 @1920 */
+    --header-h: calc(var(--bull-h) + 34px);
+  }
 }
 
+/* ── Схемы ────────────────────────────────────────────────────────────────── */
 /* «Бумага» — статьи и документы (решение Влада 27.10). На <html>: тогда и холст,
-   и область перетяга, и color-scheme светлые (поправка 24). */
-:root[data-theme="paper"] {
+   и область перетяга, и color-scheme светлые (поправка 24). Тот же набор — светлые
+   блоки внутри тёмной страницы: шторка, промо --paper, карточка cookie. */
+:root[data-theme="paper"], .scheme-light, .promo--paper .promo__panel {
   color-scheme: light;
   --page: var(--fg);
   --on: var(--ink); --on-rgb: var(--ink-rgb); --on-muted: rgb(var(--ink-rgb) / .7);
   --on-line: rgb(var(--ink-rgb) / .14); --on-red: var(--red-ink);
+  --on-inverse: var(--fg);
   --surface: rgb(var(--ink-rgb) / .05); --surface-2: rgb(var(--ink-rgb) / .08);
+  --line: rgb(var(--ink-rgb) / .14);
   --line-field: rgb(var(--ink-rgb) / .45);
+  --muted: rgb(var(--ink-rgb) / .7);
+  --frost-strong: rgb(var(--ink-rgb) / .08);
+  --frost: rgb(var(--ink-rgb) / .05);
+  --frost-hover: rgb(var(--ink-rgb) / .14);
+  --focus: var(--red-ink);
+  --on-danger: var(--red-ink);
+  --lift: var(--lift-paper);
+}
+/* Тёмный блок внутри светлой страницы: шапка и подвал на «бумаге». */
+.scheme-dark {
+  color-scheme: dark;
+  --page: var(--bg);
+  --on: var(--fg); --on-rgb: var(--fg-rgb); --on-muted: rgb(var(--fg-rgb) / .66);
+  --on-line: rgb(var(--fg-rgb) / .14); --on-red: var(--red);
+  --on-inverse: var(--ink);
+  --surface: rgb(var(--fg-rgb) / .06); --surface-2: rgb(var(--fg-rgb) / .10);
+  --line: rgb(var(--fg-rgb) / .14);
+  --line-field: rgb(var(--fg-rgb) / .40);
+  --muted: rgb(var(--fg-rgb) / .66);
+  --frost-strong: rgb(156 156 159 / .3);
+  --frost: rgb(107 107 112 / .227);
+  --frost-hover: rgb(156 156 159 / .45);
+  --focus: var(--red);
+  --on-danger: #ff5a50;
+  --lift: 0 0 0 1px rgb(var(--fg-rgb) / .1);
+}
+/* Бордо: промо-панели, полоса цитаты. Красный на бордо — 2,89:1, поэтому акцент
+   и фокус здесь — слоновая кость (поправка 19). */
+.scheme-oxblood, .promo__panel, .quote-band {
+  color-scheme: dark;
+  --page: var(--oxblood);
+  --on: var(--fg); --on-rgb: var(--fg-rgb); --on-muted: rgb(var(--fg-rgb) / .72);
+  --on-line: rgb(var(--fg-rgb) / .22); --on-red: var(--fg);
+  --on-inverse: var(--ink);
+  --surface: rgb(var(--fg-rgb) / .08); --surface-2: rgb(var(--fg-rgb) / .12);
+  --line: rgb(var(--fg-rgb) / .22);
+  --line-field: rgb(var(--fg-rgb) / .5);
+  --muted: rgb(var(--fg-rgb) / .72);
+  --frost-strong: rgb(var(--fg-rgb) / .16);
+  --frost: rgb(var(--fg-rgb) / .1);
+  --frost-hover: rgb(var(--fg-rgb) / .26);
+  --focus: var(--fg);
+  --on-danger: var(--fg);
 }
 /* Главная — как v2: светлая страница, тёмная фаза — класс .is-dark у body (home.css, WP2). */
 :root[data-theme="home"] {
@@ -115,6 +186,16 @@
   --page: var(--fg);
   --on: var(--ink); --on-rgb: var(--ink-rgb); --on-muted: rgb(var(--ink-rgb) / .7);
   --on-line: rgb(var(--ink-rgb) / .14); --on-red: var(--red-ink);
+  --on-inverse: var(--fg);
+  --focus: var(--red-ink);
+  --on-danger: var(--red-ink);
+}
+:root[data-theme="home"] body.is-dark {
+  --on: var(--fg); --on-rgb: var(--fg-rgb); --on-muted: rgb(var(--fg-rgb) / .66);
+  --on-line: rgb(var(--fg-rgb) / .14); --on-red: var(--red);
+  --on-inverse: var(--ink);
+  --focus: var(--red);
+  --on-danger: #ff5a50;
 }
 
 html { background: var(--page); color: var(--on); }

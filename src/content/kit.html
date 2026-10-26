@@ -1,7 +1,598 @@
 <!-- Набор компонентов (план §2.8): все компоненты во всех вариантах — на нём WP7 проверяет
      переполнение и контраст до появления страниц. Владелец: WP1. Нет в sitemap, robots noindex,
-     в пакет превью и на meatwash.ru не выкладывается. -->
+     в пакет превью и на meatwash.ru не выкладывается. Тексты — с нынешнего сайта и из JSON
+     (ничего не выдумано), цены и счётчики — подстановками. Один H1; заголовки героев A, B, C, E
+     здесь — h2 с классом hero-*__title (на страницах это H1). -->
+<style>
+  /* Только для набора: подписи образцов, плашки цветов, схемы. На страницах не нужно. */
+  .kit-label { margin-top: var(--md); color: var(--on-muted); font-size: var(--fs-xs); letter-spacing: .04em; }
+  .kit-label:first-child { margin-top: 0; }
+  .kit-scale > p:not(.kit-label) { margin-top: 4px; }
+  .kit-swatches { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sm); margin-top: var(--lg); }
+  .kit-swatches li { display: grid; gap: 2px; font-size: var(--fs-sm); }
+  .kit-swatches li::before { content: ""; height: 72px; margin-bottom: 8px; border-radius: var(--r-sm); background: var(--sw); box-shadow: inset 0 0 0 1px var(--on-line); }
+  .kit-swatches span { color: var(--on-muted); }
+  .kit-schemes { display: grid; gap: var(--md); }
+  @media (min-width: 1000px) { .kit-schemes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kit-scheme { position: relative; isolation: isolate; overflow: hidden; display: grid; align-content: start; gap: var(--md); padding: var(--md); border-radius: var(--r-lg); box-shadow: inset 0 0 0 1px var(--on-line); }
+  .kit-scheme__title { font-size: var(--fs-md); font-weight: 600; }
+  .kit-scheme--photo { color: var(--fg); min-height: 320px; align-content: end; }
+  .kit-scheme__img { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; }
+  .kit-scheme--photo::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, var(--fade)) bottom / 100% 80% no-repeat; }
+  .kit-form { display: grid; gap: var(--md); }
+  .kit-form__grid { display: grid; gap: var(--md); }
+  @media (min-width: 760px) { .kit-form__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .kit-form__checks { display: grid; gap: 12px; }
+  .kit-gap { margin-top: var(--md); }
+  .kit-pagebar { padding-block: var(--lg); }
+  .kit-pagebar .kit-label { margin-bottom: var(--sm); }
+  .kit-photo-cards { display: grid; gap: var(--md); }
+  @media (min-width: 1000px) { .kit-photo-cards { grid-template-columns: 819fr 649fr 479fr; align-items: end; } }
+</style>
 <section class="hero-d col-wide" aria-labelledby="page-title">
+  <a class="back-link" href="./">{{icon:chevron-left}}<span>На главную</span></a>
   <h1 id="page-title">Набор компонентов</h1>
-  <p class="hero-d__lead">Служебная страница дизайн-системы <span lang="en">Meat Auto</span>.</p>
+  <p class="hero-d__lead">Служебная страница дизайн-системы <span lang="en">Meat Auto</span>: все компоненты во всех вариантах — для проверки переполнения и контраста.</p>
+  <div class="hero-d__aside">
+    <span class="chip">Manrope 200–800</span>
+    <span class="chip">Тёмная · бумага · бордо</span>
+    <a class="btn btn--secondary btn--compact" href="#kit-heroes">К героям</a>
+  </div>
 </section>
+
+<nav class="anchor-tabs" data-anchor-tabs aria-label="Разделы набора">
+  <div class="anchor-tabs__track">
+    <a class="anchor-tabs__tab" href="#kit-base">Основа</a>
+    <a class="anchor-tabs__tab" href="#kit-actions">Кнопки и ссылки</a>
+    <a class="anchor-tabs__tab" href="#kit-fields">Поля</a>
+    <a class="anchor-tabs__tab" href="#kit-heroes">Герои</a>
+    <a class="anchor-tabs__tab" href="#kit-blocks">Секции</a>
+    <a class="anchor-tabs__tab" href="#kit-media">Медиа</a>
+    <a class="anchor-tabs__tab" href="#kit-numbers">Цифры и списки</a>
+  </div>
+</nav>
+
+<!-- ── Основа: шкала и цвета ─────────────────────────────────────────────── -->
+<section class="section" id="kit-base" aria-labelledby="kit-base-title">
+  <header class="section-head">
+    <h2 id="kit-base-title">Шрифт и цвет</h2>
+    <p class="section-head__lead">Один шрифт — Manrope, вариативный 200–800. Крупные заголовки — 300, подзаголовки — 400, мелкие заголовки — 600.</p>
+  </header>
+  <div class="col-basic kit-scale">
+    <p class="kit-label">4xl · 300</p><p class="t-4xl">Уход, который сохраняет ценность</p>
+    <p class="kit-label">3xl · 300 — H1</p><p class="t-3xl">Мойка и детейлинг</p>
+    <p class="kit-label">2xl · 300 — H2</p><p class="t-2xl">Привоз авто <span class="nw">из-за</span> рубежа</p>
+    <p class="kit-label">xl · 400</p><p class="t-xl">Больше, чем сервис</p>
+    <p class="kit-label">lg · 400 — H3</p><p class="t-lg">Покупка и продажа авто</p>
+    <p class="kit-label">md · 400</p><p class="t-md">Две студии в Москве: адреса, часы работы, телефоны и онлайн-запись.</p>
+    <p class="kit-label">base · 400</p><p>Мясницкая — премиальная мойка, Технопарк — детейлинг-центр полного цикла. Мойка от {{min:wash}}, {{program:0:time}}.</p>
+    <p class="kit-label">sm · 400</p><p class="t-sm t-muted">Стоимость зависит от типа кузова и состояния автомобиля. Итоговый объём и цену согласуем перед работой. Не является публичной офертой.</p>
+    <p class="kit-label">Пометка</p><p>Так выглядит <span class="todo" data-no-typo>пометка «нужно от клиента»</span> — только на страницах привоза и работ.</p>
+  </div>
+  <ul class="col-basic kit-swatches" aria-label="Цвета">
+    <li style="--sw: var(--bg)"><b>Холст</b><span>#080808</span></li>
+    <li style="--sw: var(--fg)"><b>Слоновая кость</b><span>#f1ebe0</span></li>
+    <li style="--sw: var(--fg-2)"><b>Вторая панель</b><span>#e6dfd3</span></li>
+    <li style="--sw: var(--oxblood)"><b>Бордо</b><span>#5c1219</span></li>
+    <li style="--sw: var(--red)"><b>Красный</b><span>#e2231a — линии, фокус</span></li>
+    <li style="--sw: var(--red-ink)"><b>Красный на светлом</b><span>#c0150f</span></li>
+  </ul>
+</section>
+
+<!-- ── Кнопки, ссылки, чипы: на тёмном, на «бумаге», на бордо ─────────────── -->
+<section class="section" id="kit-actions" aria-labelledby="kit-actions-title">
+  <header class="section-head">
+    <h2 id="kit-actions-title">Кнопки, ссылки и чипы</h2>
+    <p class="section-head__lead">Одни и те же классы на тёмном холсте, на «бумаге» и на бордо: цвета — из схемы блока.</p>
+  </header>
+  <div class="col-ext kit-schemes">
+    <div class="kit-scheme">
+      <h3 class="kit-scheme__title">Тёмный холст</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services">Услуги и цены</a>
+        <a class="btn btn--ghost" href="works">Наши работы</a>
+      </div>
+      <div class="actions">
+        <button class="btn btn--secondary btn--compact" type="button" data-book>Записаться</button>
+        <a class="btn btn--primary btn--compact" href="tel:{{loc:technopark:tel}}">{{icon:phone}}Позвонить в Технопарк</a>
+        <button class="btn btn--primary btn--compact" type="button" disabled>Недоступно</button>
+      </div>
+      <div class="actions">
+        <a class="pill-cta" href="services"><span>Услуги и цены</span>{{icon:cta-arrow}}</a>
+        <a class="link-arrow" href="wrap">Подробнее об оклейке{{icon:arrow-right}}</a>
+        <a class="link-arrow" href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Канал <span lang="en">MEAT AUTO</span>{{icon:arrow-up-right}}<span class="sr"> в Telegram (откроется в новой вкладке)</span></a>
+      </div>
+      <div class="actions">
+        <a class="back-link" href="services">{{icon:chevron-left}}<span>Мойка и детейлинг</span></a>
+        <p>Текст со <a href="privacy">ссылкой на Политику</a> внутри абзаца.</p>
+      </div>
+      <ul class="chips">
+        <li class="chip">30 минут</li>
+        <li class="chip chip--solid">2023</li>
+        <li class="chip">от {{min:detailing}}</li>
+        <li class="chip chip--check">{{icon:check}}Химчистка салона</li>
+      </ul>
+      <button class="btn btn--primary btn--block" type="button" data-book>Записаться — на всю ширину</button>
+    </div>
+    <div class="kit-scheme scheme-light">
+      <h3 class="kit-scheme__title">Бумага (статьи и документы, шторка)</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services">Услуги и цены</a>
+        <a class="btn btn--ghost" href="articles">Все статьи</a>
+      </div>
+      <div class="actions">
+        <a class="pill-cta" href="services#programs"><span>Программы мойки</span>{{icon:cta-arrow}}</a>
+        <a class="link-arrow" href="services">Все услуги и цены{{icon:arrow-right}}</a>
+      </div>
+      <p>Подробнее — в <a href="privacy">Политике обработки персональных данных</a>.</p>
+      <ul class="chips">
+        <li class="chip">{{program:2:time}}</li>
+        <li class="chip chip--solid">Седан</li>
+        <li class="chip chip--check">{{icon:check}}Мойка дисков и колёсных арок</li>
+      </ul>
+    </div>
+    <div class="kit-scheme scheme-oxblood">
+      <h3 class="kit-scheme__title">Бордо (промо, цитата)</h3>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-membership="Условия клуба">Обсудить условия</button>
+        <a class="btn btn--secondary" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+      </div>
+      <div class="actions">
+        <a class="link-arrow" href="about#membership">Больше, чем сервис{{icon:arrow-right}}</a>
+        <span class="chip">Фокус здесь — слоновой костью</span>
+      </div>
+    </div>
+    <div class="kit-scheme kit-scheme--photo">
+      <img class="kit-scheme__img" src="assets/img/auto-lotus-3.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3 class="kit-scheme__title">На фото</h3>
+      <ul class="chips">
+        <li class="chip chip--photo">Мойка · химчистка · полировка · ремонт</li>
+        <li class="chip chip--photo">Уже продали {{count:sold:машина}}</li>
+      </ul>
+      <div class="actions">
+        <a class="pill-cta" href="auto"><span>Смотреть машины</span>{{icon:cta-arrow}}</a>
+        <a class="btn btn--secondary btn--compact" href="auto#lotus-eletre">Lotus Eletre R</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Поля и переключатели ──────────────────────────────────────────────── -->
+<section class="section" id="kit-fields" aria-labelledby="kit-fields-title">
+  <header class="section-head">
+    <h2 id="kit-fields-title">Поля и переключатели</h2>
+    <p class="section-head__lead">Поля — на будущее (заявка с фото, привоз). Переключатель — кузов на «Услугах», «Прозрачная / Цветная» на «Оклейке».</p>
+  </header>
+  <div class="col-title kit-form">
+    <fieldset class="segmented">
+      <legend class="sr">Тип кузова</legend>
+      <label><input type="radio" name="kit-body" value="0" checked><span>Седан</span></label>
+      <label><input type="radio" name="kit-body" value="1"><span>Кроссовер</span></label>
+      <label><input type="radio" name="kit-body" value="2"><span>Внедорожник</span></label>
+      <label><input type="radio" name="kit-body" value="3"><span>Микроавтобус</span></label>
+    </fieldset>
+    <div class="kit-form__grid">
+      <div class="field">
+        <label class="field__label" for="kit-name">Имя</label>
+        <input class="field__input" id="kit-name" type="text" autocomplete="off" placeholder="Как к вам обращаться">
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-phone">Телефон</label>
+        <input class="field__input" id="kit-phone" type="tel" autocomplete="off" aria-invalid="true" aria-describedby="kit-phone-error" value="+7 930">
+        <p class="field__error" id="kit-phone-error">Проверьте номер: не хватает цифр.</p>
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-studio">Студия</label>
+        <select class="field__input" id="kit-studio">
+          <option>{{loc:myasnitskaya:name}}</option>
+          <option>{{loc:technopark:name}}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field__label" for="kit-car">Марка и модель</label>
+        <input class="field__input" id="kit-car" type="text" autocomplete="off">
+        <p class="field__hint">Например, Lotus Eletre R.</p>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field__label" for="kit-text">Что сделать</label>
+      <textarea class="field__input" id="kit-text" rows="4"></textarea>
+    </div>
+    <div class="kit-form__checks">
+      <label class="check"><input type="checkbox" checked><span>Даю <a href="consent-request">согласие на обработку персональных данных</a></span></label>
+      <label class="check"><input type="checkbox"><span>Нужна полировка</span></label>
+      <label class="check"><input type="radio" name="kit-film" checked><span>Прозрачная плёнка</span></label>
+      <label class="check"><input type="radio" name="kit-film"><span>Цветная плёнка</span></label>
+    </div>
+  </div>
+</section>
+
+<!-- ── Герои ─────────────────────────────────────────────────────────────── -->
+<div id="kit-heroes">
+  <section class="hero-a" aria-labelledby="kit-hero-a">
+    <picture class="hero-a__media">
+      <source media="(max-width: 759px)" srcset="assets/shots/cf-rq-wet-s.webp">
+      <img src="assets/shots/cf-rq-wet.webp" alt="Иллюстрация: заднее крыло Porsche в каплях воды" width="1600" height="900" loading="lazy" decoding="async">
+    </picture>
+    <div class="hero-a__body">
+      <h2 class="hero-a__title t-3xl" id="kit-hero-a">Мойка и детейлинг</h2>
+      <p class="hero-a__lead">Четыре раздела: мойка, детейлинг, защита и помощь. Мойку запишем онлайн в выбранную студию, цену остальных работ назовёт администратор.</p>
+      <div class="hero-a__actions actions">
+        <button class="btn btn--primary" type="button" data-book>Записаться</button>
+        <a class="btn btn--secondary" href="services#catalog">Смотреть цены</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="hero-b" aria-labelledby="kit-hero-b">
+    <picture class="hero-b__media"><img src="assets/shots/cf-hood-crop.webp" alt="" width="1600" height="900" loading="lazy" decoding="async"></picture>
+    <h2 class="hero-b__title" id="kit-hero-b">Машина уезжает такой, какой её задумали на заводе</h2>
+    <p class="hero-b__lead">Подбираем химию под покрытие, согласуем работы на приёмке и проверяем результат перед выдачей.</p>
+    <div class="hero-b__actions actions">
+      <a class="btn btn--primary" href="about">О компании</a>
+    </div>
+  </section>
+
+  <section class="hero-c" aria-labelledby="kit-hero-c">
+    <a class="back-link" href="services">{{icon:chevron-left}}<span>Мойка и детейлинг</span></a>
+    <p class="hero-c__mark" aria-hidden="true" lang="en">PPF</p>
+    <fieldset class="segmented">
+      <legend class="sr">Плёнка</legend>
+      <label><input type="radio" name="kit-wrap" checked><span>Прозрачная</span></label>
+      <label><input type="radio" name="kit-wrap"><span>Цветная</span></label>
+    </fieldset>
+    <h2 class="hero-c__title t-3xl" id="kit-hero-c">Оклейка полиуретаном</h2>
+    <p class="hero-c__lead">Полиуретан — прочная защитная плёнка, прозрачная или цветная. Прозрачная бережёт заводской лак от сколов, песка и реагентов.</p>
+    <span class="chip">Фары — {{price:Оклейка фар плёнкой}}</span>
+    <p class="hero-c__price">Зоны риска и весь кузов — {{price:Оклейка зон риска}}</p>
+    <div class="hero-c__actions actions">
+      <button class="btn btn--primary" type="button" data-request data-request-category="protection" data-request-services="Оклейка фар плёнкой">Узнать цену</button>
+      <a class="btn btn--secondary" href="tel:{{loc:technopark:tel}}">Позвонить в Технопарк</a>
+      <a class="btn btn--ghost" href="works">Наши работы</a>
+    </div>
+  </section>
+
+  <section class="hero-e" aria-labelledby="kit-hero-e">
+    <h2 class="hero-e__title t-3xl" id="kit-hero-e">Купить или продать — напишите</h2>
+    <p class="hero-e__lead">Или позвоните в студию на Мясницкой <a href="tel:{{loc:myasnitskaya:tel}}"><span class="nw">{{loc:myasnitskaya:phone}}</span></a>.</p>
+    <div class="hero-e__actions actions">
+      <a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram<span class="sr"> (откроется в новой вкладке)</span></a>
+    </div>
+  </section>
+
+  <div class="kit-pagebar col-ext">
+    <p class="kit-label">Панель страницы (P06) — на странице въезжает после героя, полоса прогресса красная</p>
+    <div class="page-bar is-shown" style="position: relative; inset: auto; translate: none; z-index: 0">
+      <p class="page-bar__title">Оклейка полиуретаном</p>
+      <div class="page-bar__actions">
+        <button class="btn btn--primary btn--compact" type="button" data-request data-request-category="protection" data-request-services="Оклейка фар плёнкой">Узнать цену</button>
+        <a href="tel:{{loc:technopark:tel}}">Позвонить</a>
+      </div>
+      <span class="page-bar__progress" style="--progress: .42"></span>
+    </div>
+  </div>
+</div>
+
+<!-- ── Секции: заголовки, карточки, зигзаг, промо, тизеры, аккордеоны ─────── -->
+<section class="section" id="kit-blocks" aria-labelledby="kit-blocks-title">
+  <header class="section-head">
+    <h2 id="kit-blocks-title">Перед визитом</h2>
+    <p class="section-head__lead">Заголовок секции по центру колонки «title», под ним — три карточки.</p>
+  </header>
+  <div class="col-ext cards cards--3">
+    <article class="card">
+      <h3>Первый визит</h3>
+      <p>Новым клиентам — защитное кварцевое покрытие кузова в подарок и скидка 500 ₽ на первую мойку. Условия уточняйте при записи.</p>
+      <div class="card__actions"><button class="link-arrow" type="button" data-book data-book-context="Первый визит">Записаться{{icon:arrow-right}}</button></div>
+    </article>
+    <article class="card">
+      <h3>Пока ждёте</h3>
+      <p>На Мясницкой два часа закрытого паркинга включены в мойку. В зоне ожидания — Wi-Fi, вода и кофе. Кофемания — этажом выше.</p>
+    </article>
+    <article class="card">
+      <h3>Оплата</h3>
+      <p>Карта, СБП, QR, наличные, безналичный расчёт и рассрочка. На Мясницкой можно оплатить из автомобиля. Онлайн-запись доступна круглосуточно.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-team-title">
+  <header class="section-head section-head--left">
+    <h2 id="kit-team-title">Наша команда</h2>
+    <p class="section-head__lead">Всё делаем своей командой: работу с машиной, сопровождение клиента и организацию.</p>
+  </header>
+  <div class="col-basic cards cards--3">
+    <article class="card card--outline"><h3>Мастера студий</h3><p>Мойка, детейлинг, полировка, оклейка и восстановление — на Мясницкой и в Технопарке.</p></article>
+    <article class="card card--outline"><h3>Сопровождение</h3><p>Ведём задачу клиента целиком — от первого сообщения до выдачи машины или сделки.</p></article>
+    <article class="card card--outline"><h3>Проверенные партнёры</h3><p>Если задача шире наших студий, подключаем профессионалов, которые работают по нашим стандартам.</p></article>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-zigzag-title">
+  <header class="section-head"><h2 id="kit-zigzag-title">Наши работы</h2></header>
+  <div class="zigzag col-basic">
+    <div class="zigzag__row">
+      <figure><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R после подготовки к продаже" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Lotus Eletre R — подготовка к продаже</h3>
+        <p>Перед продажей сделали глубокую химчистку салона, отполировали кузов и нанесли керамическое покрытие Surface.</p>
+        <a class="link-arrow" href="auto#lotus-eletre">Машина в продаже{{icon:arrow-right}}</a>
+      </div>
+    </div>
+    <div class="zigzag__row">
+      <figure><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R после химчистки" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <div class="zigzag__text">
+        <h3>Химчистка салона</h3>
+        <p>Глубокая химчистка салона — часть подготовки машины к продаже.</p>
+        <div class="actions"><button class="btn btn--primary" type="button" data-request data-request-category="detailing">Узнать цену</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section section--tight" aria-label="Промо-блоки">
+  <div class="promo col-ext">
+    <div class="promo__media"><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></div>
+    <div class="promo__panel">
+      <h2>Больше, чем сервис</h2>
+      <p>Подарочные сертификаты, уход за корпоративным автопарком и индивидуальные комплексы. Обсудим условия и подберём удобное время.</p>
+      <div class="actions">
+        <button class="btn btn--primary" type="button" data-membership="Условия клуба">Обсудить условия</button>
+        <a class="link-arrow" href="https://admin.wahelp.cards/lendings/019c6b46-a042-7121-8e8c-23717fd3195e" target="_blank" rel="noopener noreferrer" data-club-card>Клубная карта{{icon:arrow-up-right}}<span class="sr"> (откроется в новой вкладке)</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="promo promo--paper promo--reverse col-ext kit-gap">
+    <div class="promo__media"><img src="assets/img/auto-lotus-8.webp" alt="Передние кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></div>
+    <div class="promo__panel">
+      <h2>Купить или продать — напишите</h2>
+      <p>Продаём автомобили и делаем предпродажную подготовку: детейлинг, полировку, химчистку салона.</p>
+      <div class="actions"><a class="btn btn--primary" href="https://t.me/otec_roman" target="_blank" rel="noopener">Написать в Telegram<span class="sr"> (откроется в новой вкладке)</span></a></div>
+    </div>
+  </div>
+  <div class="promo col-ext kit-gap">
+    <div class="promo__panel">
+      <h2>Под вашу задачу.</h2>
+      <p>Комплекс перед продажей, защита нового автомобиля или регулярный уход за автопарком. Для корпоративных клиентов — индивидуальный расчёт, консьерж-сервис и единый счёт.</p>
+      <button class="btn btn--primary" type="button" data-membership="Индивидуальный уход">Обсудить уход</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-teasers-title">
+  <header class="section-head"><h2 id="kit-teasers-title">Тизеры</h2></header>
+  <div class="col-ext">
+    <a class="teaser" href="wrap">
+      <img class="teaser__img" src="assets/shots/cf-bead-macro.webp" alt="" width="1600" height="900" loading="lazy" decoding="async">
+      <span class="teaser__body">
+        <span class="teaser__title">Оклейка полиуретаном</span>
+        <span class="teaser__text">Прозрачная бережёт заводской лак, цветная ещё и меняет цвет машины.</span>
+        <span class="teaser__cta">Подробнее{{icon:cta-arrow}}</span>
+      </span>
+    </a>
+  </div>
+  <div class="teasers teasers--skewed col-ext kit-gap">
+    <a class="teaser" href="works">
+      <img class="teaser__img" src="assets/img/auto-lotus-2.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <span class="teaser__body"><span class="teaser__title">Наши работы</span><span class="teaser__text">Подготовка к продаже, оклейка плёнкой, химчистка и полировка.</span><span class="teaser__cta">Смотреть{{icon:cta-arrow}}</span></span>
+    </a>
+    <a class="teaser" href="import">
+      <span class="teaser__body"><span class="teaser__title">Привоз авто <span class="nw">из-за</span> рубежа</span><span class="teaser__text">Тизер без фото — на поверхности.</span><span class="teaser__cta">Подробнее{{icon:cta-arrow}}</span></span>
+    </a>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-faq-title">
+  <header class="section-head"><h2 id="kit-faq-title">Что входит</h2></header>
+  <div class="col-basic accordions">
+    <details class="accordion">
+      <summary class="accordion__head">{{program:1:name}} — {{program:1:time}}</summary>
+      <div class="accordion__body">
+        <ul>
+          <li>Всё из трёхфазной мойки</li>
+          <li>Покрытие кузова воском</li>
+          <li>Мойка дисков и колёсных арок</li>
+          <li>Пылесос салона и багажника</li>
+          <li>Протирка панели, стёкол изнутри</li>
+        </ul>
+      </div>
+    </details>
+    <details class="accordion" open>
+      <summary class="accordion__head">Где оклеиваем</summary>
+      <div class="accordion__body"><p>Только в детейлинг-центре Технопарк: ТЦ «Мегаполис», 1 этаж.</p><a class="link-arrow" href="about#map-technopark">На карте{{icon:arrow-right}}</a></div>
+    </details>
+    <details class="accordion">
+      <summary class="accordion__head">Как проходит оклейка: расчёт, подготовка, оклейка и выдача — длинная строка заголовка переносится</summary>
+      <div class="accordion__body"><p>Моем и обезжириваем кузов. Если нужно — полируем перед плёнкой.</p></div>
+    </details>
+  </div>
+</section>
+
+<!-- ── Медиа: карточки на фото, карусели, мозаики, ленты, «до/после» ───────── -->
+<section class="section" id="kit-media" aria-labelledby="kit-media-title">
+  <header class="section-head"><h2 id="kit-media-title">Карточки на фото</h2></header>
+  <div class="col-wide kit-photo-cards">
+    <a class="photo-card photo-card--l" href="auto#lotus-eletre">
+      <img class="photo-card__img" src="assets/img/auto-lotus-3.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <ul class="chips"><li class="chip chip--photo">2023</li><li class="chip chip--photo">38 100 км</li></ul>
+      <h3>Lotus Eletre R</h3>
+      <p>Подготовили в <span lang="en">Meat Auto</span>: глубокая химчистка салона, полировка кузова, керамическое покрытие.</p>
+    </a>
+    <a class="photo-card photo-card--m" href="works">
+      <img class="photo-card__img" src="assets/img/auto-lotus-7.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3>Химчистка салона</h3>
+    </a>
+    <a class="photo-card photo-card--s" href="services#price-help">
+      <img class="photo-card__img" src="assets/img/auto-lotus-6.webp" alt="" width="800" height="533" loading="lazy" decoding="async">
+      <h3>Кузов и диски</h3>
+    </a>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-path-title">
+  <div class="carousel col-basic" data-carousel aria-roledescription="карусель" aria-labelledby="kit-path-title">
+    <div class="carousel__head">
+      <h2 id="kit-path-title">Наш путь</h2>
+      <div class="carousel__nav">
+        <button type="button" data-carousel-prev aria-label="Назад">{{icon:chevron-left}}</button>
+        <button type="button" data-carousel-next aria-label="Вперёд">{{icon:chevron-right}}</button>
+      </div>
+    </div>
+    <ul class="carousel__track" tabindex="0" aria-label="Вехи">
+      <li class="carousel__slide card"><p class="t-sm t-muted">Сентябрь 2025</p><h3>Оклейка полиуретаном</h3><p>Рассказали, что давно оклеиваем машины защитной плёнкой, — показали BMW M4 в цветном полиуретане Brooklyn Grey.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Ноябрь 2025</p><h3>Интервью в журнале</h3><p>Материал в Service &amp; Parts (РЁВ): про автокультуру, системный подход и развитие проекта.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Май 2026</p><h3>Детейлинг-выставка</h3><p>Впервые всей командой поучаствовали в выставке в медиаформате.</p></li>
+      <li class="carousel__slide card"><p class="t-sm t-muted">Сентябрь 2026</p><h3>Запуск направления продажи авто, канал <span lang="en">MEAT AUTO</span></h3><p>Свои автомобили в продаже: готовим их в наших студиях и показываем вживую.</p><a class="link-arrow" href="auto">Автомобили в продаже{{icon:arrow-right}}</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-gallery-title">
+  <div class="carousel col-basic" data-carousel aria-roledescription="карусель" aria-labelledby="kit-gallery-title">
+    <div class="carousel__head">
+      <h2 id="kit-gallery-title">Lotus Eletre R</h2>
+      <div class="carousel__nav">
+        <button type="button" data-carousel-prev aria-label="Назад">{{icon:chevron-left}}</button>
+        <button type="button" data-carousel-next aria-label="Вперёд">{{icon:chevron-right}}</button>
+      </div>
+    </div>
+    <ul class="carousel__track" tabindex="0" aria-label="Фотографии">
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"><h3>Спереди</h3><p>Снаружи большой кроссовер, по цифрам почти суперкар.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"><h3>Сзади</h3><p>Полировка кузова перед продажей.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"><h3>Салон</h3><p>Глубокая химчистка салона.</p></li>
+      <li class="carousel__slide"><img src="assets/img/auto-lotus-6.webp" alt="Колесо Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"><h3>Диски</h3><p>Керамическое покрытие Surface.</p><a class="link-arrow" href="auto#lotus-eletre">Машина в продаже{{icon:arrow-right}}</a></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-mosaic-title">
+  <header class="section-head"><h2 id="kit-mosaic-title">Мозаики</h2></header>
+  <div class="col-wide">
+    <div class="mosaic">
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R, вид спереди сбоку" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-5.webp" alt="Салон Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-6.webp" alt="Колесо Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-8.webp" alt="Кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <ul class="mosaic__chips chips"><li class="chip chip--photo">{{count:sale}} в продаже</li></ul>
+      <a class="mosaic__open" href="auto#lotus-eletre">Все фото (8){{icon:arrow-right}}</a>
+    </div>
+  </div>
+  <div class="col-wide kit-gap">
+    <div class="mosaic mosaic--three">
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-7.webp" alt="Центральная консоль Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/img/auto-lotus-8.webp" alt="Кресла Lotus Eletre R" width="800" height="533" loading="lazy" decoding="async"></figure>
+    </div>
+  </div>
+  <div class="col-wide kit-gap">
+    <div class="mosaic mosaic--zoom">
+      <figure class="mosaic__item"><img src="assets/shots/cf-rq-wet.webp" alt="Иллюстрация: заднее крыло в каплях воды" width="1600" height="900" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/shots/cf-wheel-macro.webp" alt="Иллюстрация: колесо крупным планом" width="1600" height="900" loading="lazy" decoding="async"></figure>
+      <figure class="mosaic__item"><img src="assets/shots/cf-bead-macro.webp" alt="Иллюстрация: капли на покрытии" width="1600" height="900" loading="lazy" decoding="async"></figure>
+    </div>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-strip-title">
+  <header class="section-head section-head--left"><h2 id="kit-strip-title">Ленты фото</h2></header>
+  <div class="col-basic">
+    <ul class="strip" tabindex="0" aria-label="Фотографии Lotus Eletre R">
+      <li><img src="assets/img/auto-lotus-1.webp" alt="Lotus Eletre R спереди" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-4.webp" alt="Lotus Eletre R сбоку" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-2.webp" alt="Lotus Eletre R сзади" width="800" height="533" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-lotus-3.webp" alt="Lotus Eletre R спереди сбоку" width="800" height="533" loading="lazy" decoding="async"></li>
+    </ul>
+  </div>
+  <div class="col-basic kit-gap">
+    <ul class="strip strip--tall" tabindex="0" aria-label="Фотографии BMW 740Ld xDrive">
+      <li><img src="assets/img/auto-bmw740-1.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-2.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-3.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+      <li><img src="assets/img/auto-bmw740-4.webp" alt="BMW 740Ld xDrive" width="640" height="800" loading="lazy" decoding="async"></li>
+    </ul>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-ba-title">
+  <header class="section-head"><h2 id="kit-ba-title">Разницу видно, если её показать</h2></header>
+  <div class="col-ext ba-grid">
+    <figure class="ba" data-ba>
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-front-corner.webp" srcset="assets/shots/cf-front-corner-s.webp 900w, assets/shots/cf-front-corner.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Фара после полировки: стекло прозрачное, виден отражатель" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-headlight-hazy.webp" srcset="assets/shots/cf-headlight-hazy-s.webp 900w, assets/shots/cf-headlight-hazy.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Та же фара до полировки: рассеиватель помутнел и отдаёт жёлтым" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Фары до и после полировки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b">до</span>
+        <span class="ba__tag ba__tag--a">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <b>Полировка фар — {{price:Полировка фар}}</b>
+        <i>Мутный рассеиватель снова прозрачный: свет идёт на дорогу, а не рассеивается в пластике.</i>
+        <span class="ba__note">Иллюстрация, не работа студии</span>
+      </figcaption>
+    </figure>
+    <figure class="ba" data-ba data-split="72">
+      <div class="ba__frame">
+        <img class="ba__img" src="assets/shots/cf-chip-macro-healed.webp" srcset="assets/shots/cf-chip-macro-healed-s.webp 900w, assets/shots/cf-chip-macro-healed.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="Крыло после подкраски скола: отражение идёт без разрыва" width="1600" height="900" loading="lazy" decoding="async">
+        <div class="ba__clip">
+          <img class="ba__img" src="assets/shots/cf-chip-macro.webp" srcset="assets/shots/cf-chip-macro-s.webp 900w, assets/shots/cf-chip-macro.webp 1600w" sizes="(max-width: 759px) 100vw, 42vw" alt="То же крыло со сколом до ремонта" width="1600" height="900" loading="lazy" decoding="async">
+        </div>
+        <div class="ba__handle" role="slider" tabindex="0" aria-label="Скол до и после подкраски" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span class="ba__grip" aria-hidden="true"></span></div>
+        <span class="ba__tag ba__tag--b">до</span>
+        <span class="ba__tag ba__tag--a">после</span>
+      </div>
+      <figcaption class="ba__cap">
+        <b>Удаление сколов и подкраска — {{price:Удаление сколов и подкраска}}</b>
+        <i>Отражение лампы идёт по крылу без разрыва — скол не читается ни под каким углом.</i>
+        <span class="ba__note">Иллюстрация, не работа студии</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ── Цифры, шаги, ссылки-строки, цитата ─────────────────────────────────── -->
+<section class="section" id="kit-numbers" aria-labelledby="kit-numbers-title">
+  <header class="section-head"><h2 id="kit-numbers-title">Подход к уходу</h2>
+    <p class="section-head__lead">Ручной уход за автомобилем в Москве. Подбираем химию под покрытие, согласуем работы на приёмке и проверяем результат перед выдачей.</p>
+  </header>
+  <div class="col-basic counters">
+    <p class="counter"><b class="counter__value">5.0</b><span class="counter__label">Рейтинг на Яндекс Картах</span></p>
+    <p class="counter"><b class="counter__value">{{count:studios}}</b><span class="counter__label">Студии в Москве</span></p>
+    <p class="counter"><b class="counter__value">30<span class="counter__unit">мин</span></b><span class="counter__label">Мойка от</span></p>
+  </div>
+  <div class="col-basic number-tiles kit-gap">
+    <p class="number-tile"><b>{{count:sale}}</b><span>Сейчас в продаже</span></p>
+    <p class="number-tile"><b>{{count:sold}}</b><span>Уже продали</span></p>
+    <p class="number-tile"><b>{{count:studios}}</b><span>Студии в Москве</span></p>
+    <p class="number-tile"><b>{{brand:since}}</b><span>Работаем с этого года</span></p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="kit-steps-title">
+  <header class="section-head"><h2 id="kit-steps-title">Как проходит оклейка</h2></header>
+  <ol class="steps col-basic">
+    <li class="steps__item"><h3>Расчёт</h3><p>Позвоните в Технопарк — администратор подскажет цену для вашей машины. Стоимость зон риска и всего кузова называем после осмотра.</p></li>
+    <li class="steps__item"><h3>Подготовка</h3><p>Моем и обезжириваем кузов. Если нужно — полируем перед плёнкой.</p></li>
+    <li class="steps__item"><h3>Оклейка и выдача</h3><p>Оклеиваем в студии и вместе с вами проверяем результат перед выдачей.</p></li>
+  </ol>
+</section>
+
+<section class="section" aria-labelledby="kit-rows-title">
+  <header class="section-head"><h2 id="kit-rows-title">Документы</h2></header>
+  <ul class="link-rows col-title">
+    <li><a href="privacy">Политика обработки персональных данных</a></li>
+    <li><a href="consent">Согласие на обработку данных</a></li>
+    <li><a href="consent-request">Согласие при отправке заявки</a></li>
+    <li><a href="https://t.me/MEATWASH_Auto" target="_blank" rel="noopener">Все предложения — в канале <span lang="en">MEAT AUTO</span><span class="sr"> в Telegram (откроется в новой вкладке)</span></a></li>
+  </ul>
+</section>
+
+<figure class="quote-band">
+  <blockquote><p>Машина уезжает такой, какой её задумали на заводе — и остаётся такой дольше.</p></blockquote>
+  <figcaption lang="en">Meat Auto Car Care Club</figcaption>
+</figure>
