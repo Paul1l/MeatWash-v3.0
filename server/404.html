@@ -1,25 +1,65 @@
 <!doctype html>
-<html lang="ru">
+<!-- Серверная 404 Meat Auto (план §3.10, паттерн Porsche 3.6). Владелец: WP1.
+     Отдаёт .htaccess (ErrorDocument 404) по любому адресу, поэтому все пути — от корня.
+     Шапка без меню — только белый бык; огромные тонкие «404» (Manrope 200) с переходом
+     от слоновой кости к прозрачному; «На главную» и четыре направления.
+     Сборка эту страницу не трогает: неразрывные пробелы расставлены руками, версии ?v=
+     у CSS и шрифта ставит упаковка (preview-pack / stamp-assets, WP7). -->
+<html lang="ru" data-theme="dark">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Страница не найдена — MEATWASH</title>
+<meta name="theme-color" content="#080808">
+<title>Страница не найдена — Meat Auto</title>
+<link rel="preload" href="/assets/fonts/manrope-vf.woff2" as="font" type="font/woff2" crossorigin>
+<style>@font-face{font-family:'Manrope';src:url('/assets/fonts/manrope-vf.woff2') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}</style>
 <link rel="icon" href="/assets/favicon-bull.png" sizes="512x512" type="image/png">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="stylesheet" href="/css/tokens.css">
+<link rel="stylesheet" href="/css/base.css">
+<link rel="stylesheet" href="/css/components.css">
+<link rel="stylesheet" href="/css/shell.css">
 <style>
-  .nf { min-height: 100svh; display: grid; place-content: center; justify-items: start;
-        gap: 18px; padding: var(--gutter); background: var(--black); }
-  .nf h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(38px, 7vw, 92px); }
-  .nf p { color: var(--muted); max-width: 46ch; }
+  .nf-header .site-header__logo { grid-column: 2; }
+  .nf {
+    display: grid; justify-items: center; align-content: start;
+    min-height: calc(100vh - var(--header-h)); min-height: calc(100svh - var(--header-h));
+    padding: var(--lg) var(--ext) var(--xl);
+    text-align: center;
+  }
+  .nf__code {
+    margin-bottom: calc(-1 * var(--sm));
+    font-size: clamp(8.5rem, 21vw, 19rem); font-weight: 200; line-height: .92; letter-spacing: -.045em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, rgb(var(--fg-rgb) / .92) 8%, rgb(var(--fg-rgb) / .38) 58%, rgb(var(--fg-rgb) / 0) 96%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .nf h1 { font-size: var(--fs-2xl); }
+  .nf__lead { margin-top: var(--sm); max-width: 40ch; color: var(--on-muted); font-size: var(--fs-md); line-height: 1.42; }
+  .nf .btn { margin-top: var(--lg); }
+  .nf__links { width: min(100%, 820px); margin-top: var(--xl); text-align: left; }
 </style>
 </head>
 <body>
-<main class="nf">
-  <img src="/assets/brand/Horizontal_Logo.svg" alt="MEATWASH Car Care Club" width="2520" height="654" style="width:clamp(150px,18vw,220px);height:auto">
-  <h1>Страница не найдена</h1>
-  <p>Такой страницы на сайте нет. Вернитесь на главную — там услуги, цены и обе локации.</p>
-  <a class="btn btn--fill" href="/">На главную</a>
+<a class="skip-link" href="#main">Перейти к&nbsp;содержанию</a>
+<header class="site-header site-header--solid nf-header" id="top">
+  <div class="site-header__bar">
+    <a class="site-header__logo" href="/" aria-label="Meat Auto — на главную"><svg class="bull" viewBox="0 0 1097 800" fill="currentColor" aria-hidden="true" focusable="false"><use href="/assets/brand/sprite.svg#i-bull"/></svg></a>
+  </div>
+</header>
+<main class="nf" id="main">
+  <p class="nf__code" aria-hidden="true">404</p>
+  <h1>Страница не&nbsp;найдена</h1>
+  <p class="nf__lead">Вернитесь на&nbsp;главную&nbsp;— там все направления <span lang="en">Meat&nbsp;Auto</span>.</p>
+  <a class="btn btn--secondary" href="/">На&nbsp;главную</a>
+  <ul class="link-rows nf__links" aria-label="Направления">
+    <li><a href="/services">Мойка и&nbsp;детейлинг</a></li>
+    <li><a href="/import">Привоз авто <span class="nw">из-за</span>&nbsp;рубежа</a></li>
+    <li><a href="/auto">Покупка и&nbsp;продажа</a></li>
+    <li><a href="/about">О&nbsp;нас</a></li>
+  </ul>
 </main>
 </body>
 </html>

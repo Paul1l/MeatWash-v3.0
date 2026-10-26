@@ -1,26 +1,286 @@
 /* ==========================================================================
    base.css — сброс, типографика §2.2, контейнеры §2.3, кнопки, ссылки, чипы, поля,
-   .sr и .visually-hidden, .todo, .eyebrow, reduced-motion.
-   Владелец: WP1. Ниже — минимальная заготовка WP0, чтобы каркас читался; WP1 заменяет
-   файл целиком. Цвета — только из токенов --on* / --page (tokens.css).
+   .sr и .visually-hidden, .todo, .eyebrow, блокировка прокрутки, reduced-motion.
+   Владелец: WP1. Цвета — только из токенов --on* / --page (tokens.css).
+   Надзаголовков над H1/H2 и нумерации блоков на страницах нет (решение Влада):
+   .eyebrow оставлен только для старых частей, пока их не переделали.
    ========================================================================== */
+
+/* ── Сброс ───────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
-body { margin: 0; font: 400 16px/1.5 var(--sans); -webkit-font-smoothing: antialiased; overflow-x: clip; }
-img, svg, video { max-width: 100%; height: auto; }
-a { color: inherit; }
-h1, h2, h3 { font-weight: 300; letter-spacing: -.02em; }
-.sr, .visually-hidden { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+html {
+  -webkit-text-size-adjust: 100%; text-size-adjust: 100%;
+  /* Место полосы прокрутки держим всегда: окно или шторка не сдвигают страницу вбок. */
+  scrollbar-gutter: stable;
+  /* Липкие панели страницы и нижняя кнопка не закрывают цель якоря и фокус (поправка 22). */
+  scroll-padding-top: 8px;
+  scroll-padding-bottom: var(--cta-zone);
+}
+html:has(.anchor-tabs, [data-page-bar]) { scroll-padding-top: calc(var(--sticky-h) + 8px); }
+body {
+  margin: 0;
+  min-height: 100vh; min-height: 100svh;
+  font: 400 var(--fs-base)/1.5 var(--sans);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+:where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, address) { margin: 0; }
+address { font-style: normal; }
+:where(ul[class], ol[class]) { list-style: none; margin: 0; padding: 0; }
+img, svg, video, canvas, picture { display: block; max-width: 100%; }
+img, video { height: auto; }
+picture > img { width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; }
+a { color: inherit; -webkit-tap-highlight-color: transparent; }
+b, strong { font-weight: 600; }
+hr { height: 1px; margin: 0; border: 0; background: var(--on-line); }
+[hidden] { display: none !important; }
+::selection { background: rgb(var(--red-rgb) / .38); color: inherit; }
+table { border-collapse: collapse; }
+
+/* ── Типографика (§2.2; Manrope вместо Porsche Next) ─────────────────────── */
+h1, .t-3xl { font-size: var(--fs-3xl); font-weight: 300; line-height: 1.23; letter-spacing: -.025em; }
+h2, .t-2xl { font-size: var(--fs-2xl); font-weight: 300; line-height: 1.26; letter-spacing: -.02em; }
+h3, .t-lg  { font-size: var(--fs-lg);  font-weight: 400; line-height: 1.36; letter-spacing: -.005em; }
+h4, .t-md-strong { font-size: var(--fs-md); font-weight: 600; line-height: 1.42; letter-spacing: 0; }
+h1, h2, h3 { text-wrap: balance; }
+p, li, dd { text-wrap: pretty; }
+.t-hero { font-size: var(--fs-hero); font-weight: 300; line-height: 1; letter-spacing: -.03em; }
+.t-4xl { font-size: var(--fs-4xl); font-weight: 300; line-height: 1.21; letter-spacing: -.03em; }
+.t-xl  { font-size: var(--fs-xl); font-weight: 400; line-height: 1.31; letter-spacing: -.01em; }
+.t-md  { font-size: var(--fs-md); font-weight: 400; line-height: 1.42; }
+.t-sm  { font-size: var(--fs-sm); line-height: 1.55; }
+.t-xs  { font-size: var(--fs-xs); line-height: 1.625; }
+.t-muted { color: var(--on-muted); }
+.lead { font-size: var(--fs-md); line-height: 1.42; }
+.tnum { font-variant-numeric: tabular-nums; }
 .nw { white-space: nowrap; }
-.skip-link { position: absolute; left: 8px; top: -100px; z-index: 100; }
-.skip-link:focus { top: 8px; }
+/* Ссылка в тексте: подчёркнута всегда (цвет не единственный признак), наведение — красным. */
+a:not([class]) {
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--on-rgb) / .4);
+  text-decoration-thickness: 1px;
+  text-underline-offset: .22em;
+  transition: text-decoration-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+a:not([class]):hover { text-decoration-color: var(--on-red); }
+/* Поток текста: отступ между соседями (абзацы, списки) — 1 строка. */
+.flow > * + * { margin-top: var(--flow, 1em); }
+.flow ul:not([class]), .flow ol:not([class]) { padding-left: 1.25em; }
+.flow li + li { margin-top: .4em; }
+
+/* Подпись блока: 12 px, верхний регистр, красная линия (v2). Для старых частей;
+   над заголовками страниц не ставится (решение Влада). */
+.eyebrow {
+  display: flex; align-items: center; gap: 14px;
+  font: 500 var(--fs-xs)/1.4 var(--sans); letter-spacing: .16em; text-transform: uppercase;
+  color: var(--on-muted);
+}
+.eyebrow::before { content: ""; flex: none; width: 36px; height: 1px; background: var(--on-red); }
+
+/* ── Доступность ─────────────────────────────────────────────────────────── */
+.sr, .visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0;
+}
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.icon { width: 24px; height: 24px; flex: none; }
-.todo { background: #ffd84d; color: var(--ink); padding: 0 .3em; border-radius: 4px; }
-.col-wide { padding-inline: var(--wide); } .col-ext { padding-inline: var(--ext); }
-.col-basic { padding-inline: var(--basic); } .col-title { padding-inline: var(--title); }
+:focus:not(:focus-visible) { outline: none; }
+.skip-link {
+  position: fixed; left: 16px; top: 12px; z-index: 1000;
+  padding: 12px 20px; border-radius: var(--r-sm);
+  background: var(--fg); color: var(--ink); font-weight: 500; text-decoration: none;
+  translate: 0 calc(-100% - 24px);
+  transition: translate var(--t-fast) var(--ease);
+}
+.skip-link:focus-visible { translate: 0 0; outline-color: var(--red); }
+
+/* Иконки спрайта (assets/brand/sprite.svg): 24×24, stroke = currentColor. */
+.icon { display: inline-block; vertical-align: middle; width: 24px; height: 24px; flex: none; }
+.icon--sm { width: 20px; height: 20px; }
+.icon--xs { width: 16px; height: 16px; }
+
+/* Прокрутка фона выключена, пока открыто окно (класс ставит ui.js) или шторка
+   (модальный <dialog>; shell.js класс не трогает — поправка 21). Правила раздельные:
+   браузер без :has() не должен терять первое. */
+html.is-locked, html.is-locked body { overflow: hidden; }
+html:has(dialog:modal) { overflow: hidden; }
+
+/* ── Схемы блока (tokens.css): фон и цвет текста ──────────────────────────── */
+.scheme-dark, .scheme-light, .scheme-oxblood { background-color: var(--page); color: var(--on); }
+
+/* ── Колонки и секции (§2.3) ─────────────────────────────────────────────── */
+.col-wide   { padding-inline: var(--wide); }
+.col-ext    { padding-inline: var(--ext); }
+.col-basic  { padding-inline: var(--basic); }
+.col-title  { padding-inline: var(--title); }
 .col-narrow { padding-inline: var(--narrow); }
 .section { padding-block: var(--xl) var(--lg); }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 56px; padding: 16px 28px; border-radius: var(--r-sm); font: 500 16px/1.2 var(--sans); border: 1px solid var(--line-field); background: transparent; color: var(--on); text-decoration: none; cursor: pointer; }
-.btn--primary { background: var(--fg); color: var(--ink); border-color: var(--fg); }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0s !important; animation-duration: 0s !important; } }
+.section--tight { padding-block: var(--lg); }
+.section--end { padding-bottom: calc(2 * var(--xl)); }
+.section + .section--flush { padding-top: 0; }
+
+/* ── Кнопки (Porsche 2.6: 56, радиус 12, 16 / 28) ────────────────────────── */
+.btn {
+  --btn-bg: var(--frost-strong); --btn-fg: var(--on); --btn-line: transparent; --btn-hover: var(--frost-hover);
+  position: relative;
+  /* Строчный блок, не flex: внутри бывают <span lang="en">, <span class="nw"> — пробелы
+     между ними остаются пробелами. Высота 56 = рамка 2 + отступы 15 × 2 + строка 24. */
+  display: inline-block; vertical-align: middle;
+  min-height: 56px; padding: 15px 28px;
+  border: 1px solid var(--btn-line); border-radius: var(--r-sm);
+  background: var(--btn-bg); color: var(--btn-fg);
+  font: 500 var(--fs-base)/24px var(--sans); letter-spacing: 0;
+  text-align: center; text-decoration: none; white-space: normal;
+  cursor: pointer; user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+}
+.btn:hover { --btn-bg: var(--btn-hover); }
+.btn .icon { width: 20px; height: 20px; margin: -3px 4px 0; vertical-align: middle; }
+.btn--primary { --btn-bg: var(--on); --btn-fg: var(--on-inverse); --btn-hover: color-mix(in srgb, var(--on) 84%, var(--page)); }
+.btn--secondary { --btn-bg: var(--frost-strong); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
+.btn--ghost { --btn-bg: transparent; --btn-line: var(--line-field); --btn-hover: transparent; }
+.btn--ghost:hover { --btn-line: var(--on); }
+.btn--compact { min-height: 40px; padding: 7px 16px; border-radius: var(--r-xs); font-size: 15px; }
+.btn--block { display: block; width: 100%; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: .4; cursor: not-allowed; pointer-events: none; }
+@media (pointer: coarse) { .btn--compact { min-height: 44px; padding-block: 9px; } }
+/* Группа кнопок: в ряд, на телефоне — столбиком на всю ширину (Porsche 2.6). */
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: max(12px, var(--sm)); }
+@media (max-width: 759px) {
+  .actions--stack { flex-direction: column; align-items: stretch; }
+  .actions--stack > .btn { width: 100%; }
+}
+
+/* Стрелка-CTA: капсула с подписью и стрелкой (dir__cta главной v2). Наведение —
+   красная заливка: --red-ink, чтобы слоновая кость читалась (5,27:1). */
+.pill-cta {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 40px; padding: 4px 8px 4px 16px;
+  border-radius: var(--r-xs);
+  background: var(--frost); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  color: var(--on); font: 500 15px/24px var(--sans); text-decoration: none; white-space: nowrap;
+  transition: background-color .35s var(--ease), color .35s var(--ease);
+}
+.pill-cta .icon { transition: transform .6s var(--expo); }
+.pill-cta:hover { background-color: var(--red-ink); color: var(--fg); }
+.pill-cta:hover .icon { transform: translateX(3px); }
+
+/* Текстовая ссылка «Подробнее →»: подчёркивание --on-line → --on-red. Строчная (не flex):
+   внутри бывают <span lang="en"> и неразрывные пробелы — промежутки остаются пробелами. */
+.link-arrow {
+  display: inline; padding: 0;
+  color: var(--on); font: inherit; font-weight: 500; line-height: 1.6; text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--on-rgb) / .3); text-decoration-thickness: 1px; text-underline-offset: 6px;
+  background: none; border: 0; cursor: pointer;
+  transition: text-decoration-color var(--t-fast) var(--ease);
+}
+.link-arrow .icon { width: 20px; height: 20px; margin: -2px 0 0 4px; transition: transform .4s var(--ease); }
+.link-arrow:hover { text-decoration-color: var(--on-red); }
+.link-arrow:hover .icon { transform: translateX(3px); }
+.link-arrow[target="_blank"]:hover .icon { transform: translate(2px, -2px); }
+
+/* Ссылка-возврат над H1 (P19 «← Zu den Suchergebnissen»). */
+.back-link {
+  display: inline-flex; align-items: center; gap: 4px;
+  min-height: 40px; margin-left: -6px; padding: 4px 10px 4px 2px; border-radius: var(--r-xs);
+  color: var(--on); font-size: var(--fs-base); text-decoration: none;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.back-link:hover { background-color: var(--frost); }
+.back-link .icon { transition: transform .4s var(--ease); }
+.back-link:hover .icon { transform: translateX(-3px); }
+
+/* ── Чипы (p-tag: 24, капсула, 14) ──────────────────────────────────────── */
+.chips { display: flex; flex-wrap: wrap; gap: var(--xs); }
+.chip {
+  display: inline-block; vertical-align: middle;
+  min-height: 24px; padding: 1px 10px;
+  border-radius: var(--r-pill);
+  background: var(--frost-strong); color: var(--on);
+  font: 400 var(--fs-sm)/22px var(--sans); white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chip .icon { width: 16px; height: 16px; margin: -2px 4px 0 -2px; }
+.chip--solid { background: var(--on); color: var(--on-inverse); font-weight: 500; }
+/* На фото (v2): матовый с тёмной подложкой — слоновая кость читается 4,5:1 и на пене. */
+.chip--photo {
+  background: linear-gradient(var(--frost-strong), var(--frost-strong)), rgb(8 8 8 / .58);
+  box-shadow: inset 0 0 0 1px rgb(var(--fg-rgb) / .16);
+  color: var(--fg);
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+}
+.chip--check { min-height: 36px; padding: 6px 14px 6px 10px; background: var(--surface); white-space: normal; line-height: 22px; }
+.chip--check .icon { width: 20px; height: 20px; margin: -3px 6px 0 0; color: var(--on-red); }
+
+/* ── Поля (на будущее; Porsche 2.6 / P29) ───────────────────────────────── */
+.field { display: grid; gap: 4px; }
+.field__label { font-size: var(--fs-base); line-height: 1.5; }
+.field__input {
+  width: 100%; min-height: 56px; padding: 0 16px;
+  border: 1px solid var(--line-field); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--on);
+  font: 400 var(--fs-base)/1.5 var(--sans);
+  transition: border-color var(--t-fast) var(--ease), box-shadow var(--t-fast) var(--ease);
+}
+.field__input::placeholder { color: var(--on-muted); opacity: 1; }
+.field__input:hover { border-color: rgb(var(--on-rgb) / .7); }
+.field__input:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus); }
+textarea.field__input { min-height: 200px; padding: 15px 16px; resize: vertical; }
+select.field__input {
+  appearance: none; -webkit-appearance: none; padding-right: 48px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 9.5l6 6 6-6' fill='none' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center; background-size: 24px;
+}
+.field__input[aria-invalid="true"] { border-color: var(--on-danger); }
+.field__hint { font-size: var(--fs-sm); color: var(--on-muted); }
+.field__error { font-size: var(--fs-sm); color: var(--on-danger); }
+/* Чекбокс и радио 28×28, радиус 8. */
+.check { display: inline-flex; align-items: flex-start; gap: 12px; cursor: pointer; line-height: 1.5; }
+.check > input {
+  appearance: none; -webkit-appearance: none;
+  flex: none; display: grid; place-content: center;
+  width: 28px; height: 28px; margin: -2px 0 0;
+  border: 1px solid var(--line-field); border-radius: var(--r-xs);
+  background: var(--surface); cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+}
+.check > input[type="radio"] { border-radius: 50%; }
+.check > input:hover { border-color: var(--on); }
+.check > input:checked { background: var(--on); border-color: var(--on); }
+.check > input:checked::before {
+  content: ""; width: 18px; height: 18px; background: var(--on-inverse);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.check > input[type="radio"]:checked::before { width: 10px; height: 10px; border-radius: 50%; -webkit-mask: none; mask: none; }
+
+/* Пометка «нужно от клиента» ({{todo}}): заметная, чтобы не уехала в бой (check:release). */
+.todo, .doc-todo {
+  /* Поля — тенью, не padding: пометка не выталкивает строку за край колонки. */
+  padding: 0; border-radius: 2px;
+  background: #ffd84d; color: #080808; font-weight: 500;
+  box-shadow: .3em 0 0 #ffd84d, -.3em 0 0 #ffd84d;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone; box-decoration-break: clone;
+}
+
+/* Появление блока по прокрутке — только по выбору: data-reveal + class="reveal"
+   (класс is-in ставит ui.js). Общего правила для [data-reveal] нет: главная v2
+   анимирует свои плитки сама. */
+.js .reveal[data-reveal]:not(.is-in) { opacity: 0; transform: translateY(24px); }
+.reveal.is-in { transition: opacity 1.2s var(--expo), transform 1.4s var(--expo); }
+
+/* ── Уменьшение движения: конечные состояния без переходов (v2) ─────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .js .reveal[data-reveal]:not(.is-in) { opacity: 1; transform: none; }
+}
