@@ -21,12 +21,12 @@
   <h2 class="dialog__title" id="booking-title" tabindex="-1" autofocus>Записаться</h2>
   <p class="dialog__context" id="booking-context" hidden></p>
   <p class="dialog__lead" id="booking-lead" hidden>Администратор ответит на вопросы и подберёт время.</p>
-  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её онлайн-записи.</p>
+  <p class="dialog__lead" id="booking-hint">Выберите студию. Услугу и время — в её <span class="nw">онлайн-записи</span>.</p>
   <div class="dialog__branches">
     <a class="dialog__branch studio-link" href="{{loc:myasnitskaya:booking}}" target="_blank" rel="noopener noreferrer" data-branch="myasnitskaya"><strong class="studio-link__name">{{loc:myasnitskaya:name}}</strong><span class="studio-link__type dialog__branch-type">{{loc:myasnitskaya:type}}</span><span class="studio-link__address">{{loc:myasnitskaya:address}}</span><span class="studio-link__hours dialog__branch-hours">{{loc:myasnitskaya:hours}}</span><span class="studio-link__go" aria-hidden="true">{{icon:arrow-up-right}}</span><span class="sr"> — онлайн-запись, откроется в новой вкладке</span></a>
     <a class="dialog__branch studio-link" href="{{loc:technopark:booking}}" target="_blank" rel="noopener noreferrer" data-branch="technopark"><strong class="studio-link__name">{{loc:technopark:name}}</strong><span class="studio-link__type dialog__branch-type">{{loc:technopark:type}}</span><span class="studio-link__address">{{loc:technopark:address}}</span><span class="studio-link__hours dialog__branch-hours">{{loc:technopark:hours}}</span><span class="studio-link__go" aria-hidden="true">{{icon:arrow-up-right}}</span><span class="sr"> — онлайн-запись, откроется в новой вкладке</span></a>
   </div>
-  <p class="dialog__yc">Онлайн-запись откроется в YCLIENTS (<span lang="en">{{brand:legacy}}</span>)</p>
+  <p class="dialog__yc">Онлайн-запись откроется в YCLIENTS <span class="nw">(<span lang="en">{{brand:legacy}}</span>)</span></p>
   <!-- Мойка и другие работы выбраны вместе (гараж): цену остального — «Узнать цену». -->
   <p class="dialog__note dialog__note--request" id="booking-request" hidden><span data-booking-request-text></span> <button class="link-arrow" type="button" data-request data-booking-request>Узнать цену{{icon:arrow-right}}</button></p>
   <p class="dialog__aside" id="booking-other">Химчистка, полировка, плёнка, ремонт — по телефону: администратор назовёт цену.</p>
