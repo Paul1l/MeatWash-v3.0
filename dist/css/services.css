@@ -177,6 +177,39 @@ ol.programs {
 .compare__only input:focus-visible + .compare__switch { outline: 2px solid var(--focus); outline-offset: 2px; }
 .compare:has([data-compare-only]:checked) tr[data-same] { display: none; }
 
+/* Липкая строка названий программ (catalog.js, setupCompareBar): высоты в потоке нет,
+   видна, пока thead ушёл под вкладки, а итог таблицы ещё ниже. */
+.compare__bar {
+  position: sticky; top: var(--sticky-h); z-index: 3;
+  height: 0;
+  overflow-x: clip; overflow-y: visible;   /* дорожка шире ленты: обрезать по бокам, не давая прокрутки странице */
+  pointer-events: none;
+}
+@supports not (overflow: clip) { .compare__bar { display: none; } }
+.compare__bar-track, .compare__bar-mask {
+  position: absolute; top: 0; left: 0;
+  height: 64px;
+  background: var(--page);
+  border-bottom: 1px solid rgb(var(--on-rgb) / .3);
+  visibility: hidden; opacity: 0;
+}
+.compare__bar-track { display: flex; align-items: center; will-change: transform; }
+.compare__bar-mask { z-index: 1; border-bottom-color: rgb(var(--on-rgb) / .3); }
+.compare__bar-cell {
+  flex: none; padding: 0 10px;
+  text-align: center;
+  font-size: var(--fs-sm); font-weight: 600; line-height: 1.3;
+  color: var(--on);
+}
+.compare__bar.is-on .compare__bar-track, .compare__bar.is-on .compare__bar-mask { visibility: visible; opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .compare__bar-track, .compare__bar-mask { transition: opacity .2s var(--ease), visibility .2s; }
+}
+@media (max-width: 759px) {
+  .compare__bar-track, .compare__bar-mask { height: 56px; }
+  .compare__bar-cell { padding: 0 8px; }
+}
+
 .compare__scroll {
   position: relative; /* скрытые подписи (.sr, position: absolute) остаются внутри ленты */
   margin-top: var(--md);

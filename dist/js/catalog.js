@@ -184,11 +184,67 @@ function setupScrollRegions(signal) {
   signal.addEventListener('abort', () => observer.disconnect());
 }
 
+// Сравнение программ (P04): строка названий программ липнет под вкладками, пока таблица на
+// экране (как панель сравнения у эталона). Липкий thead внутри ленты с overflow-x не
+// работает, поэтому строка — отдельная полоса над лентой: ширины колонок берутся из
+// настоящего thead, сдвиг вбок повторяет прокрутку ленты. Для чтения с экрана полоса
+// скрыта (aria-hidden): названия есть в thead таблицы.
+function setupCompareBar(signal) {
+  const scroll = document.querySelector('.compare__scroll');
+  const table = scroll?.querySelector('table');
+  const head = table?.tHead?.rows[0];
+  if (!head || !('ResizeObserver' in window)) return;
+  const bar = document.createElement('div');
+  bar.className = 'compare__bar';
+  bar.setAttribute('aria-hidden', 'true');
+  const track = document.createElement('div');
+  track.className = 'compare__bar-track';
+  const cells = [...head.cells].map((th, i) => {
+    const cell = document.createElement('span');
+    cell.className = 'compare__bar-cell';
+    if (i) cell.textContent = th.textContent.trim();
+    track.append(cell);
+    return cell;
+  });
+  const mask = document.createElement('span');
+  mask.className = 'compare__bar-mask';
+  bar.append(track, mask);
+  scroll.before(bar);
+
+  const layout = () => {
+    const widths = [...head.cells].map((th) => th.getBoundingClientRect().width);
+    widths.forEach((w, i) => { cells[i].style.width = `${w}px`; });
+    track.style.width = `${table.getBoundingClientRect().width}px`;
+    mask.style.width = `${widths[0]}px`;
+    bar.style.width = `${scroll.clientWidth}px`;
+    shift();
+    toggle();
+  };
+  const shift = () => { track.style.transform = `translateX(${-scroll.scrollLeft}px)`; };
+  let frame = 0;
+  const toggle = () => {
+    frame = 0;
+    const top = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sticky-h')) || 0;
+    const headBottom = head.getBoundingClientRect().bottom;
+    const foot = table.tFoot || table.tBodies[0];
+    const end = foot.getBoundingClientRect().top;
+    bar.classList.toggle('is-on', headBottom < top + 1 && end > top + bar.offsetHeight);
+  };
+  scroll.addEventListener('scroll', shift, { passive: true, signal });
+  addEventListener('scroll', () => { if (!frame) frame = requestAnimationFrame(toggle); }, { passive: true, signal });
+  const observer = new ResizeObserver(layout);
+  observer.observe(table);
+  observer.observe(scroll);
+  signal.addEventListener('abort', () => { observer.disconnect(); bar.remove(); });
+  layout();
+}
+
 export function setupCatalog() {
   const abort = new AbortController();
   setupTabs(abort.signal);
   setupBody(abort.signal);
   setupScrollRegions(abort.signal);
+  setupCompareBar(abort.signal);
   markOnSite();
   return () => abort.abort();
 }
