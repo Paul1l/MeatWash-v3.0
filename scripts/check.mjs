@@ -486,6 +486,12 @@ for (const [name, text] of Object.entries(js)) {
     if (!await exists(resolve(dist, path))) fail(`server/404.html: нет файла ${u}`);
   }
   if (/MEATWASH|Meatwash/.test(page404)) fail('server/404.html: старое имя');
+  // 404 свёрстана вручную, вне генератора: её текст уже должен быть таким, каким его сделал бы typo().
+  {
+    const {typo} = await import('./typo.mjs');
+    const body = page404.slice(page404.indexOf('<body>'), page404.indexOf('</body>'));
+    if (typo(body) !== body) fail('server/404.html: короткие слова или тире без неразрывного пробела — прогоните текст через typo() (scripts/typo.mjs)');
+  }
 }
 for (const page of REGISTRY) {
   const loc = `<loc>${SITE}${pageSlug(page.file)}</loc>`;

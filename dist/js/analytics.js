@@ -88,7 +88,7 @@ function showBanner(focus) {
     banner.innerHTML = `
       <div class="consent__body">
         <h2 class="consent__title" id="consent-title">Cookie и&nbsp;Яндекс Метрика</h2>
-        <p class="consent__text">Мы используем cookie и&nbsp;Яндекс Метрику с&nbsp;Вебвизором, чтобы считать посещения и&nbsp;улучшать сайт. Нажимая «Принять», вы&nbsp;даёте <a href="consent">согласие на&nbsp;обработку персональных данных</a>. Подробнее&nbsp;— в&nbsp;<a href="privacy">Политике</a>. Без согласия сайт работает полностью.</p>
+        <p class="consent__text">Мы&nbsp;используем cookie и&nbsp;Яндекс Метрику с&nbsp;Вебвизором, чтобы считать посещения и&nbsp;улучшать сайт. Нажимая «Принять», вы&nbsp;даёте <a href="consent">согласие на&nbsp;обработку персональных данных</a>. Подробнее&nbsp;— в&nbsp;<a href="privacy">Политике</a>. Без&nbsp;согласия сайт работает полностью.</p>
       </div>
       <div class="consent__actions">
         <button class="btn btn--primary consent__accept" type="button" data-consent="1">Принять</button>
