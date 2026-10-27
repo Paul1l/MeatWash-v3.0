@@ -3,10 +3,11 @@
      на бота нет), класс membership__link и порядок атрибутов — контракт проверки, цель
      club_card — по data-club-card. «Обсудить условия» открывает окно записи в варианте
      разговора с администратором (data-membership, js/ui.js): заголовок из атрибута и телефоны
-     обеих студий. На карте в кадре — прежнее имя: это настоящая карта клуба. -->
+     обеих студий. Фото карты клуба (на ней прежнее имя MEATWASH) не ставим: бренд нового
+     сайта — Meat Auto; слева — знак (бык, MEAT AUTO, Car Care Club из логотипа), не карта. -->
 <section class="promo col-ext membership" id="membership" aria-labelledby="membership-title">
-  <div class="promo__media membership__media" data-reveal>
-    <img src="assets/img/club-card.webp" alt="Клубная карта постоянного клиента" width="2100" height="1400" loading="lazy" decoding="async">
+  <div class="promo__media membership__media" data-reveal aria-hidden="true">
+    <div class="membership__mark">{{icon:bull:membership__bull}}<span class="membership__name" lang="en">Meat Auto</span>{{icon:ccc:membership__ccc}}</div>
   </div>
   <div class="promo__panel membership__panel">
     <h2 class="membership__title" id="membership-title">Больше, чем сервис</h2>

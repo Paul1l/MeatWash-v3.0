@@ -382,7 +382,6 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
   grid-template-columns: minmax(0, 1fr);       /* колонка не шире экрана: на 320 фото 4:3 с min-height 240 растягивало её до 320 px + поля (WP7) */
   padding-block: var(--xl) calc(2 * var(--xl));
 }
-@media (max-width: 759px) { .membership__media { min-height: 0; } }
 .membership__media {
   display: grid; place-items: center;
   min-width: 0;
@@ -391,7 +390,18 @@ html:has(> body[data-page="about"]) { scroll-padding-top: 72px; }
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   background: #000;
 }
-.membership__media img { display: block; width: min(100%, 600px); height: auto; }
+/* Знак клуба вместо фото карты (на карте — прежнее имя): бык, MEAT AUTO, «Car Care Club». */
+.membership__media { aspect-ratio: auto; min-height: clamp(260px, 30vw, 420px); }   /* не фото: без 4:3 promo, иначе min-height через пропорцию растягивает ширину */
+.membership__mark { display: grid; justify-items: center; gap: clamp(10px, 1.2vw, 18px); color: var(--fg); }
+.membership__bull { display: block; width: clamp(132px, 15vw, 216px); height: auto; aspect-ratio: 1097 / 800; }
+.membership__name {
+  font: 300 clamp(34px, 3.6vw, 56px)/.95 var(--sans);
+  letter-spacing: -.035em; text-transform: uppercase; white-space: nowrap;
+  color: #fff;
+}
+.membership__ccc {
+  display: block; width: clamp(150px, 15vw, 240px); height: auto; aspect-ratio: 1231 / 198; overflow: visible;
+}
 .membership__panel {
   --focus: var(--fg);                          /* поправка 19 */
   --on-muted: rgb(var(--fg-rgb) / .84);
@@ -435,8 +445,8 @@ svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20p
 @media (prefers-reduced-motion: no-preference) {
   .js .founder__photo[data-reveal]:not(.is-in) img,
   .js .studios__item[data-reveal]:not(.is-in) img,
-  .js .membership__media[data-reveal]:not(.is-in) img { opacity: 0; transform: scale(1.06); }
+  .js .membership__media[data-reveal]:not(.is-in) .membership__mark { opacity: 0; transform: scale(1.06); }
   .founder__photo[data-reveal].is-in img,
   .studios__item[data-reveal].is-in img,
-  .membership__media[data-reveal].is-in img { transition: opacity 1s var(--ease-out), transform 1.6s var(--expo); }
+  .membership__media[data-reveal].is-in .membership__mark { transition: opacity 1s var(--ease-out), transform 1.6s var(--expo); }
 }
