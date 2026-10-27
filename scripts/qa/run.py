@@ -55,8 +55,8 @@ def main():
 
     with DistServer(a.base) as base, sync_playwright() as p:
         chromium = p.chromium.launch()
-        webkit = p.webkit.launch() if '8' in only else None
-        if '2' in only: layout.overflow(chromium, base, pages, res)
+        webkit = p.webkit.launch() if only & {'2', '8'} else None
+        if '2' in only: layout.overflow(chromium, base, pages, res, webkit)
         if '3' in only: layout.fonts(chromium, base, pages, res)
         if a.preview and only & {'4', '10', '11'}:
             links.run(a.preview, a.host, headers or {}, pages, res)

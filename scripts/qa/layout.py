@@ -24,11 +24,17 @@ OVERFLOW_JS = r"""() => {
 }"""
 
 
-def overflow(browser, base, pages, res):
+# WebKit (Safari): узкие экраны — там у него своя ошибка: min-height с aspect-ratio давал
+# фото промо минимальную ширину 320 px (ревью 27.10, Chromium её не показывает).
+WEBKIT_SIZES = [(320, 700), (340, 700), (360, 800), (390, 844)]
+
+
+def overflow(browser, base, pages, res, webkit=None):
     runs, bad, clipped_total, details, clipped_notes = 0, 0, 0, [], []
     sizes = [(w, 900) for w in WIDTHS] + LANDSCAPE
-    for w, h in sizes:
-        c = Context(browser, w, h, touch=w < 768 or (w, h) in LANDSCAPE)
+    runs_plan = [(browser, w, h, '') for w, h in sizes] + ([(webkit, w, h, ' WebKit') for w, h in WEBKIT_SIZES] if webkit else [])
+    for engine, w, h, tag in runs_plan:
+        c = Context(engine, w, h, touch=w < 768 or (w, h) in LANDSCAPE)
         pg = c.page()
         for p in pages:
             load(pg, f"{base}/{p['path']}", scroll=True)
@@ -36,13 +42,13 @@ def overflow(browser, base, pages, res):
             runs += 1
             if r['sw'] != 0 or r['hard']:
                 bad += 1
-                details.append(f"/{p['path']} {w}×{h}: scrollWidth−clientWidth={r['sw']}; за краем: {', '.join(r['hard'][:4])}")
+                details.append(f"/{p['path']} {w}×{h}{tag}: scrollWidth−clientWidth={r['sw']}; за краем: {', '.join(r['hard'][:4])}")
             if r['clipped']:
                 clipped_total += 1
-                clipped_notes.append(f"/{p['path']} {w}×{h}: срезано родителем: {', '.join(r['clipped'][:3])}")
+                clipped_notes.append(f"/{p['path']} {w}×{h}{tag}: срезано родителем: {', '.join(r['clipped'][:3])}")
         c.close()
     res.add('2', 'Нет горизонтальной прокрутки', bad == 0,
-            f'{runs} прогонов (13 страниц × {len(sizes)} размеров), нарушений {bad}; прогонов со срезанным родителем содержимым {clipped_total} (для глаз)',
+            f'{runs} прогонов (13 страниц × {len(sizes)} размеров Chromium' + (f' + × {len(WEBKIT_SIZES)} WebKit: 320, 340, 360, 390' if webkit else '') + f'), нарушений {bad}; прогонов со срезанным родителем содержимым {clipped_total} (для глаз)',
             details + clipped_notes[:20])
 
 
