@@ -110,7 +110,9 @@
   background-color: rgb(0 0 0 / 0);
   transition: background-color .45s var(--ease), overlay .4s allow-discrete, display .4s allow-discrete;
 }
-.drawer[open]::backdrop { background-color: var(--scrim); }
+/* Затемнение и размытие --blur (32px) на всех ширинах, как у эталона и в плане §1.3; на телефоне
+   панель во всю ширину — размытие видно, пока шторка выезжает. */
+.drawer[open]::backdrop { background-color: var(--scrim); -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur); }
 @starting-style { .drawer[open]::backdrop { background-color: rgb(0 0 0 / 0); } }
 
 .drawer__panels { display: flex; height: 100%; }
@@ -235,7 +237,6 @@
 /* Планшет: одна панель min(468px, 100vw), рядом — затемнённая страница. */
 @media (min-width: 760px) {
   .drawer { --panel-w: min(468px, 100vw); --drawer-pad: 43px; }
-  .drawer[open]::backdrop { -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 }
 /* Компьютер: две панели по 468 = 936 px, «×» — круг 56 на затемнении справа. */
 @media (min-width: 1000px) {
