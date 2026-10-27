@@ -167,6 +167,7 @@ function fail(field) { throw new Error(`Неверное значение ${fiel
 // Класс один у кнопки и у ссылки: ui.js делает её inert под окнами, CSS прячет при открытом окне.
 const loc = (id) => d.locations.find((l) => l.id === id);
 const MOBILE_CTA = {
+  none: () => '',
   book: () => '<button class="btn btn--primary mobile-cta" type="button" data-book>Записаться</button>',
   technopark: () => `<a class="btn btn--primary mobile-cta" href="tel:${escape(loc('technopark').tel)}">Позвонить в Технопарк</a>`,
   auto: () => `<a class="btn btn--primary mobile-cta" href="${escape(cars.contact)}" target="_blank" rel="noopener">Спросить о машине<span class="sr"> в Telegram</span></a>`,

@@ -25,6 +25,9 @@
   --line-field: rgb(var(--fg-rgb) / .40);
   color-scheme: dark;
 }
+/* Нижней кнопки .mobile-cta на главной нет (в утверждённой v2 её не было; запись — в шторке,
+   в подвале и на страницах направлений), поэтому и зоны под неё нет. */
+:root[data-theme="home"] { --cta-zone: 0px; }
 /* Первое состояние без перехода (перезагрузка посреди страницы). */
 body.no-tr, body.no-tr * { transition: none !important; }
 
@@ -270,9 +273,8 @@ body.no-tr, body.no-tr * { transition: none !important; }
     color: var(--on);
     transition: color 1.2s var(--ease-color);
   }
-  /* Высота слайда — как в v2; зона нижней кнопки (--cta-zone, shell.css) вычитается,
-     чтобы слайд с точками помещался над ней. */
-  .dir__card { height: 78vh; height: calc(78svh - var(--cta-zone, 0px)); max-height: 40em; min-height: 430px; }
+  /* Высота слайда — как в утверждённой v2 (625ce74). */
+  .dir__card { height: 78vh; height: 78svh; max-height: 40em; min-height: 430px; }
   .dir__card::before { display: none; }
   .dir__card::after { height: 70%; }
   .dir__content { padding: 0 var(--md) var(--md); }
@@ -346,8 +348,8 @@ body.no-tr, body.no-tr * { transition: none !important; }
   .dirs__play .i-play, .dirs__play[data-state="paused"] .i-pause { display: none; }
   .dirs__play[data-state="paused"] .i-play { display: block; }
 }
-@media (max-width: 390px) { .dir__card { height: 74vh; height: calc(74svh - var(--cta-zone, 0px)); } }
-@media (max-width: 375px) { .dir__card { height: 72vh; height: calc(72svh - var(--cta-zone, 0px)); } }
+@media (max-width: 390px) { .dir__card { height: 74vh; height: 74svh; } }
+@media (max-width: 375px) { .dir__card { height: 72vh; height: 72svh; } }
 /* Уже 360 px слайд узок для самого длинного чипа в 14 px. */
 @media (max-width: 359px) { .dir__tags .chip { font-size: 13px; padding-inline: 10px; } }
 

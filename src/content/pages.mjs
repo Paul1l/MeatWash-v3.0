@@ -18,7 +18,7 @@
 //   parent       id родителя в иерархии §1.2 (хлебные крошки): wrap, works → services
 //   theme        dark | paper | home → data-theme у <html>
 //   header       over (поверх фото) | solid (на фоне) → {{header-variant}}
-//   cta          нижняя кнопка на телефоне: book | technopark | auto | import
+//   cta          нижняя кнопка на телефоне: book | technopark | auto | import | none (главная: в v2 её не было)
 //   shared       общие части: analytics, header, footer, dialogs + book | locations | membership
 //   css          CSS страницы после 5 общих (tokens, base, components, shell, dialogs)
 //   preload      картинка героя: [{href, srcset?, sizes?, media?}] — выводится, если файл есть в dist
@@ -57,7 +57,7 @@ export const REGISTRY = [
     title: 'Meat Auto — мойка и детейлинг в Москве',
     description: 'Car Care Club Meat Auto: мойка и детейлинг, привоз авто из-за рубежа, покупка и продажа автомобилей. Две студии в Москве — на Мясницкой и в Технопарке.',
     ogTitle: 'Meat Auto — Car Care Club в Москве',
-    headline: 'Meat Auto', theme: 'home', header: 'over', cta: 'book',
+    headline: 'Meat Auto', theme: 'home', header: 'over', cta: 'none',
     shared: ALL, css: ['home.css'],
     // Имена v2 (WP2 копирует source/v2-design/img → assets/img/home).
     preload: [

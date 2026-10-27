@@ -81,8 +81,9 @@ def inventory(browser, base, pages, res):
           const cta = document.querySelector('.mobile-cta'); const cs = cta && getComputedStyle(cta);
           return {phones: phones.every(p => t.includes(p)), meta: t.includes('Instagram принадлежит компании Meta'), articles: Boolean(f && f.querySelector('a[href="articles"], a[href="#"][aria-current], a[href=""]')) || t.includes('Статьи'),
                   cta: cta ? (cta.getAttribute('href') || (cta.hasAttribute('data-book') ? 'book' : '?')) : null, visible: Boolean(cta && cs.display !== 'none' && cs.visibility !== 'hidden')}; }""", phones)
-        want = 'tel:' if p['id'] == 'wrap' else 't.me' if p['id'] in ('auto', 'import') else 'book'
-        cta_ok = r['cta'] is not None and r['visible'] and (want in r['cta'] if want != 'book' else r['cta'] == 'book')
+        # На главной нижней кнопки нет: в утверждённой v2 её не было (запись — шторка и подвал).
+        want = None if p['id'] == 'home' else 'tel:' if p['id'] == 'wrap' else 't.me' if p['id'] in ('auto', 'import') else 'book'
+        cta_ok = (r['cta'] is None) if want is None else (r['cta'] is not None and r['visible'] and (want in r['cta'] if want != 'book' else r['cta'] == 'book'))
         if not (r['phones'] and r['meta'] and r['articles'] and cta_ok):
             per.append(f"/{p['path']}: телефоны {r['phones']}, Meta {r['meta']}, «Статьи» {r['articles']}, нижняя кнопка {r['cta']} видна {r['visible']}")
     c2.close()
