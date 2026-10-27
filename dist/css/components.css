@@ -370,6 +370,9 @@ a.card:hover, .card--link:hover { transform: scale(1.008); background-color: var
 }
 .teaser__cta .icon { transition: transform .6s var(--expo); }
 .teaser:hover .teaser__img { transform: scale(1.03); }
+/* Ролик карточки по наведению (js/video.js) — поверх постера, проявляется, когда пошёл. */
+.teaser__video { opacity: 0; transition: opacity .6s var(--ease), transform .6s var(--ease); }
+.teaser__video.is-playing { opacity: 1; }
 .teaser:hover .teaser__cta { background-color: var(--red-ink); color: var(--fg); }
 .teaser:hover .teaser__cta .icon { transform: translateX(3px); }
 .teaser:focus-visible { outline-offset: 4px; }

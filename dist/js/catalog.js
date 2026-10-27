@@ -156,7 +156,8 @@ function setupBody(signal) {
     // Формат тот же, что в scripts/catalog.mjs (programContext).
     document.querySelectorAll('[data-book][data-program]').forEach((button) => {
       const program = PROGRAMS[Number(button.dataset.program)];
-      if (program) button.dataset.bookContext = `${program.name} — ${bodyName(i)}, ${money(program.prices[i])}`;
+      if (program) button.dataset.bookContext = `${program.name} — ${bodyName(i)}, ${money(program.prices[i])}`
+        + (program.studio || []).map((s) => `, ${s.label} — ${money(s.prices[i])}`).join('');
     });
   }
 

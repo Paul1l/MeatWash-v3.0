@@ -85,7 +85,7 @@ const groupItems = d.groups.flatMap((g) => g.items);
 const itemPrice = Object.fromEntries(groupItems.map(([name, price]) => [name, price]));
 const itemNames = new Set([...groupItems.map(([n]) => n), ...d.groups.flatMap((g) => g.sections.map((s) => s.title)), ...d.programs.map(([n]) => n)]);
 // Любая цена «от N ₽» на сайте и в description — цена позиции, программы или «от» раздела.
-const catalogPrices = new Set([...d.programPrices.flat(), ...groupItems.map(([, p]) => p).filter((p) => p != null)]);
+const catalogPrices = new Set([...d.programPrices.flat(), ...Object.entries(d.programStudioPrices || {}).filter(([k]) => k !== "_comment").flatMap(([, v]) => Object.values(v).flat()), ...groupItems.map(([, p]) => p).filter((p) => p != null)]);
 const priceIn = (text) => [...plain(text).matchAll(/от (\d{1,3}(?: \d{3})*) ₽/g)].map((m) => Number(m[1].replace(/\D/g, '')));
 
 // ── Страницы: ссылки, мета, контракты ────────────────────────────────────────

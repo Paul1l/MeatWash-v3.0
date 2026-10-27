@@ -15,6 +15,7 @@ const warn = (what) => (error) => console.warn(`${what}: модуль не по�
 if (document.getElementById('catalog')) import('./catalog.js').then((m) => m.setupCatalog()).catch(warn('Каталог'));
 if (document.querySelector('[data-ba]')) import('./proof.js').then((m) => m.setupProof()).catch(warn('Шторки «до/после»'));
 if (document.querySelector('.dirs')) import('./home.js').then((m) => m.setupHome()).catch(warn('Главная'));
+if (document.querySelector('[data-video]')) import('./video.js').then((m) => m.setupVideo()).catch(warn('Видео'));
 
 // 3D-гараж (решение Влада 27.10): блок #garage на /services. Скрипт окна (garage.js)
 // загружается по первому нажатию [data-garage-open], сцена (porsche3d.bundle.js) — внутри

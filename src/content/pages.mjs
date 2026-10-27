@@ -61,8 +61,8 @@ export const REGISTRY = [
     shared: ALL, css: ['home.css'],
     // Имена v2 (WP2 копирует source/v2-design/img → assets/img/home).
     preload: [
-      { href: 'assets/img/home/hero-m-720.webp', srcset: 'assets/img/home/hero-m-720.webp 720w, assets/img/home/hero-m-1080.webp 1080w', sizes: '100vw', media: '(max-width: 699px)' },
-      { href: 'assets/img/home/hero-1600.webp', srcset: 'assets/img/home/hero-1600.webp 1600w, assets/img/home/hero-2560.webp 2560w', sizes: '100vw', media: '(min-width: 700px)' },
+      { href: 'assets/img/home/hero-wash-m-720.webp', media: '(max-width: 699px)' },   // постеры роликов героя (js/video.js)
+      { href: 'assets/img/home/hero-wash-1920.webp', media: '(min-width: 700px)' },
     ],
     jsonLd: ['autowash'], ogImage: 'assets/img/og-meat-auto.webp',
     date: '2026-10-27', sitemap: { changefreq: 'monthly', priority: '1.0' },

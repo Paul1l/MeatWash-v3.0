@@ -5,7 +5,8 @@
      по нажатию (js/site.js → js/garage.js). id="garage" и id="garage-title" заняты окном,
      которое строит garage.js, — блоку их не давать. Пары «до/после» постановочные: под каждой
      видимая подпись «Иллюстрация, не работа студии» (решение Влада 27.10, поправка 9).
-     Надзаголовков и нумерации блоков нет (решение Влада). -->
+     Надзаголовков и нумерации блоков нет (решение Влада). Ролики студии в карточках оклейки
+     и работ — по наведению (js/video.js). -->
 <section class="hero-a" aria-labelledby="page-title">
   <picture class="hero-a__media">
     <source media="(min-width: 760px)" srcset="assets/img/services/hero-1600.webp" width="1240" height="531">
@@ -91,16 +92,18 @@
 </section>
 
 <nav class="teasers teasers--skewed col-ext" aria-label="Ещё в разделе «Мойка и детейлинг»">
-  <a class="teaser teaser--mark" href="wrap">
-    <span class="teaser__mark" aria-hidden="true" lang="en" data-mark="PPF"></span>
+  <a class="teaser" href="wrap" data-video-host>
+    <img class="teaser__img" src="{{asset:assets/video/clip-wrap-poster.webp}}" width="540" height="960" alt="" loading="lazy" decoding="async">
+    <video class="teaser__img teaser__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="{{asset:assets/video/clip-wrap.mp4}}"></video>
     <span class="teaser__body">
       <span class="teaser__title">Оклейка полиуретаном</span>
       <span class="teaser__text">Прозрачная или цветная плёнка — в Технопарке.</span>
       <span class="teaser__cta">Подробнее{{icon:cta-arrow}}</span>
     </span>
   </a>
-  <a class="teaser" href="works">
+  <a class="teaser" href="works" data-video-host>
     <img class="teaser__img" src="assets/img/services/works-interior-983.webp" srcset="assets/img/services/works-interior-640.webp 640w, assets/img/services/works-interior-983.webp 983w" sizes="(max-width: 899px) 100vw, 40vw" width="983" height="737" alt="" loading="lazy" decoding="async">
+    <video class="teaser__img teaser__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="{{asset:assets/video/clip-polish.mp4}}"></video>
     <span class="teaser__body">
       <span class="teaser__title">Наши работы</span>
       <span class="teaser__text">Lotus Eletre R перед продажей, BMW M4 в цветной плёнке, химчистка и полировка.</span>

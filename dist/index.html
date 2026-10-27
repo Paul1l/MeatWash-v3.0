@@ -28,8 +28,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preload" href="assets/fonts/manrope-vf.woff2?v=8d909079" as="font" type="font/woff2" crossorigin>
-<link rel="preload" as="image" href="assets/img/home/hero-m-720.webp" imagesrcset="assets/img/home/hero-m-720.webp 720w, assets/img/home/hero-m-1080.webp 1080w" imagesizes="100vw" media="(max-width: 699px)" fetchpriority="high">
-<link rel="preload" as="image" href="assets/img/home/hero-1600.webp" imagesrcset="assets/img/home/hero-1600.webp 1600w, assets/img/home/hero-2560.webp 2560w" imagesizes="100vw" media="(min-width: 700px)" fetchpriority="high">
+<link rel="preload" as="image" href="assets/img/home/hero-wash-m-720.webp" media="(max-width: 699px)" fetchpriority="high">
+<link rel="preload" as="image" href="assets/img/home/hero-wash-1920.webp" media="(min-width: 700px)" fetchpriority="high">
 <style>@font-face{font-family:'Manrope';src:url('assets/fonts/manrope-vf.woff2?v=8d909079') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}</style>
 <link rel="icon" href="assets/favicon-bull.png" sizes="512x512" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
@@ -197,12 +197,15 @@
      вместо своих, плитка 2 ведёт на страницу привоза вместо Telegram, ссылки относительные,
      числа в чипах — из данных (проданные машины, год, студии). Подпись плитки 2 Влад
      не менял («Обсудить привоз»); «Подробнее о привозе» (поправка 8) — вопрос Владу.
+     Видео (27.10): фон героя и ролик плитки 1 по наведению — js/video.js, кадры без номеров.
      Стили — dist/css/home.css, поведение — dist/js/home.js. -->
 <section class="hero" aria-labelledby="page-title">
   <picture class="hero__media">
-    <source media="(max-width: 699px)" srcset="assets/img/home/hero-m-720.webp 720w, assets/img/home/hero-m-1080.webp 1080w" sizes="100vw" width="1080" height="1920">
-    <img src="assets/img/home/hero-1600.webp" srcset="assets/img/home/hero-1600.webp 1600w, assets/img/home/hero-2560.webp 2560w" sizes="100vw" width="2560" height="1440" alt="Синий BMW M3 в полумраке подземного паркинга" fetchpriority="high" decoding="async">
+    <source media="(max-width: 699px)" srcset="assets/img/home/hero-wash-m-720.webp" width="720" height="1280">
+    <img src="assets/img/home/hero-wash-1920.webp" width="1920" height="1080" alt="Мойка чёрного седана в студии Meat Auto: пена и струя воды" fetchpriority="high" decoding="async">
   </picture>
+  <video class="hero__video" data-video="hero" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src-m="assets/video/hero-m-720.mp4?v=d5e2f6f2" data-src="assets/video/hero-1280.mp4?v=bba44920" data-src-hd="assets/video/hero-1920.mp4?v=ddf359b3"></video>
+  <button class="hero__toggle" type="button" data-video-toggle aria-pressed="false" aria-label="Остановить видео" hidden><svg class="hero__pause" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-pause"/></svg><svg class="hero__play" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-play"/></svg></button>
   <h1 class="hero__title" id="page-title">
     <span class="hero__name" lang="en">Meat Auto</span>
     <span class="sr" lang="en">Car Care Club</span>
@@ -218,8 +221,9 @@
   <div class="dirs__grid">
     <article class="dir" data-reveal aria-labelledby="dir-1">
       <h3 class="dir__title" id="dir-1"><span class="dir__name">Мойка и&nbsp;детейлинг</span></h3>
-      <div class="dir__card">
+      <div class="dir__card" data-video-host>
         <img class="dir__img" style="--focus-xy: 68% 56%" src="assets/img/home/tile-1-800.webp" srcset="assets/img/home/tile-1-800.webp 800w, assets/img/home/tile-1-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 447px, (max-width: 759px) 55vh, 52vw" width="1240" height="1864" loading="lazy" decoding="async" alt="Lexus LX в активной пене в моечном боксе Meat Auto">
+        <video class="dir__img dir__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="assets/video/clip-wash.mp4?v=7d73ecde"></video>
         <a class="dir__hit" href="services" tabindex="-1" aria-hidden="true"></a>
         <div class="dir__content">
           <div class="dir__body">

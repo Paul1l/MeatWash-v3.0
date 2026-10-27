@@ -30,7 +30,16 @@ export const minFor=id=>{
 };
 // Контекст записи программы: название, кузов и цена для этого кузова. Тот же
 // формат собирает js/catalog.js при смене кузова.
-export const programContext=(i,body)=>`${d.programs[i][0]} — ${d.bodyTypes[body]}, ${money(d.programPrices[i][body])}`;
+// Цена программы в филиале, если она выше общей (programStudioPrices): [{name,label,prices}].
+const STUDIO_LABEL={myasnitskaya:'на Мясницкой',technopark:'в Технопарке'};
+export const studioPrices=i=>Object.entries(d.programStudioPrices?.[i]||{}).map(([id,prices])=>{
+ const location=d.locations.find(l=>l.id===id);
+ if(!location||!STUDIO_LABEL[id])throw new Error(`programStudioPrices: нет филиала ${id}`);
+ return {name:location.name,label:STUDIO_LABEL[id],prices};
+});
+export const programContext=(i,body)=>`${d.programs[i][0]} — ${d.bodyTypes[body]}, ${money(d.programPrices[i][body])}${studioPrices(i).map(s=>`, ${s.label} — ${money(s.prices[body])}`).join('')}`;
+// Строка «На Мясницкой — 3 150 ₽» под ценой: тот же data-program-price, его меняет кузов.
+const studioLine=(i,tag,cls)=>studioPrices(i).map(s=>`<${tag} class="${cls}">${s.label[0].toUpperCase()+s.label.slice(1)} — <span data-program-price data-prices="${s.prices.join(',')}">${money(s.prices[0])}</span></${tag}>`).join('');
 export const serviceCount=()=>d.groups.reduce((sum,group)=>sum+group.items.length,0);
 // Иконка спрайта — та же разметка, что у подстановки icon (scripts/pages.mjs). Своя копия:
 // pages.mjs импортирует этот модуль, обратный импорт дал бы цикл при npm run catalog.
@@ -72,7 +81,7 @@ const SECTION_NOTE={
 // (на него ведут ссылки #program-0…4) и запись с программой в корзине YCLIENTS.
 const programCard=([name,,time,description],i)=>`<li class="program-card">
       <h4 class="program-card__name">${escape(name)}</h4>
-      <p class="program-card__price"><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span></p>
+      <p class="program-card__price"><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span>${studioLine(i,'span','program-card__studio')}</p>
       <ul class="chips program-card__chips"><li class="chip">${escape(time)}</li></ul>
       <p class="program-card__desc">${escape(description)}</p>
       <details class="accordion program-card__includes" id="program-${i}"><summary class="accordion__head">Что входит</summary><div class="accordion__body"><ul class="program-includes">${d.programIncludes[i].map(item=>`<li>${escape(item)}</li>`).join('')}</ul></div></details>
@@ -162,7 +171,7 @@ ${rows.map(row=>`        <tr${row.from===0?' data-same':''}><th scope="row">${es
        </tbody>
        <tfoot>
         <tr class="compare__time"><th scope="row">Время</th>${d.programs.map(([,,time])=>`<td>${escape(time)}</td>`).join('')}</tr>
-        <tr class="compare__price"><th scope="row">Цена</th>${d.programs.map((_,i)=>`<td><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span></td>`).join('')}</tr>
+        <tr class="compare__price"><th scope="row">Цена</th>${d.programs.map((_,i)=>`<td><span data-program-price data-prices="${d.programPrices[i].join(',')}">${money(d.programPrices[i][0])}</span>${studioLine(i,'span','compare__studio')}</td>`).join('')}</tr>
        </tfoot>
       </table>
      </div>
@@ -214,7 +223,7 @@ export function renderData(){
  return `// Сгенерировано scripts/catalog.mjs из assets/meatwash-content.json — руками не править:
 // после правки JSON выполните npm run catalog (npm run check сверяет этот файл).
 export const BODY_TYPES = ${JSON.stringify(d.bodyTypes)};
-export const PROGRAMS = ${JSON.stringify(d.programs.map(([name,,time,description],i)=>({name,time,description,prices:d.programPrices[i],includes:d.programIncludes[i],items:d.programItems[i]})),null,1)};
+export const PROGRAMS = ${JSON.stringify(d.programs.map(([name,,time,description],i)=>({name,time,description,prices:d.programPrices[i],studio:studioPrices(i).map(({label,prices})=>({label,prices})),includes:d.programIncludes[i],items:d.programItems[i]})),null,1)};
 export const PRICES = ${JSON.stringify(prices,null,1)};
 // Позиции каталога: цена (null — после оценки), короткое пояснение, категория и подраздел.
 export const ITEMS = ${JSON.stringify(items,null,1)};
