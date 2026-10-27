@@ -309,6 +309,7 @@ a.card:hover, .card--link:hover { transform: scale(1.008); background-color: var
 .promo { display: flex; flex-direction: column; }
 .promo__media {
   position: relative; overflow: hidden;
+  min-width: 0;                    /* WebKit: min-height 240 через 4:3 давал минимум ширины 320 px (прокрутка на 320–340) */
   min-height: 240px; aspect-ratio: 4 / 3;
   border-radius: var(--r-lg) var(--r-lg) 0 0;
   background: var(--surface);
