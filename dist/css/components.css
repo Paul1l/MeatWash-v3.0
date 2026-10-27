@@ -565,6 +565,7 @@ a.mosaic__item:hover img { transform: scale(1.03); }
 .link-rows a:hover { background-color: var(--surface-2); }
 .link-rows a:hover::after { transform: translateX(3px); }
 .link-rows a > .icon { display: none; }
+.link-rows > li > a { height: 100%; }         /* в ряду из двух строки одной высоты */
 @media (min-width: 760px) { .link-rows { grid-template-columns: repeat(2, minmax(0, 1fr)); } .link-rows--single { grid-template-columns: minmax(0, 1fr); } }
 
 /* ── Полоса цитаты: бордо, цитата 2xl / 300, без фото ───────────────────────── */
