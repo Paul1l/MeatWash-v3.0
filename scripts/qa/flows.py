@@ -14,6 +14,25 @@ BOOKING_STATE = r"""() => {
 }"""
 
 
+# Открыть каждое окно записи / «Узнать цену» / разговора и проверить строку контекста.
+CONTEXT_TYPO = r"""() => {
+  const SHORT = '[а-яёa-z]{1,2}|для|без|под|над|при|про|обо|изо|или|как|что|чем|где|его|её|все|это';
+  const bad = new RegExp(`(?:^|[ \u00a0(«„"—–-])(?:${SHORT}) (?=\\S)| —|\\d [\\d₽]`, 'iu');
+  const out = {n: 0, bad: []};
+  for (const el of document.querySelectorAll('[data-book],[data-request],[data-membership]')) {
+    if (el.closest('dialog')) continue;
+    el.click();
+    const c = document.querySelector('#booking-context');
+    const t = c && !c.hidden ? c.textContent : '';
+    document.querySelectorAll('dialog[open]').forEach(d => d.close());
+    if (!t) continue;
+    out.n++;
+    if (bad.test(t)) out.bad.push(t.replace(/\u00a0/g, '~'));
+  }
+  return out;
+}"""
+
+
 def booking(browser, base, pages, res):
     details, ok_pages = [], 0
     for w in (1440, 390):
@@ -60,12 +79,29 @@ def booking(browser, base, pages, res):
     t = pg.evaluate(BOOKING_STATE)
     talk_ok = t['open'] and t['mode'] == 'talk' and t['phones'][:1] == ['technopark']
     c.close()
+    # Строка «Вы выбрали / Вы спрашиваете» в окне (её пишет скрипт): короткие слова не висят,
+    # перед тире и ₽ — неразрывный пробел; все кнопки записи, «Узнать цену» и разговора на
+    # страницах с ними, на /services — при четырёх типах кузова, 320 и 390 (ревью 27.10).
+    typo_total, typo_bad = 0, []
+    for w in (320, 390):
+        c = Context(browser, w, 800, consent=False)
+        pg = c.page()
+        for path in ('services', 'works', 'about', 'auto', 'article-avto-k-zime', 'wrap'):
+            load(pg, f'{base}/{path}')
+            for body in ((0, 1, 2, 3) if path == 'services' else (None,)):
+                if body is not None:
+                    pg.evaluate(f"() => {{ const i = document.querySelector('input[name=body-type][value=\"{body}\"]'); i.checked = true; i.dispatchEvent(new Event('change', {{bubbles: true}})); }}")
+                r = pg.evaluate(CONTEXT_TYPO)
+                typo_total += r['n']
+                typo_bad += [f'/{path} {w}{"" if body is None else f" кузов {body}"}: {x}' for x in r['bad']]
+        c.close()
     total = len(pages) * 2
-    res.add('5', 'Запись', ok_pages == total and cart_ok and talk_ok,
+    res.add('5', 'Запись', ok_pages == total and cart_ok and talk_ok and not typo_bad,
             f'первая [data-book] → #booking[open] с 906067 и 1743348, блокировка и Esc: {ok_pages}/{total} (13 страниц × 1440 и 390); '
             f'«{label}» + программа 3 → {", ".join(f"{b}: …{hrefs.get(b, "")[-24:]}" for b in STUDIOS)} (ожидалось m-1s{want["myasnitskaya"]}/{want["technopark"]}) — {"да" if cart_ok else "нет"}; '
-            f'«Узнать цену» в «Защите» → режим {t["mode"]}, телефоны {t["phones"]}',
-            details + ([] if cart_ok else [f'корзина: {hrefs}']) + ([] if talk_ok else [f'разговор: {t}']))
+            f'«Узнать цену» в «Защите» → режим {t["mode"]}, телефоны {t["phones"]}; '
+            f'строка «Вы выбрали…» в окне: {typo_total} открытий на 320 и 390, висящих слов и тире — {len(typo_bad)}',
+            details + ([] if cart_ok else [f'корзина: {hrefs}']) + ([] if talk_ok else [f'разговор: {t}']) + typo_bad[:10])
 
 
 def consent(browser, base, res):

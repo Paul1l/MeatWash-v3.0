@@ -11,6 +11,16 @@ import { setupAnalytics, goal } from './analytics.js';
 import { LOCATIONS, REQUESTS, CATEGORIES, ITEMS } from './data.js';
 import { getBody } from './body.js';
 
+// Неразрывные пробелы в тексте, который пишет скрипт (правила scripts/typo.mjs, без сущностей).
+const NB = ' ';
+const SHORT = '[а-яёa-z]{1,2}|для|без|под|над|при|про|обо|изо|или|как|что|чем|где|его|её|все|это';
+const SHORT_RE = new RegExp(`(^|[\\s\\u00a0(«„"—–-])(?!(?:же|ли|бы) )(${SHORT}) (?=\\S|$)`, 'giu');
+export const nb = (text) => String(text)
+  .replace(SHORT_RE, `$1$2${NB}`).replace(SHORT_RE, `$1$2${NB}`)
+  .replace(/ (же|ли|бы)(?=[\s.,;:!?»)]|$)/giu, `${NB}$1`)
+  .replace(/ (—|–)(?= )/g, `${NB}$1`)
+  .replace(/(\d) (?=[\dа-яёa-z₽%°×])/giu, `$1${NB}`);
+
 export function setupUI() {
  const abort=new AbortController(), options={signal:abort.signal};
  const $=s=>document.querySelector(s);
@@ -55,9 +65,11 @@ export function setupUI() {
  const closeDialogs=()=>{ booking?.close(); requestDialog?.close(); closeDrawer(); };
  const context=$('#booking-context'), lead=$('#booking-lead'), hint=$('#booking-hint'), branches=booking?.querySelector('.dialog__branches');
  const leadText=lead?.textContent||'';
- // Что именно выбрал или спрашивает человек — только текстом, без разметки.
- // Знак рубля не уходит на следующую строку от числа.
- const setContext=(note,prefix='Вы выбрали: ')=>{ if(!context)return; context.textContent=note?(prefix+note).replace(/ ₽/g,'\u00a0₽'):''; context.hidden=!note; };
+ // Что именно выбрал или спрашивает человек — только текстом, без разметки. Строку пишет
+ // скрипт, typo() сборки до неё не доходит: те же правила здесь (nb) — короткие слова
+ // к следующему, неразрывный пробел перед тире, число к ₽. Сами data-book-context
+ // остаются с обычными пробелами (поправка 16).
+ const setContext=(note,prefix='Вы выбрали: ')=>{ if(!context)return; context.textContent=note?nb(prefix+note):''; context.hidden=!note; };
  // Телефоны студий (блок всегда развёрнут): порядок из разметки, по плёнке и защите
  // первым — Технопарк. Переставляем сами ссылки: порядок чтения и Tab тот же, что на экране.
  const phones=booking?.querySelector('.dialog__phones'), phoneLinks=[...(phones?.querySelectorAll('[data-phone]')||[])];

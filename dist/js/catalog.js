@@ -9,7 +9,7 @@
 import { PROGRAMS } from './data.js';
 import { getBody, setBody, bodyName } from './body.js';
 
-const money = (n) => n.toLocaleString('ru-RU') + ' ₽';
+const money = (n) => n.toLocaleString('ru-RU') + '\u00a0₽';   // ₽ не отрывается от числа
 const byHash = (hash) => {
   try { return hash && hash.length > 1 ? document.getElementById(decodeURIComponent(hash.slice(1))) : null; } catch { return null; }
 };
@@ -152,7 +152,7 @@ function setupBody(signal) {
     document.querySelectorAll('[data-program-price]').forEach((price) => {
       price.textContent = money(Number(price.dataset.prices.split(',')[i]));
     });
-    if (label) label.textContent = 'Цены для типа кузова: ' + bodyName(i);
+    if (label) label.textContent = 'Цены для\u00a0типа кузова: ' + bodyName(i);   // как в разметке после typo()
     // Формат тот же, что в scripts/catalog.mjs (programContext).
     document.querySelectorAll('[data-book][data-program]').forEach((button) => {
       const program = PROGRAMS[Number(button.dataset.program)];
