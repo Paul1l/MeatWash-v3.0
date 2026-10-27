@@ -91,6 +91,9 @@
   color: rgb(var(--on-rgb) / .06); white-space: nowrap;
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
+/* Знак — не текст документа, а generated content (data-mark): чистое украшение, контраст текста
+   к нему не применяется, axe и Lighthouse его не считают. */
+.hero-c__mark::before, .teaser__mark::before { content: attr(data-mark); }
 .hero-c__media { width: min(100%, 980px); margin-top: var(--md); }
 .hero-c__media img { width: 100%; height: auto; }
 .hero-c .segmented { margin-top: clamp(96px, 14vw, 240px); }

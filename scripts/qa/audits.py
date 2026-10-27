@@ -89,14 +89,13 @@ def contrast(browser, base, res, axe=None):
                         violations += 1
             if axe:
                 pg.add_script_tag(path=axe)
-                # Водяные знаки «PPF» (.hero-c__mark, .teaser__mark) — чистое украшение под aria-hidden,
-                # WCAG 1.4.3 его не требует; остальное aria-hidden проверяется.
-                r = pg.evaluate("async () => { const r = await axe.run({exclude: [['.hero-c__mark'], ['.teaser__mark']]}, {runOnly: {type: 'rule', values: ['color-contrast']}}); return r.violations.map(v => v.nodes.map(n => n.target.join(' ') + ' — ' + (n.any[0]?.message || '').slice(0, 120))).flat(); }")
+                # Без исключений: водяные знаки «PPF» — generated content (::before), не текст.
+                r = pg.evaluate("async () => { const r = await axe.run(document, {runOnly: {type: 'rule', values: ['color-contrast']}}); return r.violations.map(v => v.nodes.map(n => n.target.join(' ') + ' — ' + (n.any[0]?.message || '').slice(0, 120))).flat(); }")
                 nodes += 1
                 if r:
                     violations += len(r)
                     details += [f'/{p} {w}: {x}' for x in r[:6]]
         c.close()
     res.add('13', 'Контраст', violations == 0,
-            (f'axe-core color-contrast: {len(pages)} страниц × 2 ширины (водяные знаки PPF — украшение, исключены), нарушений {violations}' if axe else 'axe-core не найден (AXE_PATH) — только пары выбранных состояний')
+            (f'axe-core color-contrast без исключений: {len(pages)} страниц × 2 ширины, нарушений {violations}' if axe else 'axe-core не найден (AXE_PATH) — только пары выбранных состояний')
             + '; пары выбранных состояний: ' + ('; '.join(pairs) or 'нет'), details)
