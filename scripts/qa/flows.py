@@ -90,11 +90,21 @@ def consent(browser, base, res):
     frames_after_decline = list(c.metrika_frames)
     tag = [u for u in c.metrika if 'tag.js' in u]
     c.close()
-    ok = shown and not again and after_decline == 0 and reopened and focus == '1' and tag
-    res.add('6', 'Согласие', ok,
-            f'первый визит — уведомление: {shown}; «Отказаться» → запросов страницы к mc.yandex.ru {after_decline}, после перехода уведомления нет: {not again}; '
+    # Высокий экран (1280×1024): карты «О нас» в первом экране — виджет грузится сразу, без
+    # прокрутки, и тянет свою Метрику (Политика п. 2.5 об этом говорит; «карта за согласием»
+    # или по нажатию — решение Влада, план §4.4).
+    c = Context(browser, 1280, 1024, consent=False)
+    pg = c.page()
+    load(pg, f'{base}/about')
+    pg.wait_for_timeout(4000)
+    tall_own, tall_frames = len(c.metrika), len(c.metrika_frames)
+    c.close()
+    ok = shown and not again and after_decline == 0 and tall_own == 0 and reopened and focus == '1' and tag
+    res.add('6', 'Согласие (код сайта; виджет Карт — с оговоркой)', ok,
+            f'первый визит — уведомление: {shown}; «Отказаться» → запросов кода сайта к mc.yandex.ru {after_decline + tall_own}, после перехода уведомления нет: {not again}; '
             f'«Настройки cookie» → уведомление {reopened}, фокус на «Принять»: {focus == "1"}; «Принять» → запрос tag.js: {len(tag)}; '
-            f'запросов к mc.yandex.ru из iframe виджета Яндекс Карт до согласия: {len(frames_after_decline)}',
+            f'ОГОВОРКА: виджет Яндекс Карт на /about без согласия сам обращается к mc.yandex.ru — после прокрутки {len(frames_after_decline)}, '
+            f'на 1280×1024 без прокрутки {tall_frames} (Политика п. 2.5; карта по нажатию — решение Влада)',
             [f'виджет Карт (не код сайта): {u[:90]}' for u in frames_after_decline[:4]])
 
 
