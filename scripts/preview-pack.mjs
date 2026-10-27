@@ -18,6 +18,9 @@
 //      хостом превью и заголовком X-Robots-Tag: noindex, nofollow; проверяет, что адреса
 //      meatwash.ru без поддомена в правилах не осталось;
 //   5. кладёт 404.html из server/404.html (с ?v= у CSS) и PREVIEW.txt (хост, sha, дата);
+//      из всех *.html вырезает HTML-комментарии (маркеры SHARED нужны только check, а он
+//      работает по dist; в комментариях — заметки разработки), JS сжимает esbuild (без
+//      комментариев; бандл 3D-гаража не трогает — он уже собран, лицензии в LEGAL.txt);
 //   6. проверяет пакет (noindex на каждой странице, ?v= у каждого CSS и JS, нет адресов
 //      боевого сайта в <head>, нет Метрики при --no-metrika) и печатает отчёт: страницы,
 //      адреса с ?v=, пометки «нужно от клиента», размер, бюджеты (поправка 26);
@@ -71,6 +74,11 @@ for (const name of cssFiles) {
   const file = resolve(out, 'css', name);
   execFileSync(resolve(root, 'node_modules/.bin/esbuild'), [file, '--minify', '--log-level=error', '--allow-overwrite', `--outfile=${file}`], {cwd: root});
 }
+// JS: сжатие по файлу, без склейки (import './x.js' остаются как есть — их помечает stamp-assets).
+for (const name of (await readdir(resolve(out, 'js'))).filter((n) => n.endsWith('.js') && n !== 'porsche3d.bundle.js')) {
+  const file = resolve(out, 'js', name);
+  execFileSync(resolve(root, 'node_modules/.bin/esbuild'), [file, '--minify', '--legal-comments=none', '--log-level=error', '--allow-overwrite', `--outfile=${file}`], {cwd: root});
+}
 // Один файл стилей на страницу (поправка 28, бюджет 26): 5 общих CSS + CSS страницы склеиваются
 // в css/b-<хеш>.css в том же порядке. На мобильном Lighthouse каждый блокирующий файл — лишний
 // круг по сети: с 6–7 файлами LCP был 2,8–3,3 с, с одним — 1,5–2,3 с. Страницы с одинаковым
@@ -108,12 +116,17 @@ const stamped = node('stamp-assets.mjs', sha, out).trim();
   await writeFile(file, page);
 }
 
-// 2. Страницы: noindex, адрес превью в <head>, без Метрики
+// 2. Страницы: без HTML-комментариев, noindex, адрес превью в <head>, без Метрики.
+// Комментарии вырезаются вне <script>, <style>, <textarea> и <pre>; строка, где был только
+// комментарий, уходит целиком.
+const stripComments = (html) => html.split(/(<(script|style|textarea|pre)\b[\s\S]*?<\/\2>)/i)
+  .map((part, i) => (i % 3 === 0 ? part.replace(/^[ \t]*<!--[\s\S]*?-->[ \t]*\n/gm, '').replace(/<!--[\s\S]*?-->/g, '') : i % 3 === 1 ? part : ''))
+  .join('');
 const pages = (await readdir(out)).filter((n) => n.endsWith('.html'));
 let todo = 0;
 for (const name of pages) {
   const file = resolve(out, name);
-  let html = await readFile(file, 'utf8');
+  let html = stripComments(await readFile(file, 'utf8'));
   const end = html.indexOf('</head>');
   if (end < 0) { problems.push(`${name}: нет </head>`); continue; }
   let head = html.slice(0, end), body = html.slice(end);
@@ -154,7 +167,7 @@ async function collect(dir) {
   return list;
 }
 const all = (await collect(out)).map((f) => relative(out, f).split(sep).join('/')).sort();
-for (const banned of ['sitemap.xml', 'kit.html', 'api/request.php']) if (all.includes(banned)) problems.push(`в пакете ${banned}`);
+for (const banned of ['sitemap.xml', 'kit.html', 'api/request.php', 'assets/meatwash-content.json']) if (all.includes(banned)) problems.push(`в пакете ${banned}`);
 if (all.some((f) => /^yandex_\w+\.html$/.test(f))) problems.push('в пакете файл Вебмастера');
 let versioned = 0;
 const gz = async (p) => gzipSync(await readFile(resolve(out, p)), {level: 9}).length;
@@ -175,6 +188,7 @@ const budgets = [];
 for (const name of pages) {
   const html = await readFile(resolve(out, name), 'utf8');
   if (!html.includes('<meta name="robots" content="noindex, nofollow">')) problems.push(`${name}: нет noindex`);
+  if (html.includes('<!--')) problems.push(`${name}: остался HTML-комментарий`);
   const head = html.slice(0, html.indexOf('</head>'));
   if (head.includes(PROD + '/')) problems.push(`${name}: в <head> остался адрес ${PROD}/`);
   if (!metrika && /mw-metrika|mc\.yandex\.ru/.test(html)) problems.push(`${name}: Метрика в пакете при --no-metrika`);
@@ -197,6 +211,11 @@ for (const name of pages) {
   }
   for (const k of ['html', 'css', 'js', 'lcpPhone', 'lcpDesktop']) if (row[k] > BUDGET[k]) problems.push(`${name}: бюджет ${k} превышен — ${(row[k] / 1024).toFixed(1)} КБ > ${BUDGET[k] / 1024} КБ`);
   budgets.push(row);
+}
+// Заметки разработки не уходят в пакет (ревью 27.10): имена, номера поправок, автор чужого фото.
+for (const f of all.filter((f) => /\.(html|js|css|txt)$/.test(f) && f !== 'js/porsche3d.bundle.js')) {
+  const hit = (await readFile(resolve(out, f), 'utf8')).match(/.{0,30}(?:Влад|Паш[аеи]|поправк|ГЕОмаркетинг|Бадаев).{0,30}/);
+  if (hit) problems.push(`${f}: внутренняя заметка в пакете: …${hit[0].trim()}…`);
 }
 const fontSize = (await stat(resolve(out, 'assets/fonts/manrope-vf.woff2'))).size;
 if (fontSize > BUDGET.font) problems.push(`шрифт ${fontSize} Б > 60 КБ`);
