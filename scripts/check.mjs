@@ -90,7 +90,8 @@ const priceIn = (text) => [...plain(text).matchAll(/от (\d{1,3}(?: \d{3})*) �
 
 // ── Страницы: ссылки, мета, контракты ────────────────────────────────────────
 const pageOf = (path) => { const name = path.replace(/^\.\//, ''); return name === '' || name === '.' ? 'index.html' : /\.\w+$/.test(name.split('/').pop()) ? null : name + '.html'; };
-const THEME_COLOR = {dark: '#080808', paper: '#f1ebe0', home: '#080808'};
+// «Бумага»: строка браузера — цвета шапки (тёмная полоса с белым быком), а не слоновой кости под ней.
+const THEME_COLOR = {dark: '#080808', paper: '#080808', home: '#080808'};
 const TODO_PAGES = new Set(['import.html', 'works.html']);
 const site = d.site?.analytics || {};
 const titles = new Map(), descriptions = new Map(), todos = [];

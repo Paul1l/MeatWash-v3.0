@@ -26,7 +26,8 @@ export const FONT = 'assets/fonts/manrope-vf.woff2';
 const fontFace = () => `@font-face{font-family:'Manrope';src:url('${assetUrl(FONT)}') format('woff2');font-weight:200 800;font-style:normal;font-display:swap}`;
 // Общие CSS в порядке подключения; за ними — CSS страницы (поле css реестра).
 export const SHARED_CSS = ['tokens', 'base', 'components', 'shell', 'dialogs'];
-const THEME_COLOR = {dark: '#080808', paper: '#f1ebe0', home: '#080808'};
+// «Бумага»: строка браузера — цвета шапки (тёмная полоса с белым быком), а не слоновой кости под ней.
+const THEME_COLOR = {dark: '#080808', paper: '#080808', home: '#080808'};
 
 // Старые якоря главной (поправка критика 32 и гараж на /services, решение 27.10): заход
 // по старой ссылке ведём туда, где блок живёт теперь. #contacts и #top остаются у подвала и шапки.
