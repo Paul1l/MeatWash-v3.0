@@ -17,7 +17,7 @@ def inventory(browser, base, pages, res):
       notes: document.querySelectorAll('li.catalog__item .catalog__item-note').length,
       estimate: document.querySelectorAll('.catalog__item-price--estimate').length,
       onsite: document.querySelectorAll('.catalog__item-onsite').length,
-      programs: [...document.querySelectorAll('.program-card [data-program-price]')].map(e => e.dataset.prices.split(',').length),
+      programs: [...document.querySelectorAll('.program-card__price > [data-program-price]')].map(e => e.dataset.prices.split(',').length),
       details: [...document.querySelectorAll('details[id^="program-"]')].map(e => e.id),
       sections: [...document.querySelectorAll('.catalog__section[id]')].map(e => e.id),
       bodies: document.querySelectorAll('input[name="body-type"]').length,
