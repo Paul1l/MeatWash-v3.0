@@ -379,6 +379,13 @@ ok(same(d.groups.map((g) => [g.id, g.title, g.booking]), [['wash', 'Мойка',
   });
   ok(cars.forSale.reduce((a, c) => a + c.photos.length, 0) === 18 && cars.forSale.length === 2 && cars.sold.length === 16, `cars.json: ${cars.forSale.length} машины, ${cars.forSale.reduce((a, c) => a + c.photos.length, 0)} фото, ${cars.sold.length} проданных — инвентарь: 2, 18, 16`);
   ok((auto.match(/<li class="sold-card">/g) || []).length === cars.sold.length, `auto.html: проданных карточек не ${cars.sold.length}`);
+  // Цены машин — на дату pricesDate (план §4.6): старше 30 дней — сверить с Романом
+  // (в check:release — ошибка: на боевой сайт со старыми ценами не выходим).
+  {
+    const age = Math.floor((Date.now() - Date.parse(`${cars.pricesDate}T00:00:00+03:00`)) / 864e5);
+    ok(Number.isFinite(age), `cars.json: pricesDate «${cars.pricesDate}» — не дата YYYY-MM-DD`);
+    if (age > 30) soft(`цены машин — на ${cars.pricesDate} (${age} дн. назад): сверить цены и наличие с Романом и обновить pricesDate в src/data/cars.json`);
+  }
   const sale = cars.forSale.length, sold = cars.sold.length;
   for (const page of REGISTRY) if (page.shared.includes('header')) ok(html[page.file].includes(`<span class="drawer__count">${sale}</span>`) && html[page.file].includes(`<span class="drawer__count">${sold}</span>`), `${page.file}: счётчики машин в шторке не из данных`);
   ok(/href="#for-sale"><b>(\d+)<\/b>/.exec(auto)?.[1] === String(sale) && /href="#sold"><b>(\d+)<\/b>/.exec(auto)?.[1] === String(sold), 'auto.html: цифры героя не из данных');
