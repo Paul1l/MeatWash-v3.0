@@ -72,7 +72,7 @@
       </div>
       <div class="drawer__body">
         <ul class="drawer__list">
-          <li><button class="drawer__item" type="button" aria-controls="drawer-p-care" aria-expanded="false"><span>Мойка и&nbsp;детейлинг</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
+          <li><button class="drawer__item" type="button" aria-controls="drawer-p-care" aria-expanded="false"><span>Автомойка / Детейлинг</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
           <li><button class="drawer__item" type="button" aria-controls="drawer-p-import" aria-expanded="false"><span>Привоз авто <span class="nw">из-за</span> рубежа</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
           <li><button class="drawer__item" type="button" aria-controls="drawer-p-auto" aria-expanded="false"><span>Покупка и&nbsp;продажа</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
           <li><button class="drawer__item" type="button" aria-controls="drawer-p-about" aria-expanded="false"><span>О&nbsp;нас</span><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-chevron-right"/></svg></button></li>
@@ -89,7 +89,7 @@
     <section class="drawer__panel" id="drawer-p-care" aria-labelledby="drawer-p-care-title" tabindex="-1" hidden>
       <div class="drawer__bar">
         <button class="drawer__back" type="button" data-drawer-back aria-label="Назад к разделам"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-arrow-left"/></svg></button>
-        <h2 class="drawer__title" id="drawer-p-care-title">Мойка и&nbsp;детейлинг</h2>
+        <h2 class="drawer__title" id="drawer-p-care-title">Автомойка / Детейлинг</h2>
         <button class="drawer__close" type="button" data-drawer-close aria-label="Закрыть меню"><svg class="icon" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-close"/></svg></button>
       </div>
       <div class="drawer__body">
@@ -198,6 +198,9 @@
      числа в чипах — из данных (проданные машины, год, студии). Подпись плитки 2 Влад
      не менял («Обсудить привоз»); «Подробнее о привозе» (поправка 8) — вопрос Владу.
      Видео (27.10): фон героя и ролик плитки 1 по наведению — js/video.js, кадры без номеров.
+     28.10 (разговор Влада с Романом: ролик к каждому из четырёх блоков): плитка 1 «Автомойка / Детейлинг»
+     (Паша 28.10) — оклейка BMW M4 в Brooklyn Grey, 14,8 с, плитка 4 — ролик студии; на телефоне ролик играет у слайда по центру. Плитки 2 и 3 — фото,
+     пока нет роликов о привозе и продаже авто (их готовит Роман).
      Стили — dist/css/home.css, поведение — dist/js/home.js. -->
 <section class="hero" aria-labelledby="page-title">
   <picture class="hero__media">
@@ -220,17 +223,17 @@
 
   <div class="dirs__grid">
     <article class="dir" data-reveal aria-labelledby="dir-1">
-      <h3 class="dir__title" id="dir-1"><span class="dir__name">Мойка и&nbsp;детейлинг</span></h3>
+      <h3 class="dir__title" id="dir-1"><span class="dir__name">Автомойка / Детейлинг</span></h3>
       <div class="dir__card" data-video-host>
         <img class="dir__img" style="--focus-xy: 68% 56%" src="assets/img/home/tile-1-800.webp" srcset="assets/img/home/tile-1-800.webp 800w, assets/img/home/tile-1-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 447px, (max-width: 759px) 55vh, 52vw" width="1240" height="1864" loading="lazy" decoding="async" alt="Lexus LX в активной пене в моечном боксе Meat Auto">
-        <video class="dir__img dir__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="assets/video/clip-wash.mp4?v=7d73ecde"></video>
+        <video class="dir__img dir__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="assets/video/tile-detailing.mp4?v=d7165335"></video>
         <a class="dir__hit" href="services" tabindex="-1" aria-hidden="true"></a>
         <div class="dir__content">
           <div class="dir__body">
             <ul class="dir__tags"><li class="chip chip--photo">Мойка · химчистка · полировка · ремонт</li></ul>
             <p class="dir__desc">Мойка, химчистка, полировка, защита кузова и&nbsp;ремонт сколов и&nbsp;вмятин.</p>
           </div>
-          <a class="dir__cta" href="services"><span class="dir__label">Услуги и&nbsp;цены</span><span class="sr">: мойка и&nbsp;детейлинг</span><svg class="dir__arrow" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></a>
+          <a class="dir__cta" href="services"><span class="dir__label">Услуги и&nbsp;цены</span><span class="sr">: автомойка и&nbsp;детейлинг</span><svg class="dir__arrow" width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="assets/brand/sprite.svg?v=77c0400e#i-cta-arrow"/></svg></a>
         </div>
       </div>
     </article>
@@ -267,11 +270,12 @@
 
     <article class="dir" data-reveal aria-labelledby="dir-4">
       <h3 class="dir__title" id="dir-4"><span class="dir__name">О&nbsp;нас</span></h3>
-      <div class="dir__card">
+      <div class="dir__card" data-video-host>
         <picture>
           <source media="(max-width: 759px)" srcset="assets/img/home/tile-4-m-860.webp 860w, assets/img/home/tile-4-m-1280.webp 1280w" sizes="(min-height: 810px) 447px, 55vh" width="1280" height="1924">
           <img class="dir__img" style="--focus-xy: 50% 50%" src="assets/img/home/tile-4-800.webp" srcset="assets/img/home/tile-4-800.webp 800w, assets/img/home/tile-4-1240.webp 1240w" sizes="(max-width: 759px) and (min-height: 810px) 1010px, (max-width: 759px) 125vh, (min-width: 1760px) calc(76.7vh + 15vw), (min-width: 1300px) calc(10.5vh + 58.6vw), 67.6vw" width="1240" height="825" loading="lazy" decoding="async" alt="Серый BMW 8 серии в зале студии Meat Auto">
         </picture>
+        <video class="dir__img dir__video" data-video="hover" muted loop playsinline disablepictureinpicture preload="none" aria-hidden="true" tabindex="-1" data-src="assets/video/tile-about.mp4?v=9bde9dcc"></video>
         <a class="dir__hit" href="about" tabindex="-1" aria-hidden="true"></a>
         <div class="dir__content">
           <div class="dir__body">
@@ -286,7 +290,7 @@
 
   <div class="dirs__controls" role="group" aria-label="Листание направлений">
     <div class="dirs__dots">
-      <button class="dirs__dot" type="button" aria-label="1 из 4: Мойка и детейлинг" aria-current="true"><span></span></button>
+      <button class="dirs__dot" type="button" aria-label="1 из 4: Автомойка / Детейлинг" aria-current="true"><span></span></button>
       <button class="dirs__dot" type="button" aria-label="2 из 4: Привоз авто из-за рубежа"><span></span></button>
       <button class="dirs__dot" type="button" aria-label="3 из 4: Покупка и продажа авто"><span></span></button>
       <button class="dirs__dot" type="button" aria-label="4 из 4: О нас"><span></span></button>
@@ -329,7 +333,7 @@
     <nav class="site-footer__col" aria-labelledby="footer-sections-title">
       <h3 class="site-footer__title" id="footer-sections-title" lang="en">Meat Auto</h3>
       <ul class="site-footer__links">
-        <li><a href="services">Мойка и&nbsp;детейлинг</a></li>
+        <li><a href="services">Автомойка / Детейлинг</a></li>
         <li><a href="wrap">Оклейка полиуретаном</a></li>
         <li><a href="works">Наши работы</a></li>
         <li><a href="import">Привоз авто <span class="nw">из-за</span> рубежа</a></li>

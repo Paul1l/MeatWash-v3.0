@@ -6,7 +6,10 @@
 //                       data-src-hd от 1600 px (или от 2200 физических пикселей), иначе data-src.
 //                       Кнопка [data-video-toggle] останавливает и запускает (WCAG 2.2.2);
 //                       пока ролик не играет, кнопка скрыта. Вне экрана — пауза.
-//  data-video="hover" — играет, пока указатель над [data-video-host]; на сенсорных не грузится.
+//  data-video="hover" — с мышью играет, пока указатель над [data-video-host]. На сенсорных
+//                       экранах (Роман 28.10: «ролик к каждому блоку» — смотрят с телефона)
+//                       играет сам, пока карточка видна на 60 % и больше: в карусели главной это
+//                       только слайд по центру. Ушла с экрана — пауза; ролик грузится при первом показе.
 // Подключает site.js, когда на странице есть [data-video].
 export function setupVideo() {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
@@ -45,14 +48,34 @@ export function setupVideo() {
     if (document.readyState === 'complete') start(); else addEventListener('load', start, { once: true });
   });
 
+  const load = (video) => { if (!video.src) { video.muted = true; video.src = video.dataset.src; } };
+  const inView = new IntersectionObserver((entries) => {
+    entries.forEach(({ target, isIntersecting }) => {
+      const video = target.__video;
+      target.__in = isIntersecting;
+      if (fine.matches) return;
+      if (isIntersecting && !document.hidden) { load(video); play(video); } else video.pause();
+    });
+  }, { threshold: 0.6 });
+
   document.querySelectorAll('video[data-video="hover"]').forEach((video) => {
     const host = video.closest('[data-video-host]') || video.parentElement;
     mark(video);
     host.addEventListener('pointerenter', () => {
       if (!fine.matches) return;
-      if (!video.src) { video.muted = true; video.src = video.dataset.src; }
+      load(video);
       play(video);
     });
-    host.addEventListener('pointerleave', () => video.pause());
+    host.addEventListener('pointerleave', () => { if (fine.matches) video.pause(); });
+    host.__video = video;
+    inView.observe(host);
+  });
+  // Вкладка в фоне — все ролики карточек на паузе; вернулись — на сенсорных снова играет видимый.
+  document.addEventListener('visibilitychange', () => {
+    document.querySelectorAll('video[data-video="hover"]').forEach((video) => {
+      const host = video.closest('[data-video-host]') || video.parentElement;
+      if (document.hidden) video.pause();
+      else if (!fine.matches && host.__in) { load(video); play(video); }
+    });
   });
 }
