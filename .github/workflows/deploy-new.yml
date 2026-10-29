@@ -1,0 +1,121 @@
+name: Выкладка на new.meatwash.ru
+
+# Превью нового сайта Meat Auto (решение Влада 29.10.2026): каждый push в ветку meat-auto
+# репозитория yakobsonv/MeatWash-v3.0 (или слияние PR в неё) сам собирается, проверяется и
+# загружается на https://new.meatwash.ru — пароль хостинга никому вводить не нужно.
+# Не прошли сборка, check, check:3d или бюджеты пакета — сайт не меняется.
+# Две задачи: build собирает пакет без доступа к хостингу (npm и сборка секретов не видят),
+# deploy берёт готовый пакет и только загружает его. FTP-пользователь выкладки видит лишь
+# папку поддомена: боевой meatwash.ru этим путём не выкладывается и не затрагивается.
+# Логин и пароль — секреты NEW_MEATWASH_FTP_USER и NEW_MEATWASH_FTP_PASSWORD (ставит Влад).
+# Повторить: на странице запуска «Re-run all jobs» (только у последнего запуска) или новый push.
+# Подробно — docs/meat-auto/PREVIEW.md, п. 0.
+on:
+  push:
+    branches: [meat-auto]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Выкладки идут по очереди и не обрываются посередине.
+concurrency:
+  group: deploy-new-meatwash
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'yakobsonv/MeatWash-v3.0' && github.ref == 'refs/heads/meat-auto'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установить зависимости
+        run: npm ci
+
+      - name: Собрать страницы
+        run: npm run build
+
+      - name: Ресурсы, ссылки, мета и данные
+        run: npm run check
+
+      - name: 3D-гараж (бандл и модели)
+        run: npm run check:3d
+
+      - name: Собрать пакет превью
+        run: node scripts/preview-pack.mjs --out "$RUNNER_TEMP/preview" --host new.meatwash.ru
+
+      - name: Передать пакет выкладке
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-${{ github.sha }}
+          path: ${{ runner.temp }}/preview
+          include-hidden-files: true      # .htaccess
+          if-no-files-found: error
+          retention-days: 3
+
+  deploy:
+    needs: build
+    if: github.repository == 'yakobsonv/MeatWash-v3.0' && github.ref == 'refs/heads/meat-auto'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: new.meatwash.ru
+      url: https://new.meatwash.ru/
+    steps:
+      # Запуск старого коммита (повтор давнего запуска или очередь из нескольких push)
+      # не перезаписывает более новую версию: выкладывается только текущая голова meat-auto.
+      - name: Это последняя версия meat-auto?
+        id: head
+        run: |
+          head=$(git ls-remote "https://github.com/${{ github.repository }}" refs/heads/meat-auto | cut -f1)
+          if [ "$head" = "${{ github.sha }}" ]; then
+            echo "latest=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "latest=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::meat-auto уже на ${head:0:7}, этот запуск (${GITHUB_SHA:0:7}) не выкладывает — выложит запуск новой версии."
+          fi
+
+      # Из репозитория — только скрипт загрузки, без npm.
+      - uses: actions/checkout@v6
+        if: steps.head.outputs.latest == 'true'
+        with:
+          sparse-checkout: scripts/deploy-ftp.py
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/download-artifact@v4
+        if: steps.head.outputs.latest == 'true'
+        with:
+          name: preview-${{ github.sha }}
+          path: ${{ runner.temp }}/preview
+
+      - name: Загрузить на хостинг
+        if: steps.head.outputs.latest == 'true'
+        env:
+          FTP_HOST: server205.hosting.reg.ru
+          FTP_USER: ${{ secrets.NEW_MEATWASH_FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.NEW_MEATWASH_FTP_PASSWORD }}
+        run: python3 -I scripts/deploy-ftp.py "$RUNNER_TEMP/preview" /
+
+      - name: Проверить new.meatwash.ru
+        if: steps.head.outputs.latest == 'true'
+        run: |
+          sha=${GITHUB_SHA:0:7}
+          preview=$(curl -fsS https://new.meatwash.ru/PREVIEW.txt)
+          echo "$preview"
+          grep -q "sha: $sha" <<<"$preview"
+          home=$(curl -fsS https://new.meatwash.ru/)
+          grep -q "?v=$sha" <<<"$home"
+          headers=$(curl -fsSI https://new.meatwash.ru/)
+          grep -qi '^x-robots-tag: noindex' <<<"$headers"
+          for page in services about auto import wrap works articles; do
+            code=$(curl -sS -o /dev/null -w '%{http_code}' "https://new.meatwash.ru/$page")
+            [ "$code" = 200 ] || { echo "/$page → $code"; exit 1; }
+          done
+          echo "new.meatwash.ru — версия $sha"
