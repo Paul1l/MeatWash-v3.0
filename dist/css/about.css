@@ -450,3 +450,11 @@ svg.quote-band__ccc { display: block; flex: none; width: auto; height: clamp(20p
   .studios__item[data-reveal].is-in img,
   .membership__media[data-reveal].is-in .membership__mark { transition: opacity 1s var(--ease-out), transform 1.6s var(--expo); }
 }
+
+/* «Пока ждёте» с роликом зоны ожидания (28.10): кадр 4:5 над заголовком карточки. */
+.visit__media { margin: 0; }
+.visit__media > img { aspect-ratio: 4 / 5; object-fit: cover; }
+.visit__item--media { grid-template-columns: 1fr !important; }
+.visit__item--media .visit__media { grid-column: 1 / -1; }
+.visit__item--media h3 { grid-row: auto !important; }
+@media (min-width: 760px) { .visit__media > img { aspect-ratio: 3 / 2; } }

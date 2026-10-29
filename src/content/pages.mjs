@@ -69,9 +69,9 @@ export const REGISTRY = [
   },
   {
     file: 'services.html', id: 'services', kind: 'landing', body: 'services.html',
-    title: 'Мойка и детейлинг: услуги и цены — Meat Auto',
+    title: 'Автомойка / Детейлинг: услуги и цены — Meat Auto',
     description: 'Мойка от {{min:wash}}, детейлинг, защита кузова и ремонт повреждений: химчистка, полировка, керамика, плёнка, стёкла. Мясницкая и Технопарк.',
-    headline: 'Мойка и детейлинг', theme: 'dark', header: 'over', cta: 'book',
+    headline: 'Автомойка / Детейлинг', theme: 'dark', header: 'over', cta: 'book',
     shared: WITH_BOOK,
     // garage.css — окно 3D-гаража (решение Влада 27.10: гараж остаётся блоком на этой странице,
     // 3D грузится только по нажатию). Владелец garage.css / garage.js / config.js — WP3.
